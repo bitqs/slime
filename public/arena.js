@@ -1,1 +1,576 @@
 'use strict';
+/* Questline Arena on PixiJS. Read-only viewer: SSE events + /state polling.
+   Cutscene steps are data; FX primitives interpret them (Task 9 adds scenes). */
+(async function () {
+  const CALM = new URLSearchParams(location.search).has('calm')
+    || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  const P = { bg:'#1a1d24', bg2:'#232733', gold:'#f0b541', ember:'#e8842c', red:'#c83737',
+    bone:'#e8e0d0', steel:'#7fa8c0', dark:'#2e3547', floor:'#2e3547', green:'#6abe30' };
+
+  // Knight 12×14: 0=transparent,1=steel,2=gold,3=bone,4=dark
+  const KNIGHT = [
+    [0,0,0,2,2,2,2,2,0,0,0,0],
+    [0,0,2,3,3,3,3,3,2,0,0,0],
+    [0,0,2,3,1,3,1,3,2,0,0,0],
+    [0,0,2,3,3,3,3,3,2,0,0,0],
+    [0,2,2,2,2,2,2,2,2,2,0,0],
+    [0,1,1,2,1,1,1,2,1,1,0,0],
+    [0,1,2,2,2,2,2,2,2,1,0,0],
+    [0,1,2,1,2,2,2,1,2,1,0,0],
+    [0,2,2,1,2,2,2,1,2,2,0,0],
+    [0,0,1,1,2,2,2,1,1,0,0,0],
+    [0,0,1,1,4,4,4,1,1,0,0,0],
+    [0,0,1,4,4,4,4,4,1,0,0,0],
+    [0,2,1,4,0,0,0,4,1,2,0,0],
+    [0,2,2,0,0,0,0,0,2,2,0,0],
+  ];
+  const KNIGHT_COLORS = ['', P.steel, P.gold, P.bone, P.dark];
+  // Boss blob 16×14: 0=transparent,1=main,2=dark accent,3=light mouth
+  const BOSS = [
+    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+    [0,1,1,2,1,1,2,1,1,2,1,1,2,1,1,0],
+    [0,1,1,2,2,1,2,2,1,2,2,1,2,2,1,0],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,2,1,1,1,1,1,1,1,1,1,1,2,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [0,1,1,1,3,1,1,1,1,1,1,3,1,1,1,0],
+    [0,1,1,1,3,3,3,3,3,3,3,3,1,1,1,0],
+    [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+    [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
+  ];
+  function bossColors(hpPct) {
+    const c1 = hpPct > 60 ? P.green : hpPct > 30 ? P.ember : P.red;
+    const c2 = hpPct > 60 ? '#4a8a20' : hpPct > 30 ? '#b05820' : '#8a2020';
+    return ['', c1, c2, P.bone];
+  }
+
+  const W = 320, H = 180, FLOOR_Y = 145;
+
+  function showOverlay(msg) {
+    const ov = document.getElementById('overlay');
+    if (!ov) return;
+    if (msg != null) ov.textContent = msg;
+    ov.style.display = 'flex';
+  }
+  function hideOverlay() {
+    const ov = document.getElementById('overlay');
+    if (ov) ov.style.display = 'none';
+  }
+
+  if (typeof PIXI === 'undefined') return showOverlay('arena needs WebGL — PIXI failed to load');
+  PIXI.TextureSource.defaultOptions.scaleMode = 'nearest';
+  const app = new PIXI.Application();
+  try { await app.init({ width: W, height: H, background: P.bg, antialias: false }); }
+  catch (e) { return showOverlay('arena needs WebGL — ' + e.message); }
+  app.canvas.style.width = '100%';
+  document.getElementById('canvas-wrap').prepend(app.canvas);
+
+  const world = new PIXI.Container();
+  const fxLayer = new PIXI.Container();
+  const uiLayer = new PIXI.Container();
+  app.stage.addChild(world, fxLayer, uiLayer);
+
+  // ── matrix → texture ──────────────────────────────────────────────────────
+  function texFromMatrix(mat, colors) {
+    const rows = mat.length, cols = mat[0].length;
+    const cv = document.createElement('canvas');
+    cv.width = cols; cv.height = rows;
+    const c = cv.getContext('2d');
+    for (let r = 0; r < rows; r++) {
+      for (let x = 0; x < cols; x++) {
+        const v = mat[r][x];
+        if (!v) continue;
+        c.fillStyle = colors[v];
+        c.fillRect(x, r, 1, 1);
+      }
+    }
+    return PIXI.Texture.from(cv);
+  }
+
+  // ── background: stars, floor, torches ──────────────────────────────────────
+  function starLayer(n, alpha) {
+    const g = new PIXI.Graphics();
+    for (let i = 0; i < n; i++) {
+      const x = Math.random() * W * 2, y = Math.random() * (FLOOR_Y - 10);
+      g.rect(x, y, 1, 1).fill({ color: 0xffffff, alpha });
+    }
+    return g;
+  }
+  const bgFar = starLayer(40, 0.35);
+  const bgNear = starLayer(28, 0.6);
+  world.addChild(bgFar, bgNear);
+
+  const floorBar = new PIXI.Graphics().rect(0, FLOOR_Y, W, 3).fill(P.floor);
+  world.addChild(floorBar);
+
+  const torches = [];
+  for (const tx of [20, 280]) {
+    const g = new PIXI.Graphics();
+    g._tx = tx;
+    world.addChild(g);
+    torches.push(g);
+  }
+  function drawTorch(g, hot) {
+    const tx = g._tx;
+    g.clear();
+    g.rect(tx, FLOOR_Y - 18, 3, 18).fill(0x5a3010);
+    g.rect(tx - 1, FLOOR_Y - 22, 5, 4).fill(hot ? P.gold : P.ember);
+    g.rect(tx, FLOOR_Y - 25, 3, 3).fill(P.gold);
+  }
+  torches.forEach((g) => drawTorch(g, true));
+
+  // ── sprites ─────────────────────────────────────────────────────────────────
+  const knightTex = texFromMatrix(KNIGHT, KNIGHT_COLORS);
+  const knight = new PIXI.Sprite(knightTex);
+  knight.x = 40; knight.y = FLOOR_Y - 14;
+  world.addChild(knight);
+
+  let bossHpTier = null; // 'hi' | 'mid' | 'lo'
+  const bossTex = { hi: null, mid: null, lo: null };
+  function bossTexFor(pct) {
+    const tier = pct > 60 ? 'hi' : pct > 30 ? 'mid' : 'lo';
+    if (!bossTex[tier]) bossTex[tier] = texFromMatrix(BOSS, bossColors(pct));
+    return { tier, tex: bossTex[tier] };
+  }
+  const boss = new PIXI.Sprite(bossTexFor(100).tex);
+  boss.x = 220; boss.y = FLOOR_Y - 14;
+  boss.visible = false;
+  world.addChild(boss);
+
+  // particle graphics (redrawn each frame)
+  const particleGfx = new PIXI.Graphics();
+  fxLayer.addChild(particleGfx);
+
+  // ── uiLayer chrome ───────────────────────────────────────────────────────────
+  const flashRect = new PIXI.Graphics().rect(0, 0, W, H).fill(0xffffff);
+  flashRect.alpha = 0;
+  let flashColor = 0xffffff;
+  const vignette = makeRadial(P.red);   // danger (low token)
+  const vignetteEdge = makeRadial(P.ember); // combo edge flame
+  vignette.alpha = 0; vignetteEdge.alpha = 0;
+  function makeRadial(color) {
+    // ring-ish red/ember frame: four edge gradients approximated with rects.
+    const g = new PIXI.Graphics();
+    const col = colorNum(color);
+    const band = 26;
+    g.rect(0, 0, W, band).fill({ color: col, alpha: 0.6 });
+    g.rect(0, H - band, W, band).fill({ color: col, alpha: 0.6 });
+    g.rect(0, 0, band, H).fill({ color: col, alpha: 0.6 });
+    g.rect(W - band, 0, band, H).fill({ color: col, alpha: 0.6 });
+    return g;
+  }
+  const letterTop = new PIXI.Graphics().rect(0, 0, W, 24).fill(0x000000);
+  const letterBot = new PIXI.Graphics().rect(0, 0, W, 24).fill(0x000000);
+  letterTop.y = -24; letterBot.y = H;
+  let letterboxOn = false;
+  const bigText = new PIXI.Text({ text: '', style: { fontFamily: 'monospace', fontSize: 12,
+    fontWeight: 'bold', fill: colorNum(P.gold), align: 'center' } });
+  bigText.anchor.set(0.5);
+  bigText.x = W / 2; bigText.y = H / 2; bigText.visible = false;
+  uiLayer.addChild(flashRect, vignette, vignetteEdge, letterTop, letterBot, bigText);
+
+  function colorNum(c) {
+    if (typeof c === 'number') return c;
+    return parseInt(String(c).replace('#', ''), 16);
+  }
+
+  // ── fx state + governor ───────────────────────────────────────────────────────
+  const fx = { shake: 0, shakeAmp: 4, knightLunge: 0, speed: 1, hitstop: 0, particles: [],
+    floaters: [], chromaFrames: 0, edgeFlame: 0, slowmoLeft: null, zoom: 1, zoomLeft: null,
+    bossFalling: false, type: null };
+  const governor = QLSeq.createGovernor(3, 60);
+  let activeScenes = [];
+  let frame = 0;
+  let slowmoAcc = 0;
+
+  // ── particles / floaters ──────────────────────────────────────────────────────
+  function burst(x, y, color, n) {
+    const col = colorNum(color);
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      fx.particles.push({ x, y,
+        vx: Math.cos(a) * (1 + Math.random()),
+        vy: Math.sin(a) * (1 + Math.random()) - 1,
+        age: 0, maxAge: 34, color: col });
+    }
+  }
+
+  function floater(text, x, y, color, size) {
+    const t = new PIXI.Text({ text: String(text), style: { fontFamily: 'monospace',
+      fontSize: size || 8, fontWeight: 'bold', fill: colorNum(color || P.gold) } });
+    t.x = x; t.y = y;
+    fxLayer.addChild(t);
+    fx.floaters.push({ node: t, age: 0, maxAge: 48 });
+  }
+
+  // ── FX primitives ─────────────────────────────────────────────────────────────
+  const PRIM = {
+    flash({ color = '#ffffff', strength = 0.5 } = {}) {
+      if (!governor.allow(frame)) return;
+      flashColor = colorNum(color);
+      flashRect.tint = flashColor;
+      flashRect.alpha = CALM ? Math.min(0.25, strength) : strength;
+    },
+    shake({ amp = 4, frames = 10 } = {}) { if (!CALM) { fx.shake = frames; fx.shakeAmp = amp; } },
+    hitstop({ frames: f = 8 } = {}) { if (!CALM) fx.hitstop = f; },
+    slowmo({ factor = 0.3, frames: f = 40 } = {}) { fx.speed = factor; fx.slowmoLeft = f; },
+    letterbox({ on } = {}) { letterboxOn = !!on; },
+    typewriter({ text, y = 60 } = {}) {
+      fx.type = { text: String(text || ''), shown: 0 };
+      bigText.text = '';
+      bigText.y = y; bigText.visible = true;
+    },
+    bigtext({ text, y = 60 } = {}) {
+      fx.type = null;
+      bigText.text = String(text || '');
+      bigText.y = y; bigText.visible = true;
+    },
+    hidetext() { bigText.visible = false; bigText.text = ''; fx.type = null; },
+    chroma({ frames: f = 20 } = {}) { if (!CALM) fx.chromaFrames = f; },
+    zoom({ scale = 1.12, frames: f = 8 } = {}) { if (!CALM) { fx.zoom = scale; fx.zoomLeft = f; } },
+    slam() {
+      boss.visible = true; boss.y = FLOOR_Y - 14;
+      this.shake({ amp: 4, frames: 12 });
+      burst(boss.x + 8, FLOOR_Y, P.dark, 14);
+    },
+    bossdrop() { boss.visible = true; boss.y = -20; fx.bossFalling = true; },
+    bossburst() { boss.visible = false; burst(238, 125, P.bone, 26); },
+    goldrain() {
+      for (let i = 0; i < 40; i++) {
+        fx.particles.push({ x: Math.random() * W, y: -Math.random() * 20,
+          vx: 0, vy: 0.8 + Math.random(), age: 0, maxAge: 160,
+          color: colorNum(P.gold), noGravity: true });
+      }
+    },
+    confetti() {
+      const cols = [P.gold, P.ember, P.steel, P.green].map(colorNum);
+      for (let i = 0; i < 30; i++) {
+        fx.particles.push({ x: W / 2 + (Math.random() * 80 - 40), y: 40,
+          vx: Math.random() * 2 - 1, vy: -(1 + Math.random() * 1.5),
+          age: 0, maxAge: 90, color: cols[i % cols.length] });
+      }
+    },
+    bubbles() {
+      for (let i = 0; i < 12; i++) {
+        fx.particles.push({ x: 46 + (Math.random() * 8 - 4), y: FLOOR_Y - 10,
+          vx: Math.random() * 0.4 - 0.2, vy: -(0.4 + Math.random() * 0.6),
+          age: 0, maxAge: 80, color: colorNum(P.green), noGravity: true });
+      }
+    },
+    dim({ on } = {}) { world.alpha = on ? 0.3 : 1; },
+  };
+
+  function playScene(steps) { activeScenes.push(QLSeq.createTimeline(steps)); }
+
+  // ── render loop ───────────────────────────────────────────────────────────────
+  app.ticker.add(() => {
+    frame++;
+
+    // hitstop: freeze world, count down
+    if (fx.hitstop > 0) { fx.hitstop--; return; }
+
+    // slow-mo: skip frames per accumulator
+    if (fx.slowmoLeft != null) {
+      fx.slowmoLeft--;
+      if (fx.slowmoLeft <= 0) { fx.slowmoLeft = null; fx.speed = 1; }
+      slowmoAcc += fx.speed;
+      if (slowmoAcc < 1) return;
+      slowmoAcc -= 1;
+    }
+
+    // advance scenes → dispatch due steps
+    if (activeScenes.length) {
+      for (const tl of activeScenes) {
+        for (const step of QLSeq.advance(tl)) {
+          const fn = step.do && PRIM[step.do];
+          if (fn) { try { fn.call(PRIM, step.args || step); } catch {} }
+        }
+      }
+      activeScenes = activeScenes.filter((tl) => !tl.done);
+    }
+
+    // flash decay
+    if (flashRect.alpha > 0) {
+      flashRect.alpha = Math.max(0, flashRect.alpha - (CALM ? 0.03 : 0.08));
+    }
+
+    // shake
+    if (fx.shake > 0) {
+      fx.shake--;
+      world.x = (Math.random() * 2 - 1) * fx.shakeAmp;
+      world.y = (Math.random() * 2 - 1) * fx.shakeAmp;
+    } else { world.x = 0; world.y = 0; }
+
+    // zoom punch (scale whole stage around centre)
+    if (fx.zoomLeft != null) {
+      fx.zoomLeft--;
+      app.stage.pivot.set(W / 2, H / 2);
+      app.stage.position.set(W / 2, H / 2);
+      app.stage.scale.set(fx.zoom);
+      if (fx.zoomLeft <= 0) { fx.zoomLeft = null; fx.zoom = 1; }
+    } else {
+      app.stage.pivot.set(0, 0);
+      app.stage.position.set(0, 0);
+      app.stage.scale.set(1);
+    }
+
+    // chroma class toggle
+    if (fx.chromaFrames > 0) {
+      fx.chromaFrames--;
+      app.canvas.classList.add('chroma');
+    } else {
+      app.canvas.classList.remove('chroma');
+    }
+
+    // letterbox bars lerp toward target
+    const topTarget = letterboxOn ? 0 : -24;
+    const botTarget = letterboxOn ? H - 24 : H;
+    letterTop.y += (topTarget - letterTop.y) * 0.2;
+    letterBot.y += (botTarget - letterBot.y) * 0.2;
+
+    // torch flicker every 8
+    if (frame % 8 === 0) torches.forEach((g) => drawTorch(g, (frame / 8) % 2 === 0));
+
+    // bob every 30 (alternate knight/boss)
+    if (frame % 30 === 0) {
+      knight.y = FLOOR_Y - 14 - (knight.y < FLOOR_Y - 14 ? 0 : 1);
+      if (!fx.bossFalling) boss.y = FLOOR_Y - 14 - (boss.y < FLOOR_Y - 14 ? 0 : 1);
+    }
+
+    // boss falling
+    if (fx.bossFalling) {
+      boss.y += 6;
+      if (boss.y >= FLOOR_Y - 14) { boss.y = FLOOR_Y - 14; fx.bossFalling = false; PRIM.slam(); }
+    }
+
+    // knight lunge decay
+    if (fx.knightLunge > 0) fx.knightLunge = Math.max(0, fx.knightLunge - 1);
+    knight.x = 40 + fx.knightLunge;
+
+    // parallax
+    bgNear.x = (bgNear.x - 0.05) % W;
+    bgFar.x = (bgFar.x - 0.02) % W;
+
+    // typewriter
+    if (fx.type) {
+      if (frame % 3 === 0 && fx.type.shown < fx.type.text.length) {
+        fx.type.shown++;
+        bigText.text = fx.type.text.slice(0, fx.type.shown);
+      }
+    }
+
+    // particles
+    particleGfx.clear();
+    fx.particles = fx.particles.filter((p) => {
+      p.age++;
+      p.x += p.vx;
+      p.y += p.vy;
+      if (!p.noGravity) p.vy += 0.15;
+      const alpha = Math.max(0, 1 - p.age / p.maxAge);
+      particleGfx.rect(Math.round(p.x), Math.round(p.y), 2, 2).fill({ color: p.color, alpha });
+      return p.age < p.maxAge && p.y < H + 10;
+    });
+
+    // floaters
+    fx.floaters = fx.floaters.filter((f) => {
+      f.age++;
+      f.node.y -= 0.4;
+      f.node.alpha = Math.max(0, 1 - f.age / f.maxAge);
+      if (f.age >= f.maxAge) { fxLayer.removeChild(f.node); f.node.destroy(); return false; }
+      return true;
+    });
+
+    // edge flame (combo)
+    vignetteEdge.alpha = fx.edgeFlame ? 0.25 + Math.sin(frame / 10) * 0.15 : 0;
+
+    // danger pulse (low token)
+    if (stats.token != null && stats.token > 0 && stats.token < 30) {
+      const amp = CALM ? 0.05 : 0.25;
+      vignette.alpha = 0.2 + Math.sin(frame / 12) * amp;
+    } else {
+      vignette.alpha = 0;
+    }
+  });
+
+  // ── DOM: hp bar / log ─────────────────────────────────────────────────────────
+  const hpBar = document.getElementById('hp-bar');
+  (function buildHpBar() {
+    hpBar.innerHTML = '';
+    for (let i = 0; i < 10; i++) {
+      const seg = document.createElement('div');
+      seg.className = 'hp-seg';
+      seg.id = `seg${i}`;
+      hpBar.appendChild(seg);
+    }
+  })();
+  function updateBossHpBar(pct) {
+    const filled = Math.round((pct / 100) * 10);
+    for (let i = 0; i < 10; i++) {
+      const s = document.getElementById(`seg${i}`);
+      if (s) s.classList.toggle('on', i < filled);
+    }
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  const logEl = document.getElementById('log');
+  const logLines = [];
+  function pushLog(text) {
+    if (!text) return;
+    logLines.push(String(text).slice(0, 120));
+    if (logLines.length > 6) logLines.shift();
+    logEl.innerHTML = logLines.map((l, i) => {
+      const fresh = i === logLines.length - 1;
+      return `<div class="log-line" style="${fresh ? '' : 'opacity:1;animation:none'}">${escHtml(l)}</div>`;
+    }).join('');
+  }
+
+  // ── state polling ─────────────────────────────────────────────────────────────
+  const stats = { token: null };
+  let lastCost = null;
+  function modelBadge(name) {
+    const n = String(name || '');
+    if (/opus/i.test(n)) return '⭐ ' + n;
+    if (/sonnet/i.test(n)) return '🔷 ' + n;
+    if (/haiku/i.test(n)) return '🗡️ ' + n;
+    return n;
+  }
+  function fmtDuration(ms) {
+    const s = Math.round(ms / 1000);
+    const m = Math.floor(s / 60);
+    return `${m}:${String(s % 60).padStart(2, '0')}`;
+  }
+  function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+
+  function applyState(data) {
+    if (!data) return;
+    const snap = data.snapshot;
+
+    // boss snapshot
+    if (snap) {
+      hideOverlay();
+      boss.visible = true;
+      if (snap.boss && snap.boss.name) setText('boss-name', snap.boss.name);
+      let pct = null;
+      if (snap.boss && typeof snap.boss.hpPct === 'number') pct = snap.boss.hpPct;
+      else if (snap.boss && typeof snap.boss.hp === 'number') pct = snap.boss.hp;
+      if (pct != null) {
+        updateBossHpBar(pct);
+        const { tier, tex } = bossTexFor(pct);
+        if (tier !== bossHpTier) { bossHpTier = tier; boss.texture = tex; }
+      }
+    } else {
+      showOverlay('waiting for a session…');
+      boss.visible = false;
+      setText('boss-name', '—');
+      updateBossHpBar(0);
+    }
+
+    // usage → stats panel
+    const u = data.usage;
+    if (u) {
+      let token = null;
+      if (u.fiveHour && typeof u.fiveHour.used === 'number') {
+        token = Math.max(0, Math.round(100 - u.fiveHour.used));
+      }
+      stats.token = token;
+      setText('player-token', token != null ? `⚡Token ${token}%` : '⚡Token —');
+
+      if (u.sevenDay && typeof u.sevenDay.used === 'number') {
+        setText('stamina', `${Math.max(0, Math.round(100 - u.sevenDay.used))}%`);
+      }
+
+      const fill = document.getElementById('mana-fill');
+      if (fill && typeof u.contextPct === 'number') {
+        fill.style.width = `${Math.max(0, Math.min(100, 100 - u.contextPct))}%`;
+      }
+
+      if (typeof u.cost === 'number') {
+        const goldEl = document.getElementById('gold');
+        if (goldEl) {
+          goldEl.textContent = `$${u.cost.toFixed(2)}`;
+          if (lastCost != null && u.cost > lastCost) {
+            goldEl.classList.remove('gold-tick');
+            void goldEl.offsetWidth; // restart animation
+            goldEl.classList.add('gold-tick');
+            burst(40, 30, P.gold, 6);
+          }
+        }
+        lastCost = u.cost;
+      }
+
+      if (u.model) setText('weapon', modelBadge(u.model));
+      if (u.lines) setText('atk', `+${u.lines.added || 0} / −${u.lines.removed || 0}`);
+      if (typeof u.durationMs === 'number') setText('timer', fmtDuration(u.durationMs));
+
+      // grayscale when out of tokens
+      if (token === 0) app.canvas.classList.add('gray');
+      else app.canvas.classList.remove('gray');
+    }
+  }
+  async function pollState() {
+    try { const r = await fetch('/state'); if (r.ok) applyState(await r.json()); } catch {}
+  }
+  pollState();
+  setInterval(pollState, 5000);
+
+  // ── SSE events ────────────────────────────────────────────────────────────────
+  const EXTRA_HANDLERS = [];
+  window.QLArena = { playScene, PRIM, fx, pushLog, floater, stats, on: (fn) => EXTRA_HANDLERS.push(fn) };
+
+  function onCombo(combo, dmg) {
+    fx.edgeFlame = combo >= 5 ? 1 : 0;
+    if (combo >= 10) { PRIM.chroma({ frames: 12 }); PRIM.zoom({ scale: 1.1, frames: 6 }); }
+    if (dmg >= 50) burst(160, 90, P.steel, 14);
+  }
+
+  function handleEvent(ev) {
+    let d; try { d = JSON.parse(ev.data); } catch { return; }
+    if (!d || !d.kind) return;
+
+    if (d.kind === 'encounter') {
+      if (d.bossName) setText('boss-name', d.bossName);
+      hideOverlay();
+      boss.visible = true;
+      PRIM.bossdrop();
+      if (d.text) pushLog(d.text);
+    }
+    if (d.kind === 'cast') { fx.knightLunge = 6; pushLog(d.text); }
+    if (d.kind === 'resolve') {
+      if (typeof d.dmg === 'number' && d.dmg > 0) {
+        floater(`-${d.dmg}`, 230, 110, P.gold);
+        PRIM.shake({ amp: 3, frames: 6 });
+        if (d.combo && d.combo > 1) floater(`×${d.combo}`, 250, 100, P.ember, 9);
+        onCombo(d.combo || 0, d.dmg);
+      }
+      if (d.kill) { burst(238, 125, P.bone, 8); PRIM.flash({ strength: 0.4 }); }
+      if (d.hit) { PRIM.flash({ color: '#c83737', strength: 0.35 }); onCombo(0, 0); }
+      if (d.text) pushLog(d.text);
+    }
+    if (d.kind === 'turn_end') {
+      const line = (d.text || '').split('\n')[0];
+      if (line) {
+        PRIM.bigtext({ text: line.slice(0, 40), y: H / 2 });
+        setTimeout(() => PRIM.hidetext(), 2000);
+        pushLog(line);
+      }
+    }
+    EXTRA_HANDLERS.forEach((h) => { try { h(d); } catch {} });
+  }
+
+  function connectEvents() {
+    let es;
+    try {
+      es = new EventSource('/events');
+      es.onmessage = handleEvent;
+      es.onerror = () => { es.close(); setTimeout(connectEvents, 3000); };
+    } catch {}
+  }
+  connectEvents();
+})();

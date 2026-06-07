@@ -1,6 +1,12 @@
 const { bar } = require('./report');
+const usage = require('./usage');
 
-function render(snap, stdinJson, tips, now) {
+function render(snap, stdinJson, tips, now, usageCache) {
+  const hpVal = usage.hp(usageCache);
+  if (hpVal === 0) {
+    const t = usage.restTime(usageCache);
+    return `🛌 Rest, commander. HP restored${t ? ` at ${t}` : ' soon'}.`;
+  }
   if (!snap) return '⚔️ Questline — awaiting first encounter';
   const idleMs = now - (snap.updated || 0);
 
@@ -11,6 +17,7 @@ function render(snap, stdinJson, tips, now) {
   if (!snap.inTurn) return snap.lastText || '⚔️ Questline — your turn, commander';
 
   const parts = [];
+  if (hpVal != null) parts.push(`⚡HP ${hpVal}%`);
   if (snap.boss) parts.push(`🗡️ ${snap.boss.name} ${bar(snap.boss.hp)} ${snap.boss.hp}%`);
   if (snap.combo > 1) parts.push(`🔥combo×${snap.combo}`);
   if (snap.summons > 0) parts.push(`🐺×${snap.summons}`);

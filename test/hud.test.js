@@ -33,3 +33,23 @@ test('out of turn shows last result, not tips', () => {
   const snap = { inTurn: false, updated: now - 60000, lastText: '🏆 Turn 3 complete — Rank S' };
   assert.match(hud.render(snap, {}, TIPS, now), /Rank S/);
 });
+
+test('battle frame shows player HP from usage cache', () => {
+  const now = Date.now();
+  const line = hud.render(
+    { inTurn: true, combo: 0, kills: 0, dmg: 5, summons: 0, lastText: 'x', updated: now },
+    {}, TIPS, now,
+    { fiveHour: { used: 32, resetsAt: 0 } }
+  );
+  assert.match(line, /⚡HP 68%/);
+});
+
+test('zero HP renders rest banner with reset time', () => {
+  const now = Date.now();
+  const line = hud.render(
+    { inTurn: false, lastText: 'x', updated: now },
+    {}, TIPS, now,
+    { fiveHour: { used: 100, resetsAt: 1780810000 } }
+  );
+  assert.match(line, /🛌 Rest, commander/);
+});

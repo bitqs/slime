@@ -14,6 +14,7 @@ function cacheFromStatusline(stdin, root) {
   if (!stdin) return;
   const prev = readCache(root);
   const rl = stdin.rate_limits || {};
+  const cost = stdin.cost || {};
   const next = {
     fiveHour: rl.five_hour
       ? { used: rl.five_hour.used_percentage, resetsAt: rl.five_hour.resets_at }
@@ -25,10 +26,16 @@ function cacheFromStatusline(stdin, root) {
       ? stdin.context_window.used_percentage
       : prev.contextPct,
     source: rl.five_hour ? 'official' : prev.source,
+    cost: cost.total_cost_usd != null ? cost.total_cost_usd : prev.cost ?? null,
+    model: stdin.model && stdin.model.display_name ? stdin.model.display_name : prev.model ?? null,
+    lines: cost.total_lines_added != null || cost.total_lines_removed != null
+      ? { added: cost.total_lines_added || 0, removed: cost.total_lines_removed || 0 }
+      : prev.lines ?? null,
+    durationMs: cost.total_duration_ms != null ? cost.total_duration_ms : prev.durationMs ?? null,
     t: Date.now(),
   };
-  const same = JSON.stringify([prev.fiveHour, prev.sevenDay, prev.contextPct, prev.source])
-            === JSON.stringify([next.fiveHour, next.sevenDay, next.contextPct, next.source]);
+  const same = JSON.stringify([prev.fiveHour, prev.sevenDay, prev.contextPct, prev.source, prev.cost, prev.model, prev.lines, prev.durationMs])
+            === JSON.stringify([next.fiveHour, next.sevenDay, next.contextPct, next.source, next.cost, next.model, next.lines, next.durationMs]);
   if (same) return;
   state.ensureDirs();
   safeWrite(cachePath(root), JSON.stringify(next));

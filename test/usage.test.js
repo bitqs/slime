@@ -52,3 +52,18 @@ test('identical data skips rewrite (dirty check)', () => {
   usage.cacheFromStatusline({ rate_limits: { five_hour: { used_percentage: 51, resets_at: 99 } } });
   assert.equal(usage.readCache().fiveHour.used, 51); // changed data rewrites
 });
+
+test('cacheFromStatusline persists cost, model, lines, duration', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-usage-'));
+  usage.cacheFromStatusline({
+    rate_limits: { five_hour: { used_percentage: 10, resets_at: 1 } },
+    cost: { total_cost_usd: 1.23, total_lines_added: 10, total_lines_removed: 2, total_duration_ms: 5000 },
+    model: { display_name: 'Opus' },
+  }, root);
+  const c = usage.readCache(root);
+  assert.equal(c.cost, 1.23);
+  assert.equal(c.model, 'Opus');
+  assert.deepEqual(c.lines, { added: 10, removed: 2 });
+  assert.equal(c.durationMs, 5000);
+  fs.rmSync(root, { recursive: true, force: true });
+});

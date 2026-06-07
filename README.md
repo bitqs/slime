@@ -25,11 +25,16 @@ Questline makes the game visible — a full RPG layer over your real work, with 
 
 ## Quick Start
 
-```bash
-claude plugin install questline
+```
+/plugin marketplace add bitqs/questline
+/plugin install questline@questline
 ```
 
-Then run `/questline:setup` once to enable the HUD. That's it — just work. The game plays itself.
+Then run `/questline:setup` once to enable the HUD, and turn on auto-update so every
+improvement reaches you (`/plugin` → Marketplaces → questline → Enable auto-update —
+third-party marketplaces ship with it off).
+
+That's it — just work. The game plays itself.
 
 ## What You Get
 
@@ -99,6 +104,24 @@ Zero npm dependencies. Everything works offline.
 ```bash
 node --test test/
 ```
+
+## Requirements
+
+- Claude Code (plugin system)
+- Node.js ≥ 18 (already required by Claude Code itself)
+- No npm dependencies, no network calls, no accounts
+
+## Uninstall
+
+```
+/plugin uninstall questline@questline
+```
+
+Hooks are removed automatically. Two optional leftovers:
+
+- Game data: `rm -rf ~/.claude/ccq`
+- Statusline: if `/questline:setup` wired the HUD, remove (or restore) the
+  `statusLine` entry in `~/.claude/settings.json`
 
 ## License
 

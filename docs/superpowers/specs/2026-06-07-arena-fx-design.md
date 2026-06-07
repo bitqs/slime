@@ -73,6 +73,28 @@ same script) appends these events to the session jsonl — same observer
 pattern as existing hooks, never blocks, exits 0 always. All text passes
 through the existing sanitize + escHtml paths before rendering.
 
+## Live RPG Stats Panel
+
+Everything the user cares about that the session actually exposes, wrapped in
+game language and updated live (the `/state` poll already runs every 5s):
+
+| Stat | Source | Game wrapping |
+|---|---|---|
+| 5h window | `usage.fiveHour` (cached) | ⚡HP bar — already in top bar |
+| Weekly window | `usage.sevenDay` (cached) | 🏕️ Stamina bar (small, next to HP) |
+| Context window | `usage.contextPct` (cached) | 🔮 Mana bar — drains as context fills; `potion` event = mana chug animation; low mana glows blue-warning |
+| Session cost | `cost.total_cost_usd` (statusline stdin → **new cache fields**) | 💰 Gold counter — coins fly off and counter ticks when it increases |
+| Model | `model.display_name` (statusline stdin → new cache field) | ⚔️ Equipped weapon: Opus = legendary ⭐, Sonnet = rare 🔷, Haiku = swift 🗡️ — small icon + name under the knight |
+| Lines +/− | `cost.total_lines_added/removed` (new cache fields) | 🗡️ ATK panel: `+842 / −105` styled as damage dealt / cleaved |
+| Session duration | `cost.total_duration_ms` (new cache field) | ⏳ Battle timer in corner |
+
+Implementation: extend `usage.cacheFromStatusline()` to persist
+`cost`, `model`, `lines`, `durationMs` alongside the existing fields —
+append-only, backward compatible (old cache files still parse; missing fields
+render as "—"). `serve.js` `/state` already serializes the whole cache, so no
+route change. Stat changes animate (gold tick, mana drain pulse); panel is
+compact — full detail on hover, minimal chrome by default.
+
 ## Flash Safety
 
 - Respect `prefers-reduced-motion`; manual `?calm=1` URL param.

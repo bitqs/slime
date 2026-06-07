@@ -6,6 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-'));
+process.env.CCQ_ROOT = ROOT;
 const ENV = { ...process.env, CCQ_ROOT: ROOT };
 const S = (f) => path.join(__dirname, '..', 'scripts', f);
 
@@ -175,6 +176,28 @@ test('TodoWrite: >3 fresh kills collapse into one multi-kill event', () => {
   const kills = evs.filter((e) => e.kind === 'minion_down');
   assert.equal(kills.length, 1);
   assert.equal(kills[0].count, 5);
+});
+
+test('stop hook auto-defeats a broken boss: milestone + boss_down + file gone', () => {
+  run('hook-posttool.js', {
+    session_id: 's9', cwd: '/tmp/auto', tool_name: 'TodoWrite',
+    tool_input: { todos: [{ content: 'a', activeForm: 'a', status: 'completed' }] }, tool_response: {},
+  });
+  run('hook-stop.js', { session_id: 's9', cwd: '/tmp/auto' });
+  const bossLib = require('../scripts/lib/boss');
+  assert.equal(fs.existsSync(bossLib.bossPath('/tmp/auto')), false);
+  const evs = fs.readFileSync(path.join(ROOT, 'sessions', 's9.jsonl'), 'utf8')
+    .trim().split('\n').map((l) => JSON.parse(l));
+  assert.equal(evs.filter((e) => e.kind === 'boss_down').length, 1);
+  const prof = JSON.parse(fs.readFileSync(path.join(ROOT, 'profile.json'), 'utf8'));
+  assert.ok(prof.milestones.some((m) => m.project === '/tmp/auto'));
+});
+
+test('stop hook leaves an unbroken boss alone', () => {
+  run('hook-prompt.js', { session_id: 's10', prompt: 'fix thing', cwd: '/tmp/alive' });
+  run('hook-stop.js', { session_id: 's10', cwd: '/tmp/alive' });
+  const bossLib = require('../scripts/lib/boss');
+  assert.equal(fs.existsSync(bossLib.bossPath('/tmp/alive')), true);
 });
 
 test('TodoWrite: hp→0 sets broken and emits boss_broken exactly once; recovery clears it', () => {

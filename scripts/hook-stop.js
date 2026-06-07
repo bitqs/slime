@@ -25,7 +25,19 @@ try {
     const { sanitize } = require('./lib/hud');
     const card = report.render(agg, b && { name: sanitize(b.name), hp: b.hp }, snap, { usage: u, sageLine: sageLine ?? undefined, lang });
 
-    if (b && p.cwd) { b.turns = snap.turn || 0; boss.save(p.cwd, b); }
+    if (b && p.cwd) {
+      b.turns = snap.turn || 0;
+      if (b.broken) {
+        // all todos done and still broken at stop → confirmed kill, no typing needed
+        const total = boss.recordDefeat(p.cwd, b);
+        state.appendEvent(id, { t: Date.now(), kind: 'boss_down', boss: b.name,
+          text: locale.fmt(locale.t('boss.autoDown', lang), { name: b.name, count: total }) });
+        delete snap.boss;
+        delete snap.todos;
+      } else {
+        boss.save(p.cwd, b);
+      }
+    }
 
     state.appendEvent(id, { t: Date.now(), kind: 'turn_end', text: card });
     state.ensureDirs();

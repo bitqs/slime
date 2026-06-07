@@ -43,7 +43,7 @@ test('namer renames boss file using injected command', () => {
   const b = boss.loadOrCreate('/tmp/namerapp', 'add feature x');
   boss.save('/tmp/namerapp', b);
   execFileSync('node', [S('namer.js'), '/tmp/namerapp', 'add feature x'], {
-    env: { ...ENV, QL_NAMER_CMD: `node -e "console.log('The Crimson Hydra of Namerapp')"` },
+    env: { ...ENV, QL_NAMER_CMD: JSON.stringify(['node', '-e', "console.log('The Crimson Hydra of Namerapp')"]) },
   });
   assert.equal(boss.loadOrCreate('/tmp/namerapp', '').name, 'The Crimson Hydra of Namerapp');
 });

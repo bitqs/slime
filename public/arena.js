@@ -637,24 +637,29 @@
   connectEvents();
 
   let pendingEst = null;
+  let engagedBoss = null;
   QLArena.on((d) => {
     if (d.kind === 'plan_scroll' && d.est != null) pendingEst = d.est;
     if (d.kind === 'encounter') {
-      hideOverlay();
-      const est = d.est != null ? d.est : pendingEst;
-      const tier = bossTierFor(est);
-      boss.scale.set(tier.scale);
-      boss.x = 220 - (tier.scale - 1) * 8;
-      document.getElementById('boss-name').style.color = tier.color;
-      if (d.bossName) {
-        const label = tier.label && tier.label !== 'normal' ? ` · ${tier.label}` : '';
-        const estStr = est != null ? ` · ${fmtTokensJs(est)} tokens` : '';
-        setText('boss-name', `${d.bossName}${estStr}${label}`);
+      const isNew = d.bossName && d.bossName !== engagedBoss;
+      if (isNew) {
+        engagedBoss = d.bossName;
+        hideOverlay();
+        const est = d.est != null ? d.est : pendingEst;
+        const tier = bossTierFor(est);
+        boss.scale.set(tier.scale);
+        boss.x = 220 - (tier.scale - 1) * 8;
+        document.getElementById('boss-name').style.color = tier.color;
+        if (d.bossName) {
+          const label = tier.label && tier.label !== 'normal' ? ` · ${tier.label}` : '';
+          const estStr = est != null ? ` · ${fmtTokensJs(est)} tokens` : '';
+          setText('boss-name', `${d.bossName}${estStr}${label}`);
+        }
+        playScene(SCENE_BOSS_INTRO(d.bossName || 'A NEW FOE'));
       }
-      playScene(SCENE_BOSS_INTRO(d.bossName || 'A NEW FOE'));
       if (d.text) pushLog(d.text);
     }
-    if (d.kind === 'boss_down') { playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
+    if (d.kind === 'boss_down') { engagedBoss = null; playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
     if (d.kind === 'potion') { playScene(SCENE_POTION); if (d.text) pushLog(d.text); }
   });
 

@@ -47,7 +47,7 @@ test('battle frame shows player HP from usage cache', () => {
     {}, TIPS, now,
     { fiveHour: { used: 32, resetsAt: 0 } }
   );
-  assert.match(line, /⚡HP 68%/);
+  assert.match(line, /⚡Token 68%/);
 });
 
 test('zero HP renders rest banner with reset time', () => {
@@ -57,5 +57,5 @@ test('zero HP renders rest banner with reset time', () => {
     {}, TIPS, now,
     { fiveHour: { used: 100, resetsAt: 1780810000 } }
   );
-  assert.match(line, /🛌 Rest, commander/);
+  assert.match(line, /Token restores at/);
 });

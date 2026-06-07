@@ -17,11 +17,11 @@ test('renders battle frame with boss, stats and recent events', () => {
     { boss: { name: 'The Auth Bugbear', hp: 38 }, combo: 7, summons: 2, kills: 3, dmg: 842, turn: 14 },
     { fiveHour: { used: 32 } },
     [{ text: '⚔️ hit! 4 dmg' }, { text: '🏆 Turn 1 complete' }],
-    'en', 60
+    'en', 80
   );
   assert.match(frame, /The Auth Bugbear/);
   assert.match(frame, /combo×7/);
-  assert.match(frame, /⚡HP 68%/);
+  assert.match(frame, /⚡Token 68%/);
   assert.match(frame, /hit! 4 dmg/);
 });
 

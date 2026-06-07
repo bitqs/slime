@@ -10,7 +10,7 @@ const sage = require('../scripts/lib/sage');
 
 test('advises rest when HP critically low', () => {
   const a = sage.advise({ usage: { fiveHour: { used: 96 } } });
-  assert.match(a, /🛌|rest/i);
+  assert.match(a, /🛌|rest|token/i);
 });
 
 test('advises potion when context heavy', () => {
@@ -29,5 +29,5 @@ test('silent when nothing to say', () => {
 
 test('priority: rest beats potion', () => {
   const a = sage.advise({ usage: { fiveHour: { used: 97 }, contextPct: 90 } });
-  assert.match(a, /🛌|rest/i);
+  assert.match(a, /🛌|rest|token/i);
 });

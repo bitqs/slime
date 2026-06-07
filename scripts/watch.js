@@ -68,7 +68,7 @@ function renderFrame(snap, usageCache, events, lang, cols) {
   const leftSide = `⚔️ QUESTLINE ── ${bossName} ${bossBar} ${bossHpPct} HP`;
 
   const rightParts = [];
-  if (hpVal != null) rightParts.push(`⚡HP ${hpVal}%`);
+  if (hpVal != null) rightParts.push(`⚡Token ${hpVal}%`);
   if (usageCache && usageCache.sevenDay && usageCache.sevenDay.used != null) {
     const weeklyHp = Math.max(0, Math.round(100 - usageCache.sevenDay.used));
     rightParts.push(`周 ${weeklyHp}%`);

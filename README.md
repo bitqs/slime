@@ -41,8 +41,8 @@ That's it — just work. The game plays itself.
 | | |
 |---|---|
 | ⚡ **Live battle feed** | Every tool call announced JRPG-style: `🔮 Scries with [WebSearch]…` — real tool names, real-time audit |
-| ⚡ **HP = your real usage** | Your five-hour window is your health bar — at zero, the Sage tells you exactly when you're restored |
-| 🧙 **The Sage** | One line of real advice per turn: rest at low HP, potion (/compact) when context runs heavy, pacing warnings |
+| ⚡ **Token = your real usage** | Your five-hour window is your Token reserve — at zero, the Sage tells you exactly when you're restored |
+| 🧙 **The Sage** | One line of real advice per turn: rest at low Token, potion (/compact) when context runs heavy, pacing warnings |
 | 🗡️ **Bosses = your goals** | Your prompt names the monster; your todo list is its HP bar |
 | 💀 **You confirm the kill** | AI saying "done" isn't done — `/questline:defeat` is your acceptance gate |
 | 🏆 **Turn reports** | Rank S/A/B/C when Claude stops: damage (lines changed), kills (tests passed), max combo |
@@ -77,7 +77,7 @@ Force one with `"lang": "zh"` in `~/.claude/ccq/config.json`.
 tmux split-window -bv -l 6 "node \"$(pwd)/scripts/watch.js\""
 ```
 
-A read-only live monitor: boss bar, your HP, combo, and the last three strikes — refreshed every second.
+A read-only live monitor: boss bar, your Token, combo, and the last three strikes — refreshed every second.
 
 ### Pixel Arena (browser)
 

@@ -58,7 +58,7 @@ test('render shows stamina line and sage line via extras', () => {
     { turn: 2 },
     { usage: { fiveHour: { used: 30 }, sevenDay: { used: 20 } }, sageLine: '💡 Sage: test line' }
   );
-  assert.match(txt, /⚡ HP/);
+  assert.match(txt, /⚡ Token/);
   assert.match(txt, /70%/);
   assert.match(txt, /Weekly/);
   assert.match(txt, /💡 Sage: test line/);

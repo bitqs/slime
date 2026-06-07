@@ -35,7 +35,7 @@ function render(snap, stdinJson, tips, now, usageCache, lang) {
   if (!snap.inTurn) return sanitize(snap.lastText, 120) || T('hud.yourTurn');
 
   const parts = [];
-  if (hpVal != null) parts.push(`⚡HP ${hpVal}%`);
+  if (hpVal != null) parts.push(`⚡Token ${hpVal}%`);
   if (snap.boss) parts.push(`🗡️ ${sanitize(snap.boss.name)} ${bar(snap.boss.hp)} ${snap.boss.hp}%`);
   if (snap.combo > 1) parts.push(`🔥combo×${snap.combo}`);
   if (snap.summons > 0) parts.push(`🐺×${snap.summons}`);

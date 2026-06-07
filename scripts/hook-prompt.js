@@ -15,8 +15,7 @@ try {
     boss.save(p.cwd || '', b);
     try {
       const cfgPath = require('node:path').join(state.ROOT, 'config.json');
-      let cfg = {};
-      try { cfg = JSON.parse(require('node:fs').readFileSync(cfgPath, 'utf8')); } catch {}
+      const cfg = require('./lib/safe-io').readJson(cfgPath, {}) || {};
       if (cfg.haikuNaming && b.hp === 100 && !b.named) {
         b.named = true; boss.save(p.cwd || '', b);
         const { spawn } = require('node:child_process');

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-const fs = require('node:fs');
 const state = require('./lib/state');
 const report = require('./lib/report');
 const boss = require('./lib/boss');
@@ -23,7 +22,7 @@ try {
 
     state.appendEvent(id, { t: Date.now(), kind: 'turn_end', text: card });
     state.ensureDirs();
-    fs.appendFileSync(state.reportPath(id), card + '\n\n');
+    require('./lib/safe-io').safeAppend(state.reportPath(id), card + '\n\n');
 
     snap.inTurn = false;
     snap.combo = 0;

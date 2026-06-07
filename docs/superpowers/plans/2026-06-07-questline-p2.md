@@ -485,6 +485,24 @@ Modify `scripts/hook-prompt.js` — after `boss.save(...)`, spawn namer only whe
 
 ---
 
+### Task 7: locale — game language follows the user's language
+
+**Files:** Create `scripts/lib/locale.js`, `data/locales/en.json`, `data/locales/zh.json`, `test/locale.test.js`; modify `scripts/hook-prompt.js` (tally), `scripts/lib/hud.js`, `scripts/lib/report.js`, `scripts/lib/sage.js`, `scripts/statusline.js` (tips selection), `scripts/namer.js` (language-aware prompt)
+
+Mechanism:
+- `locale.classify(prompt)` → 'zh' if CJK chars > 30% of letters, else 'en'
+- hook-prompt tallies `profile.langStats[lang]++` per prompt; `locale.current()` = majority (default 'en'); user override via `~/.claude/ccq/config.json` `{ "lang": "zh" }`
+- `locale.t(key, lang)` looks up `data/locales/<lang>.json`, falls back to en
+- String catalogs: report labels, rest banner, sage lines, defeat/milestone banners, tips array, verb pools (zh verbs: 斩击/挥砍/雕琢 for edit, 追踪/狩猎/嗅探 for grep, etc.)
+- mapper/hud/report/sage accept lang param threaded from callers (hooks/statusline read locale.current() themselves)
+- namer.js asks Haiku for a boss name in the detected language
+
+- [ ] Test: classify zh/en, tally majority, t() fallback
+- [ ] Implement locale.js + catalogs
+- [ ] Thread lang through renderers, keep all existing en tests passing (en remains default)
+- [ ] zh smoke: tally 3 zh prompts → report renders zh labels
+- [ ] Commit `feat: locale — game language follows user language (en/zh)`
+
 ## Deferred to P3+
 
 - Plan-mode boss forging (no hook events for Enter/ExitPlanMode — needs transcript-watch or new harness support)

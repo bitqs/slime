@@ -59,3 +59,23 @@ test('zero HP renders rest banner with reset time', () => {
   );
   assert.match(line, /Token restores at/);
 });
+
+test('broken boss renders the finish hint instead of the hp bar', () => {
+  const line = hud.render({ sessionId: 'x', turn: 1, combo: 0, kills: 0, dmg: 0, summons: 0,
+    inTurn: true, updated: Date.now(), boss: { name: 'The Rabid Web Bugbear', hp: 0, broken: true } },
+    null, [], Date.now(), null, 'en');
+  assert.match(line, /☠/);
+  assert.match(line, /\/defeat/);
+});
+
+test('todo counter and next-step hint render from snap.todos', () => {
+  const line = hud.render({ sessionId: 'x', turn: 1, combo: 0, kills: 0, dmg: 0, summons: 0,
+    inTurn: true, updated: Date.now(), boss: { name: 'B', hp: 50 },
+    todos: [
+      { content: 'a', status: 'completed', label: 'W mob 1', form: 0 },
+      { content: 'b', status: 'in_progress', label: 'W mob 2', activeForm: 'fixing b', form: 1 },
+    ] },
+    null, [], Date.now(), null, 'en');
+  assert.match(line, /⚔1\/2/);
+  assert.match(line, /fixing b/);
+});

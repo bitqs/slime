@@ -51,7 +51,16 @@ function render(snap, stdinJson, tips, now, usageCache, lang) {
 
   const parts = [];
   if (hpVal != null) parts.push(`⚡Token ${hpVal}%`);
-  if (snap.boss) parts.push(`🗡️ ${sanitize(snap.boss.name)} ${bar(snap.boss.hp)} ${snap.boss.hp}%`);
+  const todos = Array.isArray(snap.todos) ? snap.todos : [];
+  const doneCnt = todos.filter((t) => t.status === 'completed').length;
+  const cnt = todos.length ? ` ⚔${doneCnt}/${todos.length}` : '';
+  if (snap.boss && snap.boss.broken) {
+    parts.push(T('hud.broken', { name: sanitize(snap.boss.name) }) + cnt);
+  } else if (snap.boss) {
+    parts.push(`🗡️ ${sanitize(snap.boss.name)} ${bar(snap.boss.hp)} ${snap.boss.hp}%${cnt}`);
+  }
+  const next = todos.find((t) => t.status === 'in_progress') || todos.find((t) => t.status === 'pending');
+  if (next) parts.push(T('hud.next', { step: sanitize(next.activeForm || next.content, 40) }));
   if (snap.combo > 1) parts.push(`🔥combo×${snap.combo}`);
   if (snap.summons > 0) parts.push(`🐺×${snap.summons}`);
   parts.push(`💀${snap.kills || 0} ⚔️${snap.dmg || 0}`);

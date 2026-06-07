@@ -105,13 +105,16 @@ test('readEvents skips corrupt JSONL lines instead of throwing', () => {
   const d = tmpdir();
   process.env.CCQ_ROOT = d;
   delete require.cache[require.resolve('../scripts/lib/state')];
-  const state = require('../scripts/lib/state');
-  fs.mkdirSync(path.join(d, 'sessions'), { recursive: true });
-  fs.writeFileSync(path.join(d, 'sessions', 's1.jsonl'),
-    '{"t":1,"kind":"cast"}\n{CORRUPT\n{"t":2,"kind":"resolve"}\n');
-  const evs = state.readEvents('s1');
-  assert.strictEqual(evs.length, 2);
-  assert.strictEqual(evs[1].t, 2);
-  delete process.env.CCQ_ROOT;
-  delete require.cache[require.resolve('../scripts/lib/state')];
+  try {
+    const state = require('../scripts/lib/state');
+    fs.mkdirSync(path.join(d, 'sessions'), { recursive: true });
+    fs.writeFileSync(path.join(d, 'sessions', 's1.jsonl'),
+      '{"t":1,"kind":"cast"}\n{CORRUPT\n{"t":2,"kind":"resolve"}\n');
+    const evs = state.readEvents('s1');
+    assert.strictEqual(evs.length, 2);
+    assert.strictEqual(evs[1].t, 2);
+  } finally {
+    delete process.env.CCQ_ROOT;
+    delete require.cache[require.resolve('../scripts/lib/state')];
+  }
 });

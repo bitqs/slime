@@ -1003,6 +1003,105 @@ In the FIRST `QLArena.on` block:
 - [ ] **Step 4: Eyeball** — demo feed emits `choice_open`/`choice_made`/`plan_scroll`/`plan_approved` beats (`scripts/demo-feed.js`): rerun Task 11 eyeball commands and confirm — Q&A dims stage + baby slime appears small, each answer/plan beat lobs morsels and the slime tweens bigger with the live counter, approval forges then snaps to battle, turn_end shows the letterboxed settle card for ~2s; `?calm=1` does instant scale sets.
 - [ ] **Step 5: Commit** `git commit -am "feat: arena scenes (feeding/battle/settle) — plan+Q&A feed a baby slime up to boss size"`
 
+### Task 12b: arena.js — encounter forms (mini / big / pack / tentacled)
+
+**Files:**
+- Modify: `public/arena.js`
+
+The creature's stage form derives from (est tier, todo count) — spec §5 table.
+Presentation-only; re-evaluated on encounter, on poll (`applyState`), and on
+`minion_down`.
+
+- [ ] **Step 1: form state + sprites** — near the boss sprite setup add:
+
+```js
+  // ── encounter forms ──────────────────────────────────────────────────────────
+  let encForm = 'big';          // 'mini' | 'big' | 'pack' | 'tentacled'
+  let lastEncEst = null;        // est used for form decisions (locked at encounter/approval)
+  const packSprites = [];       // PIXI sprites, one per todo (cap 5)
+  const PACK_X = [180, 205, 230, 255, 280];
+  const tentacleGfx = new PIXI.Graphics();
+  world.addChild(tentacleGfx);
+
+  function encounterFormFor(est, todoCount) {
+    const tier = bossTierFor(est);
+    const big = tier.label === 'ELITE' || tier.label === 'RAID BOSS';
+    if (!big) return todoCount >= 2 ? 'pack' : 'mini';
+    return todoCount >= 3 ? 'tentacled' : 'big';
+  }
+
+  function drawTentacles(aliveCount) {
+    tentacleGfx.clear();
+    if (encForm !== 'tentacled' || bossDead) return;
+    const n = Math.min(6, aliveCount);
+    for (let i = 0; i < n; i++) {
+      // pixel arms fanning from the boss base
+      const bx = boss.x + 2 + i * (boss.width - 4) / Math.max(1, n - 1);
+      const sway = CALM ? 0 : Math.sin(frame / 14 + i) * 2;
+      tentacleGfx.rect(bx + sway, FLOOR_Y - 4, 2, 4).fill(colorNum(bossColors(50)[1]));
+      tentacleGfx.rect(bx + sway * 1.5, FLOOR_Y - 8, 2, 4).fill(colorNum(bossColors(50)[1]));
+    }
+  }
+
+  function applyForm(todos, est) {
+    const list = Array.isArray(todos) ? todos : [];
+    if (est != null) lastEncEst = est;
+    const next = encounterFormFor(lastEncEst, list.length);
+    encForm = next;
+    const alive = list.filter((t) => t.status !== 'completed');
+    if (next === 'pack') {
+      boss.visible = false;
+      // one mini slime per todo (cap 5); completed ones stay hidden
+      while (packSprites.length < Math.min(5, list.length)) {
+        const s = new PIXI.Sprite(bossTexFor(100).tex);
+        s.scale.set(0.35);
+        s.x = PACK_X[packSprites.length]; s.y = FLOOR_Y - 6;
+        world.addChild(s);
+        packSprites.push(s);
+      }
+      packSprites.forEach((s, i) => { s.visible = i < list.length && list[i].status !== 'completed'; });
+    } else {
+      packSprites.forEach((s) => { s.visible = false; });
+      if (!bossDead) boss.visible = true;
+      if (next === 'mini') { boss.scale.set(0.5); boss.x = 228; }
+      // 'big'/'tentacled' keep tier scale (encounter/feeding set it)
+    }
+    drawTentacles(alive.length);
+  }
+```
+
+In the ticker (after the torch flicker line) keep tentacles swaying:
+
+```js
+    if (encForm === 'tentacled' && frame % 4 === 0) {
+      // redraw with current alive count from the last rail render
+      const railCards = document.querySelectorAll('#minion-rail .minion:not(.completed)');
+      drawTentacles(railCards.length);
+    }
+```
+
+- [ ] **Step 2: wire the re-evaluation points** —
+  - `applyState`, inside `if (snap)` after `QLMinions.render(snap.todos)`: add `applyForm(snap.todos, null);`
+  - `encounter` isNew branch, after the existing `boss.scale.set(tier.scale)` lines: add `applyForm(window.__lastTodos || [], est);` — and to keep a todo cache, in `applyState` set `window.__lastTodos = snap.todos || [];`
+  - `minion_down` handler: pack form → burst the matching slime instead of the boss anchor. Replace the existing `burst(238, 125, …)` line with:
+
+```js
+      if (encForm === 'pack') {
+        const idx = packSprites.findIndex((s) => s.visible);
+        if (idx >= 0) { burst(packSprites[idx].x + 3, packSprites[idx].y + 3, P.bone, 10); packSprites[idx].visible = false; }
+      } else if (encForm === 'tentacled') {
+        burst(boss.x + boss.width / 2, FLOOR_Y - 6, P.bone, 10); // severed tentacle falls
+      } else {
+        burst(238, 125, P.bone, d.count ? 18 : 8);
+      }
+```
+
+  - `boss_down`: add `packSprites.forEach((s) => { s.visible = false; }); tentacleGfx.clear();`
+  - broken pose (`setBroken`): pack form grays the pack — add `packSprites.forEach((s) => { s.tint = on ? 0x777777 : 0xffffff; });`
+
+- [ ] **Step 3: Eyeball** — demo feed: confirm form picks per the spec table (tweak demo est/todos to hit all four: mini, big, pack, tentacled), tentacles sway and shrink as todos complete, pack slimes burst one by one; `?calm=1` = no sway.
+- [ ] **Step 4: Commit** `git commit -am "feat: encounter forms — mini/big slime, slime pack, tentacled raid boss from est+todos"`
+
 ### Task 13: Game guide overlay + README legend
 
 **Files:**

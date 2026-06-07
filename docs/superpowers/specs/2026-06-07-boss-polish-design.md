@@ -121,6 +121,21 @@ Todos already drive boss hp; now they also appear on screen as killable mobs.
 - **Next-step hint**: HUD and arena show the in_progress todo's `activeForm`
   (else the first pending): `▶ 下一步:{...}` / `▶ next: {...}`. No todos and
   no boss → existing `hud.idle`.
+- **Encounter forms (生成方式)** — the creature's on-stage shape derives
+  from the quest's shape. Presentation-only, computed in the arena from
+  (est tier, todo count), re-evaluated when todos arrive or change:
+
+  | est tier | todos | form |
+  |---|---|---|
+  | normal | ≤1 | single mini slime (scale 0.5) |
+  | ELITE/RAID | ≤2 | single big slime (tier scale) |
+  | normal | ≥2 | slime pack — one mini slime per todo on the floor (cap 5), no big boss sprite; boss hp = pack progress |
+  | ELITE/RAID | ≥3 | big slime with tentacles — one pixel tentacle per todo (cap 6); a completed todo severs one (rail drain + tentacle falls) |
+
+  A TodoWrite after the encounter may upgrade the form (single big →
+  tentacled). Kill feedback adapts per form: pack kill = that slime bursts;
+  tentacle sever = falls + bone burst. Broken state grays/kneels whatever
+  form is on stage.
 - All new arena effects respect `?calm=1` / `prefers-reduced-motion`
   (drain becomes instant, no pulse/shake) and the ≤3 flashes/sec governor.
   All locale keys land in both `en.json` and `zh.json`.

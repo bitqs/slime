@@ -50,5 +50,5 @@ test('identical data skips rewrite (dirty check)', () => {
   usage.cacheFromStatusline(payload);   // same data again
   assert.equal(usage.readCache().t, t1); // not rewritten
   usage.cacheFromStatusline({ rate_limits: { five_hour: { used_percentage: 51, resets_at: 99 } } });
-  assert.notEqual(usage.readCache().t, t1); // changed data rewrites
+  assert.equal(usage.readCache().fiveHour.used, 51); // changed data rewrites
 });

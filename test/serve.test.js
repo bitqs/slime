@@ -21,6 +21,16 @@ test('serves whitelisted static assets with JS mime', async () => {
   await new Promise(r => srv.close(r));
 });
 
+test('serves /minions.js with JS mime', async () => {
+  const srv = createServer();
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  const port = srv.address().port;
+  const res = await fetch(`http://127.0.0.1:${port}/minions.js`);
+  assert.equal(res.status, 200, '/minions.js');
+  assert.match(res.headers.get('content-type'), /javascript/, '/minions.js');
+  await new Promise(r => srv.close(r));
+});
+
 test('404s anything not whitelisted', async () => {
   const srv = createServer();
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));

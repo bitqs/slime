@@ -35,6 +35,17 @@ canvas{display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-
 #plan-overlay pre{background:#e8e0d0;color:#1a1d24;font-size:9px;max-height:70%;overflow:hidden;padding:10px;white-space:pre-wrap;width:80%}
 .chroma{filter:drop-shadow(1px 0 rgba(255,0,0,.5)) drop-shadow(-1px 0 rgba(0,255,255,.5))}
 .gray{filter:grayscale(1)}
+#minion-rail{width:100%;max-width:640px;display:flex;gap:6px;padding:4px 10px;background:#232733;border-top:1px solid #333a4a;min-height:0;overflow-x:auto}
+.minion{display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;min-width:52px;padding:2px}
+.minion canvas{width:24px;height:24px;image-rendering:pixelated}
+.minion.pending{opacity:.45}
+.minion.in_progress{outline:1px solid #f0b541}
+.minion.completed{opacity:.6}
+.minion-hp{width:40px;height:3px;background:#1a1d24;border:1px solid #444}
+.minion-hp-fill{height:100%;background:#6abe30;transition:width .4s}
+body.calm .minion-hp-fill{transition:none}
+.minion-name{font-size:8px;color:#7fa8c0;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.minion-grave{position:absolute;top:0;font-size:12px}
 </style>
 </head>
 <body>
@@ -52,6 +63,7 @@ canvas{display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-
     <div id="plan-overlay"></div>
   </div>
 </div>
+<div id="minion-rail"></div>
 <div id="stats">
   <span>🔮 <span id="mana-bar"><span id="mana-fill" style="width:100%"></span></span></span>
   <span>💰 <b id="gold">—</b></span>
@@ -63,6 +75,7 @@ canvas{display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-
 <div id="log"></div>
 <script src="/vendor/pixi.min.js"></script>
 <script src="/sequencer.js"></script>
+<script src="/minions.js"></script>
 <script src="/arena.js"></script>
 </body>
 </html>

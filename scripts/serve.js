@@ -131,7 +131,7 @@ function handle404(res) {
 
 // Exact-match whitelist: no fs paths are derived from user input, so
 // traversal is structurally impossible.
-const STATIC_WHITELIST = new Set(['/arena.js', '/sequencer.js', '/vendor/pixi.min.js']);
+const STATIC_WHITELIST = new Set(['/arena.js', '/sequencer.js', '/minions.js', '/vendor/pixi.min.js']);
 
 /**
  * @param {string} url

@@ -40,9 +40,18 @@ test('prompt hook opens encounter and creates boss', () => {
   assert.equal(snap.boss.name, 'The Myapp Bugbear');
 });
 
+test('stop hook emits systemMessage card and resets inTurn', () => {
+  const out = run('hook-stop.js', { session_id: 'h1', cwd: '/tmp/myapp' });
+  const msg = JSON.parse(out);
+  assert.match(msg.systemMessage, /TURN #/);
+  const snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'h1.json'), 'utf8'));
+  assert.equal(snap.inTurn, false);
+});
+
 test('hooks never crash on garbage stdin (observer principle)', () => {
   for (const s of ['hook-pretool.js', 'hook-posttool.js', 'hook-prompt.js',
-                   'hook-sessionstart.js', 'hook-subagentstop.js', 'hook-precompact.js']) {
+                   'hook-sessionstart.js', 'hook-subagentstop.js', 'hook-precompact.js',
+                   'hook-stop.js']) {
     const out = execFileSync('node', [S(s)], { input: 'not json{{', env: ENV });
     assert.ok(out !== null); // exited 0, no throw
   }

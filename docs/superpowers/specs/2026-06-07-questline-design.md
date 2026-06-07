@@ -160,7 +160,7 @@ hooks (collect) → events.jsonl (state) → statusline (HUD) + stop-report (tur
 | Component | Responsibility | Implementation |
 |---|---|---|
 | Event collectors | Translate real events → game events; append to `~/.claude/ccq/sessions/<id>.jsonl` | Hooks: UserPromptSubmit (encounter open), Pre/PostToolUse (combat), Stop (report), SessionStart (load profile) |
-| Boss engine | Naming + HP model | Naming: one Haiku call per encounter (prompt → boss name); fallback template "The {dir} {task-type}" when offline. HP: weighted todos + test bonus |
+| Boss engine | Naming + HP model | Naming: zero-cost template "The {dir} {task-type}" by default; opt-in Haiku call per encounter for flavorful names (cost-labeled). HP: weighted todos + test bonus |
 | Stamina reader | usage → stamina bars | **Risk:** no stable official usage API. Plan A: estimate from transcript tokens (ccusage approach). Plan B: swap to official endpoint when available. Adapter-isolated so the game layer never changes |
 | HUD renderer | One statusline line | Reads latest events + statusline stdin JSON; pure local, no LLM |
 | Turn report | Report at Stop | Hook `systemMessage` shows summary; full card written to file; `/battlelog` to view |
@@ -174,10 +174,15 @@ hooks (collect) → events.jsonl (state) → statusline (HUD) + stop-report (tur
 - `~/.claude/ccq/sessions/<id>.jsonl` — per-turn event stream (web layer's data source)
 - Boss state keyed by project directory — fights persist across sessions
 
-### Iron Rules (error handling)
+### Iron Rules — the Observer Principle
 
-- Hooks **never block the workflow**: timeout ≤ 2s, fail silent, never non-zero exit. A broken game shell must never hurt the host.
-- No network / no Haiku → full degradation path (template naming); every feature works offline.
+**Questline never affects real usage in any way. It only adds visuals, data, and feedback.** Concretely:
+
+- Hooks **never block**: timeout ≤ 2s, fail silent, never non-zero exit, never return `decision: block`. A broken game shell must never hurt the host.
+- Hooks **never inject model context**: no `additionalContext`, no prompt mutation — Claude's behavior with Questline installed is byte-identical to without. Game text reaches the user's eyes only (statusline, systemMessage, command output).
+- **No LLM calls by default**: boss naming uses zero-cost templates ("The {dir} {task-type}"). Haiku-powered naming is an opt-in setting, clearly labeled with its cost.
+- **Never auto-runs anything**: Sage suggests `/compact`, `/clear`, gear changes — the user executes or ignores. All game commands (`/defeat`, `/battlelog`, `/milestones`) are read/record-only.
+- No network / no Haiku → full degradation path; every feature works offline.
 
 ### Testing
 

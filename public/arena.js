@@ -4,6 +4,7 @@
 (async function () {
   const CALM = new URLSearchParams(location.search).has('calm')
     || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if (CALM) document.body.classList.add('calm');
 
   const P = { bg:'#1a1d24', bg2:'#232733', gold:'#f0b541', ember:'#e8842c', red:'#c83737',
     bone:'#e8e0d0', steel:'#7fa8c0', dark:'#2e3547', floor:'#2e3547', green:'#6abe30' };
@@ -172,6 +173,21 @@
   bigText.anchor.set(0.5);
   bigText.x = W / 2; bigText.y = H / 2; bigText.visible = false;
   uiLayer.addChild(flashRect, vignette, vignetteEdge, letterTop, letterBot, bigText);
+
+  let bossBroken = false;
+  let lockedTierColor = '#e8e0d0';
+  const finishText = new PIXI.Text({ text: '⚔ FINISH ⚔', style: { fontFamily: 'monospace',
+    fontSize: 10, fontWeight: 'bold', fill: 0xc83737, align: 'center' } });
+  finishText.anchor.set(0.5);
+  finishText.x = 238; finishText.y = 100; finishText.visible = false;
+  uiLayer.addChild(finishText);
+  function setBroken(on) {
+    bossBroken = on;
+    boss.tint = on ? 0x777777 : 0xffffff;
+    finishText.visible = on;
+    const nameEl = document.getElementById('boss-name');
+    if (nameEl) nameEl.style.color = on ? '#777777' : lockedTierColor;
+  }
 
   function colorNum(c) {
     if (typeof c === 'number') return c;
@@ -406,7 +422,7 @@
     // bob every 30 (alternate knight/boss)
     if (frame % 30 === 0) {
       knight.y = FLOOR_Y - 14 - (knight.y < FLOOR_Y - 14 ? 0 : 1);
-      if (!fx.bossFalling) boss.y = FLOOR_Y - 14 - (boss.y < FLOOR_Y - 14 ? 0 : 1);
+      if (!fx.bossFalling) { const baseY = FLOOR_Y - 14 + (bossBroken ? 3 : 0); boss.y = baseY - (boss.y < baseY ? 0 : 1); }
     }
 
     // boss falling
@@ -467,6 +483,8 @@
 
     // edge flame (combo)
     vignetteEdge.alpha = fx.edgeFlame ? 0.25 + Math.sin(frame / 10) * 0.15 : 0;
+
+    if (finishText.visible) finishText.alpha = CALM ? 1 : 0.6 + Math.sin(frame / 8) * 0.4;
 
     // danger pulse (low token)
     if (stats.token != null && stats.token > 0 && stats.token < 30) {
@@ -535,6 +553,7 @@
 
     // boss snapshot
     if (snap) {
+      if (window.QLMinions) QLMinions.render(snap.todos);
       hideOverlay();
       // a new boss showed up in a real session → revive the sprite (handles the
       // case where the victory cutscene hid it and no intro fired to reset bossDead)
@@ -552,7 +571,9 @@
         const { tier, tex } = bossTexFor(pct);
         if (tier !== bossHpTier) { bossHpTier = tier; boss.texture = tex; }
       }
+      if (snap.boss && typeof snap.boss.broken === 'boolean' && snap.boss.broken !== bossBroken) setBroken(snap.boss.broken);
     } else {
+      if (window.QLMinions) QLMinions.render([]);
       showOverlay('waiting for a session…');
       boss.visible = false;
       setText('boss-name', '—');
@@ -661,6 +682,8 @@
 
   let pendingEst = null;
   let engagedBoss = null;
+  let minionStreak = 0;
+  let lastMinionKill = 0;
   QLArena.on((d) => {
     if (d.kind === 'plan_scroll' && d.est != null) pendingEst = d.est;
     if (d.kind === 'encounter') {
@@ -672,7 +695,9 @@
         const tier = bossTierFor(est);
         boss.scale.set(tier.scale);
         boss.x = 220 - (tier.scale - 1) * 8;
+        lockedTierColor = tier.color;
         document.getElementById('boss-name').style.color = tier.color;
+        setBroken(false);
         if (d.bossName) {
           const label = tier.label && tier.label !== 'normal' ? ` · ${tier.label}` : '';
           const estStr = est != null ? ` · ${fmtTokensJs(est)} tokens` : '';
@@ -682,8 +707,21 @@
       }
       if (d.text) pushLog(d.text);
     }
-    if (d.kind === 'boss_down') { engagedBoss = null; playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
+    if (d.kind === 'boss_down') { engagedBoss = null; setBroken(false); playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
     if (d.kind === 'potion') { playScene(SCENE_POTION); if (d.text) pushLog(d.text); }
+    if (d.kind === 'boss_broken') { setBroken(true); PRIM.shake({ amp: 2, frames: 8 }); if (d.text) pushLog(d.text); }
+    if (d.kind === 'minion_down') {
+      if (window.QLMinions) QLMinions.kill(d.minion, CALM);
+      burst(238, 125, P.bone, d.count ? 18 : 8);
+      PRIM.flash({ strength: 0.35 });
+      minionStreak = (d.count || 1) + (Date.now() - lastMinionKill < 8000 ? minionStreak : 0);
+      lastMinionKill = Date.now();
+      if (minionStreak >= 2) {
+        PRIM.bigtext({ text: `COMBO ×${minionStreak}`, y: 50 });
+        setTimeout(() => PRIM.hidetext(), 1400);
+      }
+      if (d.text) pushLog(d.text);
+    }
   });
 
   const choiceEl = document.getElementById('choice-overlay');

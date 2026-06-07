@@ -1,0 +1,44 @@
+const { test, after } = require('node:test');
+const assert = require('node:assert');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+
+process.env.CCQ_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-'));
+after(() => fs.rmSync(process.env.CCQ_ROOT, { recursive: true, force: true }));
+const usage = require('../scripts/lib/usage');
+
+test('cacheFromStatusline stores official rate limits', () => {
+  usage.cacheFromStatusline({
+    rate_limits: {
+      five_hour: { used_percentage: 32, resets_at: 1780810000 },
+      seven_day: { used_percentage: 81, resets_at: 1781000000 },
+    },
+    context_window: { used_percentage: 44 },
+  });
+  const u = usage.readCache();
+  assert.equal(u.fiveHour.used, 32);
+  assert.equal(u.sevenDay.used, 81);
+  assert.equal(u.contextPct, 44);
+  assert.equal(u.source, 'official');
+});
+
+test('cacheFromStatusline tolerates absent rate_limits (non-Pro)', () => {
+  usage.cacheFromStatusline({ context_window: { used_percentage: 10 } });
+  const u = usage.readCache();
+  assert.equal(u.contextPct, 10);
+  // previous official five_hour data must be preserved, not wiped
+  assert.equal(u.fiveHour.used, 32);
+});
+
+test('hp converts used% to remaining HP', () => {
+  assert.equal(usage.hp({ fiveHour: { used: 32 } }), 68);
+  assert.equal(usage.hp({}), null);
+});
+
+test('readCache on empty root returns nulls', () => {
+  const root2 = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq2-'));
+  const u = usage.readCache(root2);
+  assert.equal(u.fiveHour, null);
+  fs.rmSync(root2, { recursive: true, force: true });
+});

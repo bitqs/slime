@@ -55,3 +55,9 @@ Single self-contained file (inline CSS+JS, no CDN, no build). Art direction: dar
 - `commands/wrapped.md` runs it verbatim
 - Tests: seed fixture events across dates, assert totals + card contains key numbers; old events (>7d) excluded
 - Commit: `feat: weekly wrapped card`
+
+## Known i18n gaps (future)
+
+- defeat/milestones/battlelog CLI output still en-only (thread locale.t)
+- zh README (README.zh.md)
+- catalog parity test (en/zh same key sets)

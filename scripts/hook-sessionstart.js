@@ -10,7 +10,7 @@ try {
     try {
       const cache = path.join(os.homedir(), '.claude', 'plugins', 'cache');
       gear = fs.readdirSync(cache).flatMap((mp) => {
-        try { return fs.readdirSync(path.join(cache, mp)); } catch { return []; }
+        try { return fs.readdirSync(path.join(cache, mp)).filter((n) => !n.startsWith('.')); } catch { return []; }
       });
     } catch {}
     state.writeSnapshot(p.session_id, {

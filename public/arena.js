@@ -131,6 +131,26 @@
   knight.x = 40; knight.y = FLOOR_Y - 14;
   world.addChild(knight);
 
+  // ── summons (subagent battles) ────────────────────────────────────────────────
+  const summons = []; // { sprite, born }
+  function spawnSummon() {
+    if (summons.length >= 4) return;
+    const s = new PIXI.Sprite(knightTex);
+    s.scale.set(0.6);
+    s.tint = 0x7fa8c0;
+    s.x = 60 + summons.length * 14; s.y = FLOOR_Y - 9;
+    world.addChild(s);
+    summons.push({ sprite: s, born: frame });
+    if (!CALM) burst(s.x + 4, s.y + 4, P.steel, 6);
+  }
+  function clearSummons() {
+    for (const su of summons) {
+      if (!CALM) burst(su.sprite.x + 4, su.sprite.y + 4, P.steel, 4);
+      world.removeChild(su.sprite); su.sprite.destroy();
+    }
+    summons.length = 0;
+  }
+
   let bossHpTier = null; // 'hi' | 'mid' | 'lo'
   const bossTex = { hi: null, mid: null, lo: null };
   function bossTexFor(pct) {
@@ -493,6 +513,12 @@
     if (fx.knightLunge > 0) fx.knightLunge = Math.max(0, fx.knightLunge - 1);
     knight.x = 40 + fx.knightLunge;
 
+    if (!CALM && summons.length && frame % 45 === 0) {
+      const su = summons[(frame / 45) % summons.length | 0];
+      if (su) su.sprite.x += 8; // lunge
+    }
+    summons.forEach((su, i) => { const home = 60 + i * 14; if (su.sprite.x > home) su.sprite.x -= 1; }); // settle back
+
     // feeding scale tween
     if (bossScaleTarget != null) {
       const s = boss.scale.x + (bossScaleTarget - boss.scale.x) * 0.06;
@@ -714,7 +740,9 @@
     let d; try { d = JSON.parse(ev.data); } catch { return; }
     if (!d || !d.kind) return;
 
-    if (d.kind === 'cast') { fx.knightLunge = 6; pushLog(d.text); }
+    if (d.kind === 'cast') { fx.knightLunge = 6; pushLog(d.text);
+      if (/\b(Agent|Task)\b/.test(d.tool || '') || /召唤|派遣|summon/i.test(d.text || '')) spawnSummon();
+    }
     if (d.kind === 'resolve') {
       if (typeof d.dmg === 'number' && d.dmg > 0) {
         floater(`-${d.dmg}`, 230, 110, P.gold);
@@ -727,6 +755,7 @@
       if (d.text) pushLog(d.text);
     }
     if (d.kind === 'turn_end') {
+      clearSummons();
       const line = (d.text || '').split('\n')[0];
       if (line) {
         setScene('settle');
@@ -817,7 +846,7 @@
       }
       if (d.text) pushLog(d.text);
     }
-    if (d.kind === 'boss_down') { setScene('battle'); engagedBoss = null; setBroken(false); packSprites.forEach((s) => { s.visible = false; }); tentacleGfx.clear(); playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
+    if (d.kind === 'boss_down') { clearSummons(); setScene('battle'); engagedBoss = null; setBroken(false); packSprites.forEach((s) => { s.visible = false; }); tentacleGfx.clear(); playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
     if (d.kind === 'potion') { playScene(SCENE_POTION); if (d.text) pushLog(d.text); }
     if (d.kind === 'boss_broken') { setBroken(true); PRIM.shake({ amp: 2, frames: 8 }); if (d.text) pushLog(d.text); }
     if (d.kind === 'minion_down') {

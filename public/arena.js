@@ -619,7 +619,9 @@
   const choiceEl = document.getElementById('choice-overlay');
   const planEl = document.getElementById('plan-overlay');
   let planTypeTimer = null;
+  let overlayCloseTimer = null;
   function openChoices(questions) {
+    if (overlayCloseTimer !== null) { clearTimeout(overlayCloseTimer); overlayCloseTimer = null; }
     PRIM.dim({ on: true }); PRIM.letterbox({ on: true });
     choiceEl.innerHTML = '';
     const q = questions[0] || { q: '', opts: [] };
@@ -645,9 +647,11 @@
       else card.classList.add('burn');
     }
     fx.knightLunge = 6; PRIM.flash({ strength: 0.4 });
-    setTimeout(closeOverlays, 1200);
+    if (overlayCloseTimer !== null) { clearTimeout(overlayCloseTimer); overlayCloseTimer = null; }
+    overlayCloseTimer = setTimeout(closeOverlays, 1200);
   }
   function openPlan(plan) {
+    if (overlayCloseTimer !== null) { clearTimeout(overlayCloseTimer); overlayCloseTimer = null; }
     PRIM.dim({ on: true });
     planEl.innerHTML = '';
     const pre = document.createElement('pre');
@@ -661,9 +665,11 @@
     seal.style.cssText = 'color:#c83737;font-weight:bold;font-size:13px;transform:rotate(-12deg);margin-top:-20px';
     planEl.appendChild(seal);
     PRIM.flash({ strength: 0.3 });
-    setTimeout(closeOverlays, 1500);
+    if (overlayCloseTimer !== null) { clearTimeout(overlayCloseTimer); overlayCloseTimer = null; }
+    overlayCloseTimer = setTimeout(closeOverlays, 1500);
   }
   function closeOverlays() {
+    if (overlayCloseTimer !== null) { clearTimeout(overlayCloseTimer); overlayCloseTimer = null; }
     if (planTypeTimer !== null) { clearInterval(planTypeTimer); planTypeTimer = null; }
     choiceEl.style.display = 'none'; planEl.style.display = 'none';
     PRIM.dim({ on: false }); PRIM.letterbox({ on: false });

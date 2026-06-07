@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 const state = require('./lib/state');
 const mapper = require('./lib/mapper');
+const locale = require('./lib/locale');
 const boss = require('./lib/boss');
 try {
   const p = state.readStdin();
   if (p && p.session_id) {
     const id = p.session_id;
     const snap = state.readSnapshot(id) || { sessionId: id, turn: 0, combo: 0, kills: 0, dmg: 0, summons: 0 };
-    const ev = mapper.resolve(p, snap);
+    const ev = mapper.resolve(p, snap, locale.current());
     state.appendEvent(id, ev);
     snap.combo = ev.combo ?? snap.combo;
     if (ev.dmg) snap.dmg = (snap.dmg || 0) + ev.dmg;

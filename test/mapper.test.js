@@ -81,3 +81,26 @@ test('resolve non-edit non-bash tool is quiet success', () => {
   assert.equal(ev.dmg, undefined);
   assert.equal(ev.combo, 4); // reads don't grow or break combo
 });
+
+test('zh cast uses zh verb pool, keeps real tool name', () => {
+  const ev = mapper.cast({ tool_name: 'Edit', tool_input: { file_path: '/x/auth.ts' } }, 1, 'zh');
+  assert.match(ev.text, /斩击|挥砍|雕琢/);
+  assert.match(ev.text, /\[Edit\]/);
+  assert.match(ev.text, /auth\.ts/);
+  assert.doesNotMatch(ev.text, /with/);
+});
+
+test('zh resolve hit text localized', () => {
+  const ev = mapper.resolve(
+    { tool_name: 'Edit', tool_input: { new_string: 'a\nb' }, tool_response: {} },
+    { combo: 0 }, 'zh'
+  );
+  assert.match(ev.text, /命中/);
+  assert.match(ev.text, /连击×1/);
+});
+
+test('en cast without lang unchanged', () => {
+  const ev = mapper.cast({ tool_name: 'Edit', tool_input: { file_path: '/x/a.ts' } }, 1);
+  assert.match(ev.text, /Slashes|Strikes|Carves/);
+  assert.match(ev.text, /with \[Edit\]/);
+});

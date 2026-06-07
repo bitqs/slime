@@ -1,4 +1,5 @@
 const path = require('node:path');
+const locale = require('./locale');
 
 const VERBS = {
   read:  ['peers into', 'surveys', 'studies'],
@@ -49,14 +50,25 @@ function target(input = {}) {
 
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-function cast(payload, count) {
+function cast(payload, count, lang) {
   payload = payload || {};
   const tool = payload.tool_name || 'Unknown';
   const cat = category(tool);
-  const pool = VERBS[cat];
-  const verb = pool[hash(tool + count) % pool.length];
   const tgt = target(payload.tool_input);
-  const text = `${ICONS[cat]} ${cap(verb)} with [${tool}]${tgt ? ` → ${tgt}` : ''}…`;
+  let text;
+  if (lang) {
+    const cat_key = `verbs.${cat}`;
+    const pool_zh = locale.catalog(lang)[cat_key];
+    if (Array.isArray(pool_zh)) {
+      const verb = pool_zh[hash(tool + count) % pool_zh.length];
+      text = `${ICONS[cat]} ${verb} [${tool}]${tgt ? ` → ${tgt}` : ''}…`;
+    }
+  }
+  if (text === undefined) {
+    const pool = VERBS[cat];
+    const verb = pool[hash(tool + count) % pool.length];
+    text = `${ICONS[cat]} ${cap(verb)} with [${tool}]${tgt ? ` → ${tgt}` : ''}…`;
+  }
   return { t: Date.now(), kind: 'cast', tool, text };
 }
 
@@ -64,7 +76,7 @@ const TEST_CMD = /\b(test|spec|pytest|jest|vitest|tape|--test)\b/;
 
 function lineCount(s) { return s ? String(s).split('\n').length : 0; }
 
-function resolve(payload, snap = {}) {
+function resolve(payload, snap = {}, lang) {
   payload = payload || {};
   const tool = payload.tool_name || 'Unknown';
   const cat = category(tool);
@@ -76,21 +88,27 @@ function resolve(payload, snap = {}) {
   if (isError) {
     ev.hit = true;
     ev.combo = 0;
-    ev.text = `💥 [${tool}] backfires — hit taken! combo broken`;
+    ev.text = lang
+      ? locale.fmt(locale.t('resolve.backfire', lang), { tool })
+      : `💥 [${tool}] backfires — hit taken! combo broken`;
     return ev;
   }
 
   if (cat === 'edit' || cat === 'write') {
     ev.dmg = lineCount(input.new_string ?? input.content);
     ev.combo = combo + 1;
-    ev.text = `⚔️ hit! ${ev.dmg} dmg 🔥combo×${ev.combo}`;
+    ev.text = lang
+      ? locale.fmt(locale.t('resolve.hit', lang), { dmg: ev.dmg, combo: ev.combo })
+      : `⚔️ hit! ${ev.dmg} dmg 🔥combo×${ev.combo}`;
     return ev;
   }
 
   if (cat === 'bash' && TEST_CMD.test(input.command || '')) {
     ev.kill = true;
     ev.combo = combo;
-    ev.text = `💀 tests pass — minion slain!`;
+    ev.text = lang
+      ? locale.t('resolve.kill', lang)
+      : `💀 tests pass — minion slain!`;
     return ev;
   }
 

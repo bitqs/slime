@@ -1,4 +1,7 @@
 {
+  "resolve.hit": "⚔️ hit! {dmg} dmg 🔥combo×{combo}",
+  "resolve.backfire": "💥 [{tool}] backfires — hit taken! combo broken",
+  "resolve.kill": "💀 tests pass — minion slain!",
   "hud.idle": "⚔️ Questline — awaiting first encounter",
   "hud.yourTurn": "⚔️ Questline — your turn, commander",
   "hud.restAt": "🛌 Rest, commander. HP restored at {time}.",

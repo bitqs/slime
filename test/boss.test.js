@@ -40,3 +40,11 @@ test('zh boss names use 「base」type format', () => {
 test('en nameBoss unchanged without lang', () => {
   assert.equal(boss.nameBoss('fix crash', '/p/web'), 'The Web Bugbear');
 });
+
+test('compressName: multi-word → initials with digits; single word kept or truncated', () => {
+  assert.equal(boss.compressName('/p/my-survivor-game'), 'MSG');
+  assert.equal(boss.compressName('/p/2d-three-kindom'), '2TK');
+  assert.equal(boss.compressName('/p/questline'), 'Questline');
+  assert.equal(boss.compressName('/p/supercalifragilistic'), 'Supercal');
+  assert.equal(boss.compressName(''), 'Unknown');
+});

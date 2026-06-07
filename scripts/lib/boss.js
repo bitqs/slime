@@ -28,6 +28,18 @@ const TYPES_ZH = {
 /** @param {string} s @returns {string} */
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
+/** Compress a cwd into a short display base: multi-word dirs → initials
+ *  (digits kept), short single words keep their capitalized form, long
+ *  single words truncate to 8.
+ *  @param {string | null | undefined} cwd @returns {string} */
+function compressName(cwd) {
+  const raw = (cwd || 'unknown').split(/[\\/]/).filter(Boolean).pop() || 'unknown';
+  const words = raw.split(/[-_\s]+/).filter(Boolean);
+  if (words.length >= 2) return words.map((w) => w[0].toUpperCase()).join('');
+  const w = cap(words[0] || 'unknown');
+  return w.length <= 10 ? w : w.slice(0, 8);
+}
+
 /** @param {string | null | undefined} prompt @param {string | null | undefined} cwd @param {string} [lang] @returns {string} */
 function nameBoss(prompt, cwd, lang) {
   const found = TYPES.find(([re]) => re.test(prompt || ''));
@@ -68,4 +80,4 @@ function clear(cwd) {
   try { fs.unlinkSync(bossPath(cwd)); } catch {}
 }
 
-module.exports = { nameBoss, hpFromTodos, loadOrCreate, save, clear, bossPath };
+module.exports = { nameBoss, hpFromTodos, loadOrCreate, save, clear, bossPath, compressName };

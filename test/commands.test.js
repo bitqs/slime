@@ -37,3 +37,13 @@ test('milestones renders the wall', () => {
   assert.match(out, /The Myapp Bugbear/);
   assert.match(out, /MILESTONE WALL/);
 });
+
+test('namer renames boss file using injected command', () => {
+  const boss = require('../scripts/lib/boss');
+  const b = boss.loadOrCreate('/tmp/namerapp', 'add feature x');
+  boss.save('/tmp/namerapp', b);
+  execFileSync('node', [S('namer.js'), '/tmp/namerapp', 'add feature x'], {
+    env: { ...ENV, QL_NAMER_CMD: `node -e "console.log('The Crimson Hydra of Namerapp')"` },
+  });
+  assert.equal(boss.loadOrCreate('/tmp/namerapp', '').name, 'The Crimson Hydra of Namerapp');
+});

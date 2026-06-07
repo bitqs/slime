@@ -10,6 +10,17 @@ try {
     snap.inTurn = true;
     const b = boss.loadOrCreate(p.cwd || '', p.prompt || '');
     boss.save(p.cwd || '', b);
+    try {
+      const cfgPath = require('node:path').join(state.ROOT, 'config.json');
+      let cfg = {};
+      try { cfg = JSON.parse(require('node:fs').readFileSync(cfgPath, 'utf8')); } catch {}
+      if (cfg.haikuNaming && b.hp === 100 && !b.named) {
+        b.named = true; boss.save(p.cwd || '', b);
+        const { spawn } = require('node:child_process');
+        spawn('node', [require('node:path').join(__dirname, 'namer.js'), p.cwd || '', p.prompt || ''],
+          { detached: true, stdio: 'ignore' }).unref();
+      }
+    } catch {}
     snap.boss = { name: b.name, hp: b.hp };
     state.appendEvent(id, { t: Date.now(), kind: 'encounter', text: `⚡ Turn ${snap.turn} — ${b.name} (${b.hp}% HP)` });
     snap.lastText = `⚡ ${b.name} appears!`;

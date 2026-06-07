@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-const state = require('./lib/state');
 const boss = require('./lib/boss');
+const state = require('./lib/state');
 const fs = require('node:fs');
 
 const cwd = process.argv[2] || process.cwd();
@@ -10,18 +10,12 @@ try {
     process.exit(0);
   }
   const b = boss.loadOrCreate(cwd, '');
-  const prof = state.readProfile();
-  prof.milestones.push({
-    boss: b.name, date: new Date().toISOString().slice(0, 10),
-    turns: b.turns || 0, project: cwd,
-  });
-  state.writeProfile(prof);
-  boss.clear(cwd);
+  const total = boss.recordDefeat(cwd, b);
   const sid = state.newestSessionId();
   if (sid) state.appendEvent(sid, { t: Date.now(), kind: 'boss_down', boss: b.name, text: `⚡⚡⚡ ${b.name} — DEFEATED ⚡⚡⚡` });
   console.log([
     `⚡⚡⚡ ${b.name} — DEFEATED ⚡⚡⚡`,
-    `Recorded on the Milestone Wall (${prof.milestones.length} total).`,
+    `Recorded on the Milestone Wall (${total} total).`,
     `💡 Sage: quest complete — strike camp (/clear) before the next hunt.`,
   ].join('\n'));
 } catch (e) {

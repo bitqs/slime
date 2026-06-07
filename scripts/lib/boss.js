@@ -103,4 +103,23 @@ function clear(cwd) {
   try { fs.unlinkSync(bossPath(cwd)); } catch {}
 }
 
-module.exports = { nameBoss, hpFromTodos, loadOrCreate, save, clear, bossPath, compressName };
+/** @param {string} cwd @param {number} idx @param {string} [lang] @returns {string} */
+function minionLabel(cwd, idx, lang) {
+  const base = compressName(cwd);
+  return lang === 'zh' ? `${base}·小兵 ${idx + 1}` : `${base} mob ${idx + 1}`;
+}
+
+/** Push a milestone for this boss and clear its file. Returns total milestone count.
+ *  @param {string} cwd @param {BossState} b @returns {number} */
+function recordDefeat(cwd, b) {
+  const prof = state.readProfile();
+  prof.milestones.push({
+    boss: b.name, date: new Date().toISOString().slice(0, 10),
+    turns: b.turns || 0, project: cwd,
+  });
+  state.writeProfile(prof);
+  clear(cwd);
+  return prof.milestones.length;
+}
+
+module.exports = { nameBoss, hpFromTodos, loadOrCreate, save, clear, bossPath, compressName, minionLabel, recordDefeat };

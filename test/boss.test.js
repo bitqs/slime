@@ -81,3 +81,19 @@ test('loadOrCreate with no lang arg defaults to locale.current()', () => {
     fs.rmSync(tmpRoot, { recursive: true });
   }
 });
+
+test('minionLabel: compressed base + numbered mob, per lang', () => {
+  assert.equal(boss.minionLabel('/p/my-survivor-game', 0, 'en'), 'MSG mob 1');
+  assert.equal(boss.minionLabel('/p/my-survivor-game', 2, 'zh'), 'MSG·小兵 3');
+});
+
+test('recordDefeat: milestone pushed, boss file cleared, count returned', () => {
+  const b = boss.loadOrCreate('/p/defeatme', 'fix it');
+  boss.save('/p/defeatme', b);
+  const n = boss.recordDefeat('/p/defeatme', b);
+  assert.ok(n >= 1);
+  assert.equal(fs.existsSync(boss.bossPath('/p/defeatme')), false);
+  const state = require('../scripts/lib/state');
+  const prof = state.readProfile();
+  assert.equal(prof.milestones[prof.milestones.length - 1].boss, b.name);
+});

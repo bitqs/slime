@@ -7,15 +7,18 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+/** @param {string} p @returns {boolean} */
 function isSymlink(p) {
   try { return fs.lstatSync(p).isSymbolicLink(); } catch { return false; }
 }
 
+/** @param {string} p @returns {boolean} */
 function refuse(p) {
   return isSymlink(p) || isSymlink(path.dirname(p));
 }
 
 // Atomic replace: temp + rename. Mode 0600. Returns false on any refusal/error.
+/** @param {string} p @param {string} content @returns {boolean} */
 function safeWrite(p, content) {
   try {
     if (refuse(p)) return false;
@@ -29,6 +32,7 @@ function safeWrite(p, content) {
 
 // Append for JSONL streams (rename-replace impossible). O_NOFOLLOW where the
 // platform supports it; symlink pre-check covers the rest.
+/** @param {string} p @param {string} line @returns {boolean} */
 function safeAppend(p, line) {
   try {
     if (refuse(p)) return false;
@@ -41,10 +45,12 @@ function safeAppend(p, line) {
 }
 
 // Tolerant read: corrupt, missing, or non-JSON file → fallback. Never throws.
+/** @template T @param {string} p @param {T} fallback @returns {T} */
 function readJson(p, fallback) {
   try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return fallback; }
 }
 
+/** @param {string} p @returns {boolean} */
 function safeMkdir(p) {
   try {
     // Parent-symlink NOT refused here: symlinking the whole ccq root to another

@@ -1,3 +1,7 @@
+/** @typedef {import('./types').Snapshot} Snapshot */
+/** @typedef {import('./types').Profile} Profile */
+/** @typedef {import('./types').QLEvent} QLEvent */
+/** @typedef {import('./types').StatuslineStdin} StatuslineStdin */
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -15,16 +19,21 @@ function ensureDirs() {
   }
 }
 
+/** @param {string} id @returns {string} */
 const eventsPath = (id) => path.join(ROOT, 'sessions', `${id}.jsonl`);
+/** @param {string} id @returns {string} */
 const snapshotPath = (id) => path.join(ROOT, 'sessions', `${id}.json`);
 const profilePath = () => path.join(ROOT, 'profile.json');
+/** @param {string} id @returns {string} */
 const reportPath = (id) => path.join(ROOT, 'reports', `${id}.txt`);
 
+/** @param {string} id @param {QLEvent} ev @returns {void} */
 function appendEvent(id, ev) {
   ensureDirs();
   safeAppend(eventsPath(id), JSON.stringify(ev) + '\n');
 }
 
+/** @param {string} id @returns {QLEvent[]} */
 function readEvents(id) {
   try {
     const out = [];
@@ -36,20 +45,24 @@ function readEvents(id) {
   } catch { return []; }
 }
 
+/** @param {string} id @returns {Snapshot | null} */
 function readSnapshot(id) {
   return readJson(snapshotPath(id), null);
 }
 
+/** @param {string} id @param {Snapshot} snap @returns {void} */
 function writeSnapshot(id, snap) {
   ensureDirs();
   safeWrite(snapshotPath(id), JSON.stringify(snap));
 }
 
+/** @returns {Profile} */
 function readProfile() {
   return readJson(profilePath(), null)
     || { milestones: [], totals: { turns: 0, dmg: 0, kills: 0 }, gear: {} };
 }
 
+/** @param {Profile} p @returns {void} */
 function writeProfile(p) {
   ensureDirs();
   safeWrite(profilePath(), JSON.stringify(p, null, 2));
@@ -70,6 +83,7 @@ function newestSessionId() {
   return best;
 }
 
+/** @returns {StatuslineStdin | null} */
 function readStdin() {
   try { return JSON.parse(fs.readFileSync(0, 'utf8')); }
   catch { return null; }

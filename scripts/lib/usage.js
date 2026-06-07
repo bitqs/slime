@@ -1,15 +1,20 @@
+/** @typedef {import('./types').UsageCache} UsageCache */
+/** @typedef {import('./types').StatuslineStdin} StatuslineStdin */
 const path = require('node:path');
 const state = require('./state');
 const { safeWrite, readJson } = require('./safe-io');
 
+/** @param {string} [root] @returns {string} */
 const cachePath = (root) => path.join(root || state.ROOT, 'usage.json');
 
+/** @param {string} [root] @returns {UsageCache} */
 function readCache(root) {
   // `||`: a file containing literal `null` parses successfully — fallback won't fire
   return readJson(cachePath(root), null)
     || { fiveHour: null, sevenDay: null, contextPct: null, source: null, t: 0 };
 }
 
+/** @param {StatuslineStdin | null | undefined} stdin @param {string} [root] @returns {void} */
 function cacheFromStatusline(stdin, root) {
   if (!stdin) return;
   const prev = readCache(root);
@@ -41,11 +46,13 @@ function cacheFromStatusline(stdin, root) {
   safeWrite(cachePath(root), JSON.stringify(next));
 }
 
+/** @param {UsageCache | null | undefined} cache @returns {number | null} */
 function hp(cache) {
   if (!cache || !cache.fiveHour || cache.fiveHour.used == null) return null;
   return Math.max(0, Math.round(100 - cache.fiveHour.used));
 }
 
+/** @param {UsageCache | null | undefined} cache @returns {string | null} */
 function restTime(cache) {
   if (!cache || !cache.fiveHour || !cache.fiveHour.resetsAt) return null;
   const d = new Date(cache.fiveHour.resetsAt * 1000);

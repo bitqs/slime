@@ -101,7 +101,14 @@ file would otherwise replay into the terminal continuously.
 ## 4. Distribution
 
 - **`.claude-plugin/marketplace.json`** — self-hosted marketplace listing Questline
-  itself, enabling `/plugin marketplace add bitqs/questline`.
+  itself, enabling `/plugin marketplace add bitqs/questline`. (Fast-tracked 2026-06-07
+  for local dev install.)
+- **Statusline chaining principle (user decision 2026-06-07): never replace an
+  existing `statusLine`, append after it.** `/questline:setup` (commands/setup.md —
+  Session B file, coordinate) must detect an existing `statusLine` command and write a
+  wrapper that runs the user's original command first, then appends the Questline HUD
+  to the same line. Uninstall docs reverse it: restore the original command preserved
+  inside the wrapper.
 - **`plugin.json`** — add `repository`, `homepage`, `keywords`, `license: "MIT"`,
   `author.url`. **Deliberately omit `version`**: unpinned means every git commit is a
   new version, so users on auto-update get every push with no release ritual

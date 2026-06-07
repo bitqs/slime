@@ -435,6 +435,14 @@
     if (fx.knightLunge > 0) fx.knightLunge = Math.max(0, fx.knightLunge - 1);
     knight.x = 40 + fx.knightLunge;
 
+    // feeding scale tween
+    if (bossScaleTarget != null) {
+      const s = boss.scale.x + (bossScaleTarget - boss.scale.x) * 0.06;
+      boss.scale.set(s);
+      boss.x = 220 - (s - 1) * 8;
+      if (Math.abs(s - bossScaleTarget) < 0.01) { boss.scale.set(bossScaleTarget); bossScaleTarget = null; }
+    }
+
     // parallax
     bgNear.x = (bgNear.x - 0.05) % W;
     bgFar.x = (bgFar.x - 0.02) % W;
@@ -662,8 +670,10 @@
     if (d.kind === 'turn_end') {
       const line = (d.text || '').split('\n')[0];
       if (line) {
+        setScene('settle');
+        PRIM.letterbox({ on: true });
         PRIM.bigtext({ text: line.slice(0, 40), y: H / 2 });
-        setTimeout(() => PRIM.hidetext(), 2000);
+        setTimeout(() => { PRIM.hidetext(); PRIM.letterbox({ on: false }); setScene('battle'); }, 2000);
         pushLog(line);
       }
     }
@@ -680,6 +690,46 @@
   }
   connectEvents();
 
+  // ── scene system: 'battle' | 'feeding' | 'settle' ─────────────────────────────
+  let scene = 'battle';
+  let bossScaleTarget = null; // feeding growth tween target
+  let lastFedEst = null;
+  function setScene(next) {
+    if (scene === next) return;
+    scene = next;
+    const counter = document.getElementById('feed-counter');
+    if (next === 'feeding') {
+      PRIM.dim({ on: true });
+      // baby slime: if no engaged boss yet, show the boss sprite tiny — it IS the creature being fed
+      if (!engagedBoss) { bossDead = false; boss.visible = true; boss.scale.set(0.5); boss.x = 220 + 8; }
+      if (counter) counter.style.display = 'block';
+    } else {
+      PRIM.dim({ on: false });
+      if (counter) counter.style.display = 'none';
+      if (next === 'battle') { lastFedEst = null; }
+    }
+  }
+  function feedBeat(est, small) {
+    setScene('feeding');
+    const tier = bossTierFor(est);
+    bossScaleTarget = small ? Math.min((boss.scale.x || 0.5) + 0.06, tier.scale) : tier.scale;
+    const delta = !small && lastFedEst != null ? est - lastFedEst : null;
+    if (!small) lastFedEst = est;
+    const counter = document.getElementById('feed-counter');
+    if (counter && est != null) {
+      counter.textContent = `≈${fmtTokensJs(est).slice(1)} tokens${tier.label && tier.label !== 'normal' ? ' · ' + tier.label : ''}`;
+    }
+    if (delta && delta > 0) floater(`+${fmtTokensJs(delta)}`, boss.x + 8, boss.y - 10, P.gold, 9, true);
+    if (CALM) { boss.scale.set(bossScaleTarget); bossScaleTarget = null; return; }
+    // morsel arc: knight → slime
+    const n = small ? 3 : 6;
+    for (let i = 0; i < n; i++) {
+      fx.particles.push({ x: knight.x + 10, y: knight.y + 4,
+        vx: 2.2 + i * 0.15, vy: -2 - i * 0.1, age: 0, maxAge: 60, color: colorNum(P.gold) });
+    }
+    PRIM.zoom({ scale: 1.04, frames: 6 }); // munch wobble
+  }
+
   let pendingEst = null;
   let engagedBoss = null;
   let minionStreak = 0;
@@ -689,6 +739,7 @@
     if (d.kind === 'encounter') {
       const isNew = d.bossName && d.bossName !== engagedBoss;
       if (isNew) {
+        setScene('battle');
         engagedBoss = d.bossName;
         hideOverlay();
         const est = d.est != null ? d.est : pendingEst;
@@ -707,7 +758,7 @@
       }
       if (d.text) pushLog(d.text);
     }
-    if (d.kind === 'boss_down') { engagedBoss = null; setBroken(false); playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
+    if (d.kind === 'boss_down') { setScene('battle'); engagedBoss = null; setBroken(false); playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
     if (d.kind === 'potion') { playScene(SCENE_POTION); if (d.text) pushLog(d.text); }
     if (d.kind === 'boss_broken') { setBroken(true); PRIM.shake({ amp: 2, frames: 8 }); if (d.text) pushLog(d.text); }
     if (d.kind === 'minion_down') {
@@ -783,15 +834,27 @@
     PRIM.dim({ on: false }); PRIM.letterbox({ on: false });
   }
   QLArena.on((d) => {
-    if (d.kind === 'choice_open') openChoices(d.questions || []);
-    if (d.kind === 'choice_made') resolveChoices(d.chosen || []);
-    if (d.kind === 'plan_scroll') openPlan(d.plan || '');
+    if (d.kind === 'choice_open') { setScene('feeding'); openChoices(d.questions || []); }
+    if (d.kind === 'choice_made') {
+      resolveChoices(d.chosen || []);
+      if (scene === 'feeding') feedBeat(lastFedEst, true); // Q&A morsel: small grow toward current target
+    }
+    if (d.kind === 'plan_scroll') {
+      openPlan(d.plan || '');
+      if (d.est != null) { pendingEst = d.est; feedBeat(d.est, false); }
+    }
     if (d.kind === 'plan_approved') {
       approvePlan();
+      lastFedEst = null;
       if (pendingEst != null) {
+        const tier = bossTierFor(pendingEst);
+        lockedTierColor = tier.color;
+        const nameEl = document.getElementById('boss-name');
+        if (nameEl && !bossBroken) nameEl.style.color = tier.color;
         playScene(SCENE_FORGE(pendingEst));
         pendingEst = null;
       }
+      setScene('battle');
     }
   });
 })();

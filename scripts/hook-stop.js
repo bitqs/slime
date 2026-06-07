@@ -13,6 +13,8 @@ try {
     const b = p.cwd ? boss.loadOrCreate(p.cwd, '') : null;
     const card = report.render(agg, b && { name: b.name, hp: b.hp }, snap);
 
+    if (b && p.cwd) { b.turns = snap.turn || 0; boss.save(p.cwd, b); }
+
     state.appendEvent(id, { t: Date.now(), kind: 'turn_end', text: card });
     state.ensureDirs();
     fs.appendFileSync(state.reportPath(id), card + '\n\n');

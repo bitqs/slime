@@ -42,8 +42,8 @@ function target(input = {}) {
   if (input.query) return `"${input.query}"`;
   if (input.skill) return input.skill;
   if (input.description) return input.description;
-  if (input.prompt) return String(input.prompt).slice(0, 40) + '…';
-  if (input.command) return String(input.command).slice(0, 40) + '…';
+  if (input.prompt) { const s = String(input.prompt); return s.length > 40 ? s.slice(0, 40) + '…' : s; }
+  if (input.command) { const s = String(input.command); return s.length > 40 ? s.slice(0, 40) + '…' : s; }
   return '';
 }
 

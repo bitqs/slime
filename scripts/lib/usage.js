@@ -1,12 +1,12 @@
-const fs = require('node:fs');
 const path = require('node:path');
 const state = require('./state');
+const { safeWrite, readJson } = require('./safe-io');
 
 const cachePath = (root) => path.join(root || state.ROOT, 'usage.json');
 
 function readCache(root) {
-  try { return JSON.parse(fs.readFileSync(cachePath(root), 'utf8')); }
-  catch { return { fiveHour: null, sevenDay: null, contextPct: null, source: null, t: 0 }; }
+  return readJson(cachePath(root),
+    { fiveHour: null, sevenDay: null, contextPct: null, source: null, t: 0 });
 }
 
 function cacheFromStatusline(stdin, root) {
@@ -30,7 +30,7 @@ function cacheFromStatusline(stdin, root) {
             === JSON.stringify([next.fiveHour, next.sevenDay, next.contextPct, next.source]);
   if (same) return;
   state.ensureDirs();
-  fs.writeFileSync(cachePath(root), JSON.stringify(next));
+  safeWrite(cachePath(root), JSON.stringify(next));
 }
 
 function hp(cache) {

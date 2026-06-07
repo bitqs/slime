@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const state = require('./state');
 const { hash } = require('./mapper');
+const { safeWrite, readJson } = require('./safe-io');
 
 const TYPES = [
   [/fix|bug|error|crash|broken|修复|修bug|崩溃/i, 'Bugbear'],
@@ -42,15 +43,13 @@ function bossPath(cwd) {
 }
 
 function loadOrCreate(cwd, prompt, lang) {
-  try { return JSON.parse(fs.readFileSync(bossPath(cwd), 'utf8')); }
-  catch {
-    return { name: nameBoss(prompt, cwd, lang), hp: 100, turns: 0, created: Date.now() };
-  }
+  return readJson(bossPath(cwd), null)
+    || { name: nameBoss(prompt, cwd, lang), hp: 100, turns: 0, created: Date.now() };
 }
 
 function save(cwd, b) {
   state.ensureDirs();
-  fs.writeFileSync(bossPath(cwd), JSON.stringify(b));
+  safeWrite(bossPath(cwd), JSON.stringify(b));
 }
 
 function clear(cwd) {

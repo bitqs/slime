@@ -1,6 +1,6 @@
-const fs = require('node:fs');
 const path = require('node:path');
 const state = require('./state');
+const { readJson } = require('./safe-io');
 
 const CATALOG_DIR = path.join(__dirname, '..', '..', 'data', 'locales');
 const cache = {};
@@ -26,10 +26,8 @@ function tally(prompt) {            // called by hook-prompt
 }
 
 function current() {                // config override > majority > 'en'
-  try {
-    const cfg = JSON.parse(fs.readFileSync(path.join(state.ROOT, 'config.json'), 'utf8'));
-    if (cfg.lang) return cfg.lang;
-  } catch {}
+  const cfg = readJson(path.join(state.ROOT, 'config.json'), {});
+  if (cfg.lang) return cfg.lang;
   try {
     const stats = state.readProfile().langStats || {};
     const top = Object.entries(stats).sort((a, b) => b[1] - a[1])[0];
@@ -40,8 +38,7 @@ function current() {                // config override > majority > 'en'
 
 function catalog(lang) {
   if (!cache[lang]) {
-    try { cache[lang] = JSON.parse(fs.readFileSync(path.join(CATALOG_DIR, `${lang}.json`), 'utf8')); }
-    catch { cache[lang] = {}; }
+    cache[lang] = readJson(path.join(CATALOG_DIR, `${lang}.json`), {});
   }
   return cache[lang];
 }

@@ -73,6 +73,14 @@ tmux split-window -bv -l 6 "node \"$(pwd)/scripts/watch.js\""
 
 A read-only live monitor: boss bar, your HP, combo, and the last three strikes — refreshed every second.
 
+### Pixel Arena (browser)
+
+```
+/questline:arena
+```
+
+A local pixel-art battle stage — your knight strikes in real time as Claude works. 100% local (127.0.0.1), read-only.
+
 ## How It Works
 
 ```

@@ -78,3 +78,25 @@ test('safeMkdir creates nested dirs, refuses symlinked target', () => {
   fs.symlinkSync(real, lnk);
   assert.strictEqual(safeMkdir(lnk), false);
 });
+
+const { sanitize } = require('../scripts/lib/hud');
+
+test('sanitize strips ESC/C0/C1 control chars', () => {
+  assert.strictEqual(sanitize('a\x1b[31mred\x1b[0mb'), 'a[31mred[0mb');
+  assert.strictEqual(sanitize('x\x00\x07\x9by'), 'xy');
+  assert.strictEqual(sanitize('tab\tnewline\n'), 'tabnewline');
+});
+
+test('sanitize preserves emoji and CJK', () => {
+  assert.strictEqual(sanitize('⚔️ 错虫王 🔥'), '⚔️ 错虫王 🔥');
+});
+
+test('sanitize truncates by code point with ellipsis', () => {
+  assert.strictEqual(sanitize('abcdef', 3), 'abc…');
+  assert.strictEqual(sanitize('错虫王九头蛇', 4), '错虫王九…');
+});
+
+test('sanitize handles null/undefined', () => {
+  assert.strictEqual(sanitize(null), '');
+  assert.strictEqual(sanitize(undefined), '');
+});

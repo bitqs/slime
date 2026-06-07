@@ -1,6 +1,21 @@
 const { bar } = require('./report');
 const usage = require('./usage');
 
+// Strip C0/C1 controls (incl. ESC → kills ANSI/OSC); preserve emoji/CJK;
+// truncate by code point. Statusline runs on every keystroke — a planted
+// escape sequence in any state file would replay into the terminal forever.
+function sanitize(s, max = 60) {
+  if (s == null) return '';
+  const kept = [];
+  for (const ch of String(s)) {
+    const cp = ch.codePointAt(0);
+    if (cp < 0x20 || cp === 0x7f || (cp >= 0x80 && cp <= 0x9f)) continue;
+    kept.push(ch);
+  }
+  if (kept.length > max) return kept.slice(0, max).join('') + '…';
+  return kept.join('');
+}
+
 function render(snap, stdinJson, tips, now, usageCache, lang) {
   const locale = require('./locale');
   const l = lang || locale.current();
@@ -31,4 +46,4 @@ function render(snap, stdinJson, tips, now, usageCache, lang) {
   return parts.join(' | ');
 }
 
-module.exports = { render };
+module.exports = { render, sanitize };

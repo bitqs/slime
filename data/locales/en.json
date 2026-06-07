@@ -17,5 +17,12 @@
   "sage.potion": "💡 Sage: mana runs low — a potion (/compact) or strike camp (/clear).",
   "sage.pacing": "💡 Sage: half your HP gone, the boss barely scratched — slow your pace, sharpen each strike.",
   "encounter": "⚡ Turn {turn} — {name} ({hp}% HP)",
-  "encounter.appears": "⚡ {name} appears!"
+  "encounter.appears": "⚡ {name} appears!",
+  "wrapped.title": "⚔️  QUESTLINE WRAPPED",
+  "wrapped.dmg": "damage dealt",
+  "wrapped.kills": "minions slain",
+  "wrapped.turns": "turns fought",
+  "wrapped.days": "active days",
+  "wrapped.gear": "favorite gear",
+  "wrapped.bosses": "bosses felled"
 }

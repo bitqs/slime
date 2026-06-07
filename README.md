@@ -64,6 +64,7 @@ Force one with `"lang": "zh"` in `~/.claude/ccq/config.json`.
 | `/questline:defeat` | Confirm the boss kill → milestone recorded |
 | `/questline:milestones` | Show the Milestone Wall |
 | `/questline:battlelog` | Replay this session's turn reports |
+| `/questline:wrapped` | Your week in battle — shareable card |
 
 ### Top-of-terminal battle pane (tmux)
 

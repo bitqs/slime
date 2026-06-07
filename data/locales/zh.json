@@ -26,5 +26,12 @@
   "sage.potion": "💡 贤者: 蓝量告急 — 喝药 (/compact) 或扎营 (/clear)。",
   "sage.pacing": "💡 贤者: HP 已耗一半,Boss 几乎没掉血 — 放慢节奏,磨利每一击。",
   "encounter": "⚡ 回合 {turn} — {name} ({hp}% HP)",
-  "encounter.appears": "⚡ {name} 现身!"
+  "encounter.appears": "⚡ {name} 现身!",
+  "wrapped.title": "⚔️  QUESTLINE 周报",
+  "wrapped.dmg": "总伤害",
+  "wrapped.kills": "击杀",
+  "wrapped.turns": "回合",
+  "wrapped.days": "出击天数",
+  "wrapped.gear": "惯用装备",
+  "wrapped.bosses": "Boss 击杀"
 }

@@ -266,6 +266,37 @@
 
   function playScene(steps) { activeScenes.push(QLSeq.createTimeline(steps)); }
 
+  // ── cutscene builders ─────────────────────────────────────────────────────────
+  function SCENE_BOSS_INTRO(name) {
+    return [
+      { at: 0,   do: 'letterbox', on: true },
+      { at: 0,   do: 'dim', on: true },
+      { at: 6,   do: 'typewriter', text: name, y: 60 },
+      { at: 50,  do: 'flash', strength: 0.5 },
+      { at: 58,  do: 'flash', strength: 0.5 },          // governor enforces the gap
+      { at: 66,  do: 'dim', on: false },
+      { at: 66,  do: 'bossdrop' },                       // falls, slams, shakes, dust
+      { at: 110, do: 'hidetext' },
+      { at: 110, do: 'letterbox', on: false },
+    ];
+  }
+  const SCENE_VICTORY = (name) => [
+    { at: 0,   do: 'hitstop', frames: 8 },
+    { at: 8,   do: 'slowmo', factor: 0.3, frames: 30 },
+    { at: 8,   do: 'bossburst' },
+    { at: 40,  do: 'flash', strength: 0.6 },
+    { at: 44,  do: 'bigtext', text: '🏆 VICTORY 🏆', y: 70 },
+    { at: 44,  do: 'goldrain' },
+    { at: 60,  do: 'confetti' },
+    { at: 200, do: 'hidetext' },
+  ];
+  const SCENE_POTION = [
+    { at: 0,  do: 'flash', color: '#6abe30', strength: 0.35 },
+    { at: 2,  do: 'bubbles' },
+    { at: 10, do: 'bigtext', text: '🧪 mana restored', y: 50 },
+    { at: 70, do: 'hidetext' },
+  ];
+
   // ── render loop ───────────────────────────────────────────────────────────────
   app.ticker.add(() => {
     frame++;
@@ -539,13 +570,6 @@
     let d; try { d = JSON.parse(ev.data); } catch { return; }
     if (!d || !d.kind) return;
 
-    if (d.kind === 'encounter') {
-      if (d.bossName) setText('boss-name', d.bossName);
-      hideOverlay();
-      boss.visible = true;
-      PRIM.bossdrop();
-      if (d.text) pushLog(d.text);
-    }
     if (d.kind === 'cast') { fx.knightLunge = 6; pushLog(d.text); }
     if (d.kind === 'resolve') {
       if (typeof d.dmg === 'number' && d.dmg > 0) {
@@ -578,4 +602,14 @@
     } catch {}
   }
   connectEvents();
+
+  QLArena.on((d) => {
+    if (d.kind === 'encounter') {
+      if (d.bossName) { setText('boss-name', d.bossName); }
+      playScene(SCENE_BOSS_INTRO(d.bossName || 'A NEW FOE'));
+      if (d.text) pushLog(d.text);
+    }
+    if (d.kind === 'boss_down') { playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
+    if (d.kind === 'potion') { playScene(SCENE_POTION); if (d.text) pushLog(d.text); }
+  });
 })();

@@ -48,6 +48,8 @@ test('prompt hook encounter event has numeric est', () => {
   assert.ok(enc);
   assert.equal(typeof enc.est, 'number');
   assert.ok(enc.est >= 20000);
+  assert.equal(typeof enc.bossName, 'string');
+  assert.ok(enc.bossName.length > 0);
 });
 
 test('stop hook emits systemMessage card and resets inTurn', () => {

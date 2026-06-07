@@ -52,7 +52,7 @@ FX primitives: `flash`, `shake`, `hitstop`, `zoom`, `letterbox`, `typewriter`,
 |---|---|---|
 | Boss intro | `encounter` event | letterbox → boss name typewriter → double white flash → boss slams down: screen shake + dust particles |
 | Kill / victory | new `boss_down` event — `defeat.js` appends it on confirmed kill | 8-frame hitstop → 0.3× slow-mo boss shatters into particles → white flash → VICTORY banner + gold-coin particle rain + confetti |
-| Battle escalation | `resolve` events (`combo`, `dmg`) | combo ≥5: breathing flame screen edges; combo ≥10: chromatic shake + zoom punch per hit; big dmg: radial speed lines |
+| Battle escalation | `resolve` events (`combo`, `dmg`) | combo ≥5: breathing flame screen edges; combo ≥10: chromatic shake + zoom punch per hit; big dmg: steel particle burst |
 | Danger state | `/state` usage (Token %); `potion` event | Token<30%: red vignette heartbeat pulse + low-frequency shake; Token=0: grayscale filter + sleeping Zzz; potion: gulp cutscene (green flash + bubble particles) |
 
 ## Choice & Info Gamification
@@ -122,10 +122,9 @@ shaping the boss (user request 2026-06-07).
 
 - `serve.js`: whitelist static route (above).
 - `defeat.js`: one line — `appendEvent { kind: 'boss_down' }` on confirmed kill.
-- `hook-pretool.js` (new): PreToolUse/PostToolUse observer for
-  `AskUserQuestion` / `ExitPlanMode` → `choice_open` / `choice_made` /
-  `plan_scroll` events. Registered in the plugin hooks config alongside the
-  existing hooks.
+- `hook-pretool.js` / `hook-posttool.js` (extended): PreToolUse/PostToolUse
+  observers for `AskUserQuestion` / `ExitPlanMode` → `choice_open` /
+  `choice_made` / `plan_scroll` / `plan_approved` events.
 - No other writers change. Observer principle intact: arena stays read-only.
 
 ## Error Handling

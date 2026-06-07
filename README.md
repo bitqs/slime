@@ -10,6 +10,8 @@ Your work goals are the bosses. Your plugins are your gear. Watch Claude fight.
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet)](https://docs.anthropic.com/claude-code)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](package.json)
 
+<sub>Zero npm dependencies at runtime — the browser arena vendors PixiJS as a static file.</sub>
+
 </div>
 
 ---

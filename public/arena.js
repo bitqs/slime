@@ -180,9 +180,11 @@
 
   // ── fx state + governor ───────────────────────────────────────────────────────
   let bossDead = false;
+  let lastPolledBoss = null; // last boss name seen by applyState — detects a fresh boss in real sessions
+  let wasZero = false;       // tracks token===0 transitions for the Zzz floater
   const fx = { shake: 0, shakeAmp: 4, knightLunge: 0, speed: 1, hitstop: 0, particles: [],
     floaters: [], chromaFrames: 0, edgeFlame: 0, slowmoLeft: null, zoom: 1, zoomLeft: null,
-    bossFalling: false, type: null };
+    bossFalling: false, type: null, charge: null };
   const governor = QLSeq.createGovernor(3, 60);
   let activeScenes = [];
   let frame = 0;
@@ -240,7 +242,7 @@
       burst(boss.x + 8, FLOOR_Y, P.dark, 14);
     },
     bossdrop() { bossDead = false; boss.visible = true; boss.y = -20; fx.bossFalling = true; },
-    bossburst() { bossDead = true; boss.visible = false; burst(238, 125, P.bone, 26); },
+    bossburst() { bossDead = true; burst(boss.x + boss.width / 2, boss.y + boss.height / 2, P.bone, 26); boss.visible = false; },
     goldrain() {
       for (let i = 0; i < 40; i++) {
         fx.particles.push({ x: Math.random() * W, y: -Math.random() * 20,
@@ -264,11 +266,12 @@
       }
     },
     dim({ on } = {}) { world.alpha = on ? 0.3 : 1; },
+    chargebar() { fx.charge = { pct: 0 }; }, // render loop advances ~2%/frame → updateBossHpBar
     forgeparticles() { // particles converge on the boss anchor
       for (let i = 0; i < 24; i++) {
         const a = (i / 24) * Math.PI * 2;
         fx.particles.push({ x: 238 + Math.cos(a) * 70, y: 110 + Math.sin(a) * 50,
-          vx: -Math.cos(a) * 1.6, vy: -Math.sin(a) * 1.1, c: P.gold, age: 0, maxAge: 44, noGravity: true,
+          vx: -Math.cos(a) * 1.6, vy: -Math.sin(a) * 1.1, age: 0, maxAge: 44, noGravity: true,
           color: colorNum(P.gold) });
       }
     },
@@ -325,6 +328,7 @@
       { at: 40, do: 'flash', strength: 0.4 },
       { at: 40, do: 'bigtext', text: `${fmtTokensJs(est)} tokens · ${tier.label || 'boss'}`, y: 50 },
       { at: 44, do: 'bossdrop' },
+      { at: 44, do: 'chargebar' },
       { at: 100, do: 'hidetext' },
       { at: 100, do: 'dim', on: false },
     ];
@@ -427,6 +431,13 @@
       }
     }
 
+    // forge hp charge 0→100%
+    if (fx.charge) {
+      fx.charge.pct = Math.min(100, fx.charge.pct + 2);
+      updateBossHpBar(Math.round(fx.charge.pct));
+      if (fx.charge.pct >= 100) fx.charge = null;
+    }
+
     // particles
     particleGfx.clear();
     fx.particles = fx.particles.filter((p) => {
@@ -461,6 +472,7 @@
     if (stats.token != null && stats.token > 0 && stats.token < 30) {
       const amp = CALM ? 0.05 : 0.25;
       vignette.alpha = 0.2 + Math.sin(frame / 12) * amp;
+      if (frame % 40 === 0) PRIM.shake({ amp: 1, frames: 4 }); // CALM-gated inside PRIM.shake
     } else {
       vignette.alpha = 0;
     }
@@ -524,6 +536,12 @@
     // boss snapshot
     if (snap) {
       hideOverlay();
+      // a new boss showed up in a real session → revive the sprite (handles the
+      // case where the victory cutscene hid it and no intro fired to reset bossDead)
+      if (snap.boss && snap.boss.name && snap.boss.name !== lastPolledBoss) {
+        lastPolledBoss = snap.boss.name;
+        bossDead = false;
+      }
       if (!bossDead) boss.visible = true;
       if (snap.boss && snap.boss.name) setText('boss-name', snap.boss.name);
       let pct = null;
@@ -578,9 +596,14 @@
       if (u.lines) setText('atk', `+${u.lines.added || 0} / −${u.lines.removed || 0}`);
       if (typeof u.durationMs === 'number') setText('timer', fmtDuration(u.durationMs));
 
-      // grayscale when out of tokens
-      if (token === 0) app.canvas.classList.add('gray');
-      else app.canvas.classList.remove('gray');
+      // grayscale when out of tokens + a one-shot Zzz on the zero transition
+      if (token === 0) {
+        app.canvas.classList.add('gray');
+        if (!wasZero) { floater('💤', knight.x + 6, knight.y - 8, P.steel, 14, true); wasZero = true; }
+      } else {
+        app.canvas.classList.remove('gray');
+        wasZero = false;
+      }
     }
   }
   async function pollState() {

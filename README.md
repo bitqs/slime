@@ -129,6 +129,6 @@ MIT — see [LICENSE](LICENSE).
 
 <div align="center">
 
-**Start your quest →** `claude plugin install questline`
+**Start your quest →** `/plugin marketplace add bitqs/questline`
 
 </div>

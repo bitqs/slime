@@ -16,7 +16,9 @@ try {
     const u = usage.readCache();
     const lang = locale.current();
     const sageLine = sage.advise({ usage: u, bossHp: b ? b.hp : null, lang });
-    const card = report.render(agg, b && { name: b.name, hp: b.hp }, snap, { usage: u, sageLine, lang });
+    // boss name is user-prompt- or LLM-derived — sanitize before terminal display
+    const { sanitize } = require('./lib/hud');
+    const card = report.render(agg, b && { name: sanitize(b.name), hp: b.hp }, snap, { usage: u, sageLine, lang });
 
     if (b && p.cwd) { b.turns = snap.turn || 0; boss.save(p.cwd, b); }
 

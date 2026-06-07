@@ -1,7 +1,7 @@
 {
   "name": "questline",
   "description": "Your work goals are the bosses. Your plugins are your gear. Watch Claude fight — a zero-impact RPG layer over Claude Code.",
-  "author": { "name": "qs" },
+  "author": { "name": "qs", "url": "https://github.com/bitqs" },
   "repository": "https://github.com/bitqs/questline",
   "homepage": "https://github.com/bitqs/questline",
   "license": "MIT",

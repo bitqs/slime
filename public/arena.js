@@ -615,4 +615,63 @@
     if (d.kind === 'boss_down') { playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
     if (d.kind === 'potion') { playScene(SCENE_POTION); if (d.text) pushLog(d.text); }
   });
+
+  const choiceEl = document.getElementById('choice-overlay');
+  const planEl = document.getElementById('plan-overlay');
+  let planTypeTimer = null;
+  function openChoices(questions) {
+    PRIM.dim({ on: true }); PRIM.letterbox({ on: true });
+    choiceEl.innerHTML = '';
+    const q = questions[0] || { q: '', opts: [] };
+    const title = document.createElement('div');
+    title.style.cssText = 'color:#f0b541;font-size:11px;margin-bottom:6px;text-shadow:1px 1px #000';
+    title.textContent = `❓ ${q.q}`;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:center;flex-wrap:wrap';
+    for (const opt of q.opts) {
+      const card = document.createElement('div');
+      card.className = 'skill-card';
+      card.textContent = `✨ ${opt}`;
+      row.appendChild(card);
+    }
+    choiceEl.append(title, row);
+    choiceEl.style.display = 'flex';
+  }
+  function resolveChoices(chosen) {
+    const cards = [...choiceEl.querySelectorAll('.skill-card')];
+    for (const card of cards) {
+      const label = card.textContent.replace(/^✨ /, '');
+      if (chosen.includes(label)) card.classList.add('chosen');
+      else card.classList.add('burn');
+    }
+    fx.knightLunge = 6; PRIM.flash({ strength: 0.4 });
+    setTimeout(closeOverlays, 1200);
+  }
+  function openPlan(plan) {
+    PRIM.dim({ on: true });
+    planEl.innerHTML = '';
+    const pre = document.createElement('pre');
+    planEl.appendChild(pre); planEl.style.display = 'flex';
+    let i = 0;
+    planTypeTimer = setInterval(() => { pre.textContent = plan.slice(0, i += 4); if (i >= plan.length) { clearInterval(planTypeTimer); planTypeTimer = null; } }, 16);
+  }
+  function approvePlan() {
+    const seal = document.createElement('div');
+    seal.textContent = '🔴 APPROVED';
+    seal.style.cssText = 'color:#c83737;font-weight:bold;font-size:13px;transform:rotate(-12deg);margin-top:-20px';
+    planEl.appendChild(seal);
+    PRIM.flash({ strength: 0.3 });
+    setTimeout(closeOverlays, 1500);
+  }
+  function closeOverlays() {
+    if (planTypeTimer !== null) { clearInterval(planTypeTimer); planTypeTimer = null; }
+    choiceEl.style.display = 'none'; planEl.style.display = 'none';
+    PRIM.dim({ on: false }); PRIM.letterbox({ on: false });
+  }
+  QLArena.on((d) => {
+    if (d.kind === 'choice_open') openChoices(d.questions || []);
+    if (d.kind === 'choice_made') resolveChoices(d.chosen || []);
+    if (d.kind === 'plan_scroll') openPlan(d.plan || '');
+    if (d.kind === 'plan_approved') approvePlan();
+  });
 })();

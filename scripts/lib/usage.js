@@ -26,6 +26,9 @@ function cacheFromStatusline(stdin, root) {
     source: rl.five_hour ? 'official' : prev.source,
     t: Date.now(),
   };
+  const same = JSON.stringify([prev.fiveHour, prev.sevenDay, prev.contextPct, prev.source])
+            === JSON.stringify([next.fiveHour, next.sevenDay, next.contextPct, next.source]);
+  if (same) return;
   state.ensureDirs();
   fs.writeFileSync(cachePath(root), JSON.stringify(next));
 }

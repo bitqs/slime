@@ -42,3 +42,13 @@ test('readCache on empty root returns nulls', () => {
   assert.equal(u.fiveHour, null);
   fs.rmSync(root2, { recursive: true, force: true });
 });
+
+test('identical data skips rewrite (dirty check)', () => {
+  const payload = { rate_limits: { five_hour: { used_percentage: 50, resets_at: 99 } } };
+  usage.cacheFromStatusline(payload);
+  const t1 = usage.readCache().t;
+  usage.cacheFromStatusline(payload);   // same data again
+  assert.equal(usage.readCache().t, t1); // not rewritten
+  usage.cacheFromStatusline({ rate_limits: { five_hour: { used_percentage: 51, resets_at: 99 } } });
+  assert.notEqual(usage.readCache().t, t1); // changed data rewrites
+});

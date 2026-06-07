@@ -10,7 +10,7 @@ try {
     const snap = state.readSnapshot(id) || { sessionId: id, turn: 0, combo: 0, kills: 0, dmg: 0, summons: 0 };
     snap.turn = (snap.turn || 0) + 1;
     snap.inTurn = true;
-    const b = boss.loadOrCreate(p.cwd || '', p.prompt || '');
+    const b = boss.loadOrCreate(p.cwd || '', p.prompt || '', locale.current());
     boss.save(p.cwd || '', b);
     try {
       const cfgPath = require('node:path').join(state.ROOT, 'config.json');

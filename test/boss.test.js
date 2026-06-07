@@ -29,3 +29,14 @@ test('boss store persists per cwd', () => {
   boss.save('/p/web', b);
   assert.equal(boss.loadOrCreate('/p/web', 'ignored').hp, 40);
 });
+
+test('zh boss names use 「base」type format', () => {
+  assert.equal(boss.nameBoss('修复登录bug', '/p/web', 'zh'), '「Web」错虫王');
+  assert.equal(boss.nameBoss('重构认证模块', '/p/api', 'zh'), '「Api」重构巨像');
+  assert.equal(boss.nameBoss('添加暗黑模式', '/p/web', 'zh'), '「Web」九头蛇');
+  assert.equal(boss.nameBoss('随便什么', '/p/web', 'zh'), '「Web」魔像');
+});
+
+test('en nameBoss unchanged without lang', () => {
+  assert.equal(boss.nameBoss('fix crash', '/p/web'), 'The Web Bugbear');
+});

@@ -37,7 +37,8 @@ consumers                                              READERS, never write game
   ├ scripts/watch.js       tmux top-pane live monitor
   └ scripts/serve.js       local HTTP: / (public/index.html) + /state + /events (SSE tail
                            of the jsonl) + exact-match static whitelist (arena.js,
-                           sequencer.js, vendor/pixi.min.js — never path-derived fs reads)
+                           sequencer.js, minions.js, vendor/pixi.min.js — never
+                           path-derived fs reads)
 ```
 
 - `scripts/lib/` is the shared layer; `scripts/lib/types.d.ts` holds the central JSDoc shapes (Snapshot, UsageCache, QLEvent…). All state IO goes through `scripts/lib/safe-io.js` (atomic writes, tolerant reads).

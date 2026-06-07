@@ -36,6 +36,8 @@ Then run `/questline:setup` once to enable the HUD. That's it — just work. The
 | | |
 |---|---|
 | ⚡ **Live battle feed** | Every tool call announced JRPG-style: `🔮 Scries with [WebSearch]…` — real tool names, real-time audit |
+| ⚡ **HP = your real usage** | Your five-hour window is your health bar — at zero, the Sage tells you exactly when you're restored |
+| 🧙 **The Sage** | One line of real advice per turn: rest at low HP, potion (/compact) when context runs heavy, pacing warnings |
 | 🗡️ **Bosses = your goals** | Your prompt names the monster; your todo list is its HP bar |
 | 💀 **You confirm the kill** | AI saying "done" isn't done — `/questline:defeat` is your acceptance gate |
 | 🏆 **Turn reports** | Rank S/A/B/C when Claude stops: damage (lines changed), kills (tests passed), max combo |
@@ -44,8 +46,15 @@ Then run `/questline:setup` once to enable the HUD. That's it — just work. The
 
 ## The Observer Principle
 
-Questline **never** affects real usage. No blocking, no context injection, no LLM calls, no auto-execution.
+Questline **never** affects real usage. No blocking, no context injection, no LLM calls by default, no auto-execution.
 Claude's behavior with Questline installed is byte-identical to without. Pure visuals, data, feedback.
+
+The optional Haiku boss-namer is **off by default** and costs one tiny model call per new boss (`"haikuNaming": true` in `~/.claude/ccq/config.json`).
+
+## Speaks Your Language
+
+Questline watches which language you prompt in and answers in kind — English and 中文 ship today.
+Force one with `"lang": "zh"` in `~/.claude/ccq/config.json`.
 
 ## Commands
 

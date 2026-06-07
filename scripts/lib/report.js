@@ -30,21 +30,24 @@ function bar(pct) {
 }
 
 function render(agg, bossState, snap, extras = {}) {
+  const locale = require('./locale');
+  const lang = extras.lang || locale.current();
+  const T = (key, vars) => locale.fmt(locale.t(key, lang), vars);
   const r = rank(agg);
   const lines = [
-    `━━━ TURN #${snap.turn || '?'} ━━━ Rank: ${r}`,
-    bossState ? `🗡️ Boss: ${bossState.name}  ${bar(bossState.hp)} ${bossState.hp}% HP` : null,
-    `⚔️ DMG ${agg.dmg} (lines changed) | 💀 Kills ${agg.kills} | 💥 Hits ${agg.hits} | 🔥 Max combo ×${agg.maxCombo}`,
+    T('report.header', { turn: snap.turn || '?', rank: r }),
+    bossState ? T('report.boss', { name: bossState.name, bar: bar(bossState.hp), hp: bossState.hp }) : null,
+    T('report.stats', { dmg: agg.dmg, kills: agg.kills, hits: agg.hits, maxCombo: agg.maxCombo }),
   ].filter(Boolean);
   const u = extras.usage;
   if (u && u.fiveHour && u.fiveHour.used != null) {
     const hp = Math.max(0, Math.round(100 - u.fiveHour.used));
     const weekly = u.sevenDay && u.sevenDay.used != null
-      ? ` | Weekly ${bar(100 - u.sevenDay.used)} ${Math.round(100 - u.sevenDay.used)}%` : '';
-    lines.push(`⚡ HP ${bar(hp)} ${hp}% (5h window)${weekly}`);
+      ? T('report.weekly', { bar: bar(100 - u.sevenDay.used), pct: Math.round(100 - u.sevenDay.used) }) : '';
+    lines.push(T('report.stamina', { bar: bar(hp), hp, weekly }));
   }
   if (bossState && bossState.hp <= 20) {
-    lines.push(`⚡ ${bossState.name} staggers — confirm the kill with /questline:defeat`);
+    lines.push(T('report.stagger', { name: bossState.name }));
   }
   if (extras.sageLine) lines.push(extras.sageLine);
   return lines.join('\n');

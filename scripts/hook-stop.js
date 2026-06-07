@@ -5,6 +5,7 @@ const report = require('./lib/report');
 const boss = require('./lib/boss');
 const usage = require('./lib/usage');
 const sage = require('./lib/sage');
+const locale = require('./lib/locale');
 try {
   const p = state.readStdin();
   if (p && p.session_id) {
@@ -14,8 +15,9 @@ try {
     const agg = report.aggregate(events);
     const b = p.cwd ? boss.loadOrCreate(p.cwd, '') : null;
     const u = usage.readCache();
-    const sageLine = sage.advise({ usage: u, bossHp: b ? b.hp : null });
-    const card = report.render(agg, b && { name: b.name, hp: b.hp }, snap, { usage: u, sageLine });
+    const lang = locale.current();
+    const sageLine = sage.advise({ usage: u, bossHp: b ? b.hp : null, lang });
+    const card = report.render(agg, b && { name: b.name, hp: b.hp }, snap, { usage: u, sageLine, lang });
 
     if (b && p.cwd) { b.turns = snap.turn || 0; boss.save(p.cwd, b); }
 
@@ -25,7 +27,7 @@ try {
 
     snap.inTurn = false;
     snap.combo = 0;
-    snap.lastText = `🏆 Turn ${snap.turn} complete — Rank ${report.rank(agg)}`;
+    snap.lastText = locale.fmt(locale.t('turn.complete', lang), { turn: snap.turn, rank: report.rank(agg) });
     snap.updated = Date.now();
     state.writeSnapshot(id, snap);
 

@@ -1,0 +1,16 @@
+{
+  "hud.idle": "⚔️ Questline — awaiting first encounter",
+  "hud.yourTurn": "⚔️ Questline — your turn, commander",
+  "hud.restAt": "🛌 Rest, commander. HP restored at {time}.",
+  "hud.restSoon": "🛌 Rest, commander. HP restored soon.",
+  "report.header": "━━━ TURN #{turn} ━━━ Rank: {rank}",
+  "report.boss": "🗡️ Boss: {name}  {bar} {hp}% HP",
+  "report.stats": "⚔️ DMG {dmg} (lines changed) | 💀 Kills {kills} | 💥 Hits {hits} | 🔥 Max combo ×{maxCombo}",
+  "report.stamina": "⚡ HP {bar} {hp}% (5h window){weekly}",
+  "report.weekly": " | Weekly {bar} {pct}%",
+  "report.stagger": "⚡ {name} staggers — confirm the kill with /questline:defeat",
+  "turn.complete": "🏆 Turn {turn} complete — Rank {rank}",
+  "sage.rest": "💡 Sage: 🛌 your HP is nearly spent — rest, the window restores it.",
+  "sage.potion": "💡 Sage: mana runs low — a potion (/compact) or strike camp (/clear).",
+  "sage.pacing": "💡 Sage: half your HP gone, the boss barely scratched — slow your pace, sharpen each strike."
+}

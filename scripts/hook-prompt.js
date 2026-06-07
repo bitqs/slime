@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 const state = require('./lib/state');
 const boss = require('./lib/boss');
+const locale = require('./lib/locale');
 try {
   const p = state.readStdin();
   if (p && p.session_id) {
+    try { locale.tally(p.prompt); } catch {}
     const id = p.session_id;
     const snap = state.readSnapshot(id) || { sessionId: id, turn: 0, combo: 0, kills: 0, dmg: 0, summons: 0 };
     snap.turn = (snap.turn || 0) + 1;

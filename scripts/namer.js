@@ -4,6 +4,7 @@
 // No shell: argv-array exec only (QL_NAMER_CMD must be a JSON argv array).
 const { execFileSync } = require('node:child_process');
 const boss = require('./lib/boss');
+const locale = require('./lib/locale');
 
 const cwd = process.argv[2];
 const prompt = process.argv[3] || '';
@@ -13,9 +14,11 @@ try {
   if (process.env.QL_NAMER_CMD) {
     argv = JSON.parse(process.env.QL_NAMER_CMD); // e.g. ["node","-e","console.log('X')"]
   } else {
-    argv = ['claude', '-p',
-      `Invent a short menacing RPG boss name (3-5 words, definite article) for this coding task: "${prompt.slice(0, 200)}". Reply with the name only.`,
-      '--model', 'haiku', '--max-turns', '1'];
+    const lang = locale.current();
+    const namerPrompt = lang === 'zh'
+      ? `为这个编程任务起一个简短霸气的中文 RPG Boss 名(4-10字):"${prompt.slice(0, 200)}". 只回名字。`
+      : `Invent a short menacing RPG boss name (3-5 words, definite article) for this coding task: "${prompt.slice(0, 200)}". Reply with the name only.`;
+    argv = ['claude', '-p', namerPrompt, '--model', 'haiku', '--max-turns', '1'];
   }
   const name = execFileSync(argv[0], argv.slice(1), { timeout: 30000 })
     .toString().trim().split('\n').pop().trim();

@@ -1,20 +1,23 @@
 const { bar } = require('./report');
 const usage = require('./usage');
 
-function render(snap, stdinJson, tips, now, usageCache) {
+function render(snap, stdinJson, tips, now, usageCache, lang) {
+  const locale = require('./locale');
+  const l = lang || locale.current();
+  const T = (key, vars) => locale.fmt(locale.t(key, l), vars);
   const hpVal = usage.hp(usageCache);
   if (hpVal === 0) {
     const t = usage.restTime(usageCache);
-    return `🛌 Rest, commander. HP restored${t ? ` at ${t}` : ' soon'}.`;
+    return t ? T('hud.restAt', { time: t }) : T('hud.restSoon');
   }
-  if (!snap) return '⚔️ Questline — awaiting first encounter';
+  if (!snap) return T('hud.idle');
   const idleMs = now - (snap.updated || 0);
 
   if (snap.inTurn && idleMs > 20000 && tips.length) {
     return tips[Math.floor(now / 20000) % tips.length];
   }
 
-  if (!snap.inTurn) return snap.lastText || '⚔️ Questline — your turn, commander';
+  if (!snap.inTurn) return snap.lastText || T('hud.yourTurn');
 
   const parts = [];
   if (hpVal != null) parts.push(`⚡HP ${hpVal}%`);

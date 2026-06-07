@@ -104,6 +104,11 @@ Statusline HUD (live during Claude's turn):
 ⚔️ Lv.12 Ranger | HP ██████░░ | MP ███░░ | 🔥combo×7 | 🐺×2 | turn: 💀3 ⚔️842
 ```
 
+During Claude's turn the statusline is strictly watch-only (no interaction) and alternates between:
+
+- **Battle frames** — the live combat feed above, with small ASCII animation ticks (⚔️→🗡️→⚔️) so the line visibly "fights"
+- **Loading-screen tips** — every ~20s of continuous waiting, one rotating tip in game voice: `💡 Sage: summons (subagents) fight without draining your context — send them on big hunts`. Tips are real Claude Code technique; the wait screen teaches. Tip pool ships in plugin data, community-extendable.
+
 Turn Report (at Stop):
 
 ```

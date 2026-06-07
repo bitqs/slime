@@ -12,6 +12,8 @@ Your work goals are the bosses. Your plugins are your gear. Watch Claude fight.
 
 <sub>Zero npm dependencies at runtime — the browser arena vendors PixiJS as a static file.</sub>
 
+**[▶️ Live arena demo](https://questline-arena-demo.shuangqu.workers.dev)** — watch a full battle before you install ([flash-free](https://questline-arena-demo.shuangqu.workers.dev/?calm=1))
+
 </div>
 
 ---

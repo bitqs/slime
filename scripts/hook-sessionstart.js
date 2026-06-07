@@ -8,7 +8,9 @@ try {
   if (p && p.session_id) {
     let gear = [];
     try {
-      const cache = path.join(os.homedir(), '.claude', 'plugins', 'cache');
+      const cache = process.env.CLAUDE_CONFIG_DIR
+        ? path.join(process.env.CLAUDE_CONFIG_DIR, 'plugins', 'cache')
+        : path.join(os.homedir(), '.claude', 'plugins', 'cache');
       gear = fs.readdirSync(cache).flatMap((mp) => {
         try { return fs.readdirSync(path.join(cache, mp)).filter((n) => !n.startsWith('.')); } catch { return []; }
       });

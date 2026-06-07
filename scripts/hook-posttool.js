@@ -14,6 +14,14 @@ try {
     if (ev.dmg) snap.dmg = (snap.dmg || 0) + ev.dmg;
     if (ev.kill) snap.kills = (snap.kills || 0) + 1;
     if (ev.text) snap.lastText = ev.text;
+    if (p.tool_name === 'AskUserQuestion') {
+      const ans = (p.tool_response && p.tool_response.answers) || {};
+      const chosen = Object.values(ans).filter((v) => typeof v === 'string').map((v) => v.slice(0, 60));
+      state.appendEvent(id, { t: Date.now(), kind: 'choice_made', chosen });
+    }
+    if (p.tool_name === 'ExitPlanMode') {
+      state.appendEvent(id, { t: Date.now(), kind: 'plan_approved' });
+    }
     if ((p.tool_name || '') === 'TodoWrite' && p.tool_input && p.tool_input.todos && p.cwd) {
       const b = boss.loadOrCreate(p.cwd, '');
       b.hp = boss.hpFromTodos(p.tool_input.todos);

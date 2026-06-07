@@ -64,3 +64,55 @@ test('pretool counts Skill invocations as gear use in profile', () => {
   const prof = JSON.parse(fs.readFileSync(path.join(ROOT, 'profile.json'), 'utf8'));
   assert.equal(prof.gearUse['superpowers'], 1);
 });
+
+test('AskUserQuestion emits choice_open with question and labels', () => {
+  const payload = {
+    session_id: 'cho1', tool_name: 'AskUserQuestion',
+    tool_input: { questions: [{ question: 'Pick a path', options: [{ label: 'Left' }, { label: 'Right' }] }] },
+  };
+  run('hook-pretool.js', payload);
+  const lines = fs.readFileSync(path.join(ROOT, 'sessions', 'cho1.jsonl'), 'utf8').trim().split('\n');
+  const evs = lines.map((l) => JSON.parse(l));
+  const open = evs.find((e) => e.kind === 'choice_open');
+  assert.ok(open);
+  assert.equal(open.questions[0].q, 'Pick a path');
+  assert.deepEqual(open.questions[0].opts, ['Left', 'Right']);
+});
+
+test('AskUserQuestion result emits choice_made with chosen labels', () => {
+  const payload = {
+    session_id: 'cho2', tool_name: 'AskUserQuestion',
+    tool_input: { questions: [] },
+    tool_response: { answers: { 'Pick a path': 'Left' } },
+  };
+  run('hook-posttool.js', payload);
+  const lines = fs.readFileSync(path.join(ROOT, 'sessions', 'cho2.jsonl'), 'utf8').trim().split('\n');
+  const evs = lines.map((l) => JSON.parse(l));
+  const made = evs.find((e) => e.kind === 'choice_made');
+  assert.ok(made);
+  assert.deepEqual(made.chosen, ['Left']);
+});
+
+test('ExitPlanMode emits plan_scroll with truncated plan', () => {
+  const payload = {
+    session_id: 'pla1', tool_name: 'ExitPlanMode',
+    tool_input: { plan: 'P'.repeat(3000) },
+  };
+  run('hook-pretool.js', payload);
+  const lines = fs.readFileSync(path.join(ROOT, 'sessions', 'pla1.jsonl'), 'utf8').trim().split('\n');
+  const evs = lines.map((l) => JSON.parse(l));
+  const sc = evs.find((e) => e.kind === 'plan_scroll');
+  assert.ok(sc);
+  assert.ok(sc.plan.length <= 1500);
+});
+
+test('ExitPlanMode result emits plan_approved', () => {
+  const payload = {
+    session_id: 'pla2', tool_name: 'ExitPlanMode',
+    tool_input: {}, tool_response: {},
+  };
+  run('hook-posttool.js', payload);
+  const lines = fs.readFileSync(path.join(ROOT, 'sessions', 'pla2.jsonl'), 'utf8').trim().split('\n');
+  const evs = lines.map((l) => JSON.parse(l));
+  assert.ok(evs.find((e) => e.kind === 'plan_approved'));
+});

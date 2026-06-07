@@ -18,7 +18,7 @@ test('serves whitelisted static assets with JS mime', async () => {
     assert.equal(res.status, 200, p);
     assert.match(res.headers.get('content-type'), /javascript/, p);
   }
-  srv.close();
+  await new Promise(r => srv.close(r));
 });
 
 test('404s anything not whitelisted', async () => {
@@ -32,7 +32,7 @@ test('404s anything not whitelisted', async () => {
     const res = await fetch(`http://127.0.0.1:${port}${p}`);
     assert.equal(res.status, 404, p);
   }
-  srv.close();
+  await new Promise(r => srv.close(r));
 });
 
 test('serves /state and / and 404', async () => {

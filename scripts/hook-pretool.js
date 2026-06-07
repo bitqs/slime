@@ -13,6 +13,13 @@ try {
     if (t === 'agent' || t === 'task') {
       snap.summons = (snap.summons || 0) + 1;
     }
+    if ((p.tool_name || '') === 'Skill' && p.tool_input && p.tool_input.skill) {
+      const plugin = String(p.tool_input.skill).split(':')[0];
+      const prof = state.readProfile();
+      prof.gearUse = prof.gearUse || {};
+      prof.gearUse[plugin] = (prof.gearUse[plugin] || 0) + 1;
+      state.writeProfile(prof);
+    }
     snap.inTurn = true;
     snap.lastText = ev.text;
     snap.updated = Date.now();

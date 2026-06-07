@@ -56,3 +56,11 @@ test('hooks never crash on garbage stdin (observer principle)', () => {
     assert.ok(out !== null); // exited 0, no throw
   }
 });
+
+test('pretool counts Skill invocations as gear use in profile', () => {
+  run('hook-pretool.js', {
+    session_id: 'h1', tool_name: 'Skill', tool_input: { skill: 'superpowers:brainstorming' },
+  });
+  const prof = JSON.parse(fs.readFileSync(path.join(ROOT, 'profile.json'), 'utf8'));
+  assert.equal(prof.gearUse['superpowers'], 1);
+});

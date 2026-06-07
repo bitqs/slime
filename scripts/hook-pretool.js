@@ -21,6 +21,10 @@ try {
       prof.gearUse[plugin] = (prof.gearUse[plugin] || 0) + 1;
       state.writeProfile(prof);
     }
+    snap.inTurn = true;
+    snap.lastText = ev.text;
+    snap.updated = Date.now();
+    state.writeSnapshot(id, snap);
     if (p.tool_name === 'AskUserQuestion' && p.tool_input && Array.isArray(p.tool_input.questions)) {
       const questions = p.tool_input.questions.slice(0, 4).map((q) => ({
         q: String(q.question || '').slice(0, 200),
@@ -31,10 +35,6 @@ try {
     if (p.tool_name === 'ExitPlanMode' && p.tool_input && p.tool_input.plan) {
       state.appendEvent(id, { t: Date.now(), kind: 'plan_scroll', plan: String(p.tool_input.plan).slice(0, 1500) });
     }
-    snap.inTurn = true;
-    snap.lastText = ev.text;
-    snap.updated = Date.now();
-    state.writeSnapshot(id, snap);
   }
 } catch {}
 process.exit(0);

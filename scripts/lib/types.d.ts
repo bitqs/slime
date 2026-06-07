@@ -6,6 +6,7 @@ export interface BossState {
   turns?: number;
   created?: number;
   named?: boolean;
+  broken?: boolean;
 }
 
 export interface Snapshot {
@@ -19,7 +20,8 @@ export interface Snapshot {
   inTurn?: boolean;
   lastText?: string;
   updated?: number;
-  boss?: { name: string; hp: number };
+  boss?: { name: string; hp: number; broken?: boolean };
+  todos?: Array<{ content: string; status: string; label: string; activeForm?: string; form: number }>;
   gear?: string[];
   [key: string]: unknown;
 }
@@ -74,6 +76,8 @@ export interface QLEvent {
   questions?: unknown[];
   chosen?: string[];
   plan?: string;
+  minion?: string;
+  count?: number;
 }
 
 /** Shape of JSON piped from the Claude Code statusline to our scripts. */

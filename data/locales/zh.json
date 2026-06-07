@@ -33,5 +33,11 @@
   "wrapped.turns": "回合",
   "wrapped.days": "出击天数",
   "wrapped.gear": "惯用装备",
-  "wrapped.bosses": "Boss 击杀"
+  "wrapped.bosses": "Boss 击杀",
+  "boss.broken": "☠ {name} 濒死 — 补刀!",
+  "boss.autoDown": "⚡⚡⚡ {name} — 击杀!⚡⚡⚡ (里程碑 #{count})",
+  "hud.broken": "🗡️ {name} ☠ 濒死 — /defeat 斩杀",
+  "hud.next": "▶ 下一步:{step}",
+  "minion.down": "✄ 斩杀:{minion}",
+  "minion.multi": "✄ ×{count} 连斩!"
 }

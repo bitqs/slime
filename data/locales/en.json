@@ -24,5 +24,11 @@
   "wrapped.turns": "turns fought",
   "wrapped.days": "active days",
   "wrapped.gear": "favorite gear",
-  "wrapped.bosses": "bosses felled"
+  "wrapped.bosses": "bosses felled",
+  "boss.broken": "☠ {name} is broken — finish it!",
+  "boss.autoDown": "⚡⚡⚡ {name} — DEFEATED ⚡⚡⚡ (milestone #{count})",
+  "hud.broken": "🗡️ {name} ☠ broken — /defeat to finish",
+  "hud.next": "▶ next: {step}",
+  "minion.down": "✄ slain: {minion}",
+  "minion.multi": "✄ ×{count} multi-kill!"
 }

@@ -60,4 +60,43 @@ function cast(payload, count) {
   return { t: Date.now(), kind: 'cast', tool, text };
 }
 
-module.exports = { cast, category, target, hash, VERBS, ICONS };
+const TEST_CMD = /\b(test|spec|pytest|jest|vitest|tape|--test)\b/;
+
+function lineCount(s) { return s ? String(s).split('\n').length : 0; }
+
+function resolve(payload, snap = {}) {
+  payload = payload || {};
+  const tool = payload.tool_name || 'Unknown';
+  const cat = category(tool);
+  const input = payload.tool_input || {};
+  const isError = Boolean(payload.tool_response && payload.tool_response.is_error);
+  let combo = snap.combo || 0;
+  const ev = { t: Date.now(), kind: 'resolve', tool };
+
+  if (isError) {
+    ev.hit = true;
+    ev.combo = 0;
+    ev.text = `💥 [${tool}] backfires — hit taken! combo broken`;
+    return ev;
+  }
+
+  if (cat === 'edit' || cat === 'write') {
+    ev.dmg = lineCount(input.new_string ?? input.content);
+    ev.combo = combo + 1;
+    ev.text = `⚔️ hit! ${ev.dmg} dmg 🔥combo×${ev.combo}`;
+    return ev;
+  }
+
+  if (cat === 'bash' && TEST_CMD.test(input.command || '')) {
+    ev.kill = true;
+    ev.combo = combo;
+    ev.text = `💀 tests pass — minion slain!`;
+    return ev;
+  }
+
+  ev.combo = combo;
+  ev.text = '';
+  return ev;
+}
+
+module.exports = { cast, resolve, category, target, hash, VERBS, ICONS };

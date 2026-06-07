@@ -32,3 +32,52 @@ test('cast survives null payload and empty input', () => {
   assert.equal(ev.kind, 'cast');
   assert.match(ev.text, /\[Unknown\]/);
 });
+
+test('resolve Edit counts damage as changed lines and grows combo', () => {
+  const ev = mapper.resolve(
+    { tool_name: 'Edit', tool_input: { new_string: 'a\nb\nc' }, tool_response: {} },
+    { combo: 2 }
+  );
+  assert.equal(ev.kind, 'resolve');
+  assert.equal(ev.dmg, 3);
+  assert.equal(ev.combo, 3);
+  assert.match(ev.text, /3 dmg/);
+  assert.match(ev.text, /combo×3/);
+});
+
+test('resolve Write counts content lines', () => {
+  const ev = mapper.resolve(
+    { tool_name: 'Write', tool_input: { content: 'x\ny' }, tool_response: {} },
+    { combo: 0 }
+  );
+  assert.equal(ev.dmg, 2);
+});
+
+test('resolve test-passing Bash is a kill', () => {
+  const ev = mapper.resolve(
+    { tool_name: 'Bash', tool_input: { command: 'node --test test/' }, tool_response: {} },
+    { combo: 0 }
+  );
+  assert.equal(ev.kill, true);
+  assert.match(ev.text, /💀/);
+});
+
+test('resolve errored tool is a hit and breaks combo', () => {
+  const ev = mapper.resolve(
+    { tool_name: 'Bash', tool_input: { command: 'npm test' }, tool_response: { is_error: true } },
+    { combo: 7 }
+  );
+  assert.equal(ev.hit, true);
+  assert.equal(ev.kill, undefined);
+  assert.equal(ev.combo, 0);
+  assert.match(ev.text, /💥/);
+});
+
+test('resolve non-edit non-bash tool is quiet success', () => {
+  const ev = mapper.resolve(
+    { tool_name: 'Read', tool_input: {}, tool_response: {} },
+    { combo: 4 }
+  );
+  assert.equal(ev.dmg, undefined);
+  assert.equal(ev.combo, 4); // reads don't grow or break combo
+});

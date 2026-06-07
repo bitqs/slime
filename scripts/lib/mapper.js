@@ -43,13 +43,14 @@ function target(input = {}) {
   if (input.skill) return input.skill;
   if (input.description) return input.description;
   if (input.prompt) return String(input.prompt).slice(0, 40) + '…';
-  if (input.command) return String(input.command).slice(0, 40);
+  if (input.command) return String(input.command).slice(0, 40) + '…';
   return '';
 }
 
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 function cast(payload, count) {
+  payload = payload || {};
   const tool = payload.tool_name || 'Unknown';
   const cat = category(tool);
   const pool = VERBS[cat];

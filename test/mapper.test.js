@@ -26,3 +26,9 @@ test('cast on unknown tool still works', () => {
   const ev = mapper.cast({ tool_name: 'mcp__github__create_pull_request', tool_input: {} }, 0);
   assert.match(ev.text, /\[mcp__github__create_pull_request\]/);
 });
+
+test('cast survives null payload and empty input', () => {
+  const ev = mapper.cast(null, 0);
+  assert.equal(ev.kind, 'cast');
+  assert.match(ev.text, /\[Unknown\]/);
+});

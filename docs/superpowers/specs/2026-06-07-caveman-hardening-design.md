@@ -152,10 +152,41 @@ This work runs as **Session C** in COORDINATION.md. Claims:
 - `README.md` — Quick Start rewrite + Requirements + Uninstall sections (Session B owns
   only the language-switcher line; sections don't overlap, but re-read before editing)
 - `test/safe-io.test.js` (new)
+- `commands/update.md` (new)
 
 Conflict watch: `scripts/defeat.js`, `scripts/milestones.js`, `scripts/battlelog.js`
 (Session B) import `lib/` — API compatibility is a hard constraint. `git add` explicit
 paths only.
+
+## 7. Update notifier
+
+Goal (user request 2026-06-07): on session start, if the marketplace repo has new
+commits, show the user what changed and let them trigger the update with one phrase.
+
+**SessionStart check** (extends `hook-sessionstart.js`):
+
+1. Resolve installed commit: read `~/.claude/plugins/installed_plugins.json`
+   (via `readJson`), take `plugins["questline@questline"][0].gitCommitSha`.
+2. Resolve marketplace source from `extraKnownMarketplaces.questline` in settings —
+   **only proceed if `source.source === "directory"`** (local repo). GitHub-sourced
+   installs skip the check entirely: no network at session start; official
+   auto-update covers them.
+3. `git -C <dir> rev-parse HEAD` (execFileSync, short timeout, silent-fail). Equal →
+   exit silent.
+4. `git -C <dir> log --oneline <installed>..HEAD` → commit subjects (cap at 5 lines,
+   sanitize through §2 `sanitize()` — commit messages are untrusted display input).
+5. Emit hook JSON `{ "systemMessage": "⬆️ Questline update (N commits): …\n
+   Reply '更新questline' or run /questline:update" }` — display-only, no model
+   context, Observer Principle intact.
+
+**`commands/update.md`** (new): instructs Claude to run
+`claude plugin marketplace update questline`, then tell the user to restart the
+session. Localized en/zh like other commands.
+
+Constraints: hooks cannot prompt interactively — "ask" = notify via systemMessage,
+user triggers with one phrase. Commit subjects are the changelog; write `feat:`/`fix:`
+subjects accordingly. Whole check is best-effort: any failure (no git, no
+installed_plugins.json, detached state) exits silent, never blocks session start.
 
 ## Error handling philosophy
 

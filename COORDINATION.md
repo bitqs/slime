@@ -37,6 +37,6 @@ Claimed:
 - `scripts/statusline.js`, `scripts/hook-prompt.js`, `scripts/hook-stop.js`, `scripts/hook-sessionstart.js`
 - `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` (new)
 - `README.md` — Quick Start + Requirements + Uninstall sections only (B owns the switcher line; re-read before edit)
-- `test/safe-io.test.js` (new)
+- `test/safe-io.test.js` (new), `commands/update.md` (new)
 
 Shared (append-only protocol): `data/locales/en.json`, `data/locales/zh.json`

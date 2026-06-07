@@ -18,6 +18,20 @@ Your work goals are the bosses. Your plugins are your gear. Watch Claude fight.
 
 ---
 
+## How to read the battle · 怎么看懂这场仗
+
+| On screen | Meaning · 含义 |
+|---|---|
+| 🗡️ Boss | Your current quest — forged from your prompt, sized by estimated token cost · 当前任务,体型=预估 token 量 |
+| ❤️ Boss HP | Falls as todos complete; at 0 the boss kneels, and dies automatically at session stop · todo 全勾=濒死,停机自动击杀 |
+| 🟢 Minions | The todo list — each completed todo slays a slime · 小怪=todo |
+| ⚡ Token | Your resource (5h rate window) · 你的资源,休息回复 |
+| 🔥 Combo | Consecutive successful tool strikes · 连击 |
+| 🍖 Feeding | Planning + Q&A feed the boss; it grows · 计划/问答喂怪 |
+| 🐺 Summons | Subagent dispatches fight beside you · 召唤兽=subagent |
+
+---
+
 <!-- demo.gif: terminal battle feed + turn report. TODO before launch -->
 
 Claude Code is already a turn-based game: you cast a prompt, Claude takes its turn, you wait.

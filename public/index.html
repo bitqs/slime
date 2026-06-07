@@ -47,6 +47,12 @@ body.calm .minion-hp-fill{transition:none}
 .minion-name{font-size:8px;color:#7fa8c0;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .minion-grave{position:absolute;top:0;font-size:12px}
 #feed-counter{position:absolute;right:8px;bottom:26px;font-size:10px;color:#f0b541;text-shadow:1px 1px #000;display:none;z-index:3}
+#help-btn{flex-shrink:0;background:#232733;color:#f0b541;border:1px solid #f0b541;font-family:monospace;font-size:11px;width:18px;height:18px;cursor:pointer}
+#guide-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(26,29,36,.92);z-index:30}
+#guide-box{max-width:85%;max-height:90%;overflow:auto;font-size:10px;line-height:1.5;color:#e8e0d0;background:#232733;border:2px solid #f0b541;padding:10px}
+#guide-box b{color:#f0b541}
+#guide-box code{color:#7fa8c0}
+#guide-close-hint{color:#7fa8c0;text-align:center;margin-top:4px}
 </style>
 </head>
 <body>
@@ -55,6 +61,7 @@ body.calm .minion-hp-fill{transition:none}
   <span id="boss-name">—</span>
   <div id="hp-bar"></div>
   <span id="player-token">⚡Token —</span>
+  <button id="help-btn" title="game guide (h)">?</button>
 </div>
 <div id="stage-wrap">
   <div id="canvas-wrap">
@@ -63,6 +70,20 @@ body.calm .minion-hp-fill{transition:none}
     <div id="choice-overlay"></div>
     <div id="plan-overlay"></div>
     <div id="feed-counter"></div>
+    <div id="guide-overlay">
+      <div id="guide-box">
+        <b>⚔️ How to read the battle · 怎么看懂这场仗</b>
+        <p>🗡️ <b>Boss</b> — your current quest in this project. Forged from your prompt; its size/tier comes from the estimated token cost. <i>Boss=当前任务,体型=预估 token 量。</i></p>
+        <p>❤️ <b>Boss HP</b> — falls as todos get checked off. At 0 the boss kneels (☠ broken); it dies automatically when the session stops. <i>todo 全勾=濒死,停机自动击杀,免打字。</i></p>
+        <p>🟢 <b>Minions</b> — the todo list. Each completed todo drains a slime's HP to zero. <i>小怪=todo,做完一只死一只。</i></p>
+        <p>⚡ <b>Token</b> — your resource (5h rate window). Rest restores it. <i>Token=你的资源,休息回复。</i></p>
+        <p>🔥 <b>Combo</b> — consecutive successful tool strikes. <i>连击=连续成功操作。</i></p>
+        <p>🍖 <b>Feeding</b> — while planning, every plan update and answered question feeds the boss and it grows. <i>计划和问答越喂越大。</i></p>
+        <p>🐺 <b>Summons</b> — subagent dispatches fight beside the knight. <i>召唤兽=subagent。</i></p>
+        <p>Commands: <code>/questline:arena</code> · <code>/questline:defeat</code> · <code>/questline:milestones</code> · <code>/questline:wrapped</code></p>
+        <p id="guide-close-hint">esc / click to close</p>
+      </div>
+    </div>
   </div>
 </div>
 <div id="minion-rail"></div>

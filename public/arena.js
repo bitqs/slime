@@ -952,4 +952,19 @@
       setScene('battle');
     }
   });
+
+  // ── game guide ────────────────────────────────────────────────────────────────
+  const guideEl = document.getElementById('guide-overlay');
+  function toggleGuide(force) {
+    if (!guideEl) return;
+    const show = force != null ? force : guideEl.style.display !== 'flex';
+    guideEl.style.display = show ? 'flex' : 'none';
+  }
+  const helpBtn = document.getElementById('help-btn');
+  if (helpBtn) helpBtn.addEventListener('click', () => toggleGuide());
+  if (guideEl) guideEl.addEventListener('click', () => toggleGuide(false));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'h') toggleGuide();
+    if (e.key === 'Escape') toggleGuide(false);
+  });
 })();

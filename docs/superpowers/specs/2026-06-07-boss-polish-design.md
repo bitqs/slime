@@ -125,22 +125,31 @@ Todos already drive boss hp; now they also appear on screen as killable mobs.
   (drain becomes instant, no pulse/shake) and the ≤3 flashes/sec governor.
   All locale keys land in both `en.json` and `zh.json`.
 
-## 6. Plan = feeding the boss (投喂)
+## 6. Scene system + plan-as-feeding (投喂)
 
-Planning is reframed as the player feeding the monster. The pipeline already
-exists — `hook-pretool.js` emits `plan_scroll` with `est` (estimateTokens of
-the plan text) and the arena stores it as `pendingEst`; this section is pure
-arena presentation.
+The arena gains three scenes, switched by events. Scene switching is
+presentation-only — no new event kinds, no hook changes (the pipeline
+already exists: `hook-pretool.js` emits `plan_scroll` with `est`,
+`hook-posttool.js` emits `choice_made` and `plan_approved`).
 
-- On each `plan_scroll`: a **feeding beat** — morsel sprite arcs into the
-  boss, munch wobble, and the boss **tweens toward the scale of the new
-  est's tier** (no snap). A floating `+{delta}` and a live counter
-  `≈{est}k tokens · {tier label}` sit under the boss while a plan is open.
-  Repeated `plan_scroll` events (plan revisions) re-feed and re-grow.
-- On `plan_approved`: forge flash locks the final tier (the engage-once
-  guard is amended to accept this one re-lock), counter fades, label stays.
-- `?calm=1` / `prefers-reduced-motion`: no wobble/arc — instant scale set
-  and a static counter. Flash governor applies.
+- **FEEDING (plan scene)**: any plan-phase activity — `plan_scroll`, and
+  Q&A (`choice_open`/`choice_made`) — enters the feeding scene: stage dims,
+  and the creature starts as a **baby slime (mob-sized, scale ~0.5)** that
+  is fed up toward boss size. Each `plan_scroll` lobs a morsel arc from the
+  knight and tweens the slime's scale toward the new est tier's scale (no
+  snap); each `choice_made` answer is a small morsel (+small grow toward
+  the current target). A live counter `≈{est}k tokens · {tier label}` sits
+  under the slime, with `+{delta}` floaters per feed. `plan_approved` →
+  forge flash locks the final tier → BATTLE.
+- **BATTLE (default scene)**: knight vs boss + minion rail — current
+  behavior. **With no plan at all, encounters go straight to BATTLE** and
+  the player fights minions directly; feeding never shows.
+- **SETTLEMENT (results scene)**: on `turn_end`, a brief dimmed results
+  card (rank/dmg/kills, ~2s) then back to BATTLE; on `boss_down`, the
+  victory cutscene + milestone toast IS the settlement, returning to BATTLE
+  (or idle when no boss remains).
+- `?calm=1` / `prefers-reduced-motion`: no wobble/arc/pulse — instant scale
+  set and a static counter. Flash governor applies throughout.
 
 ## 7. Game guide (游戏说明)
 

@@ -101,7 +101,7 @@ function renderFrame(snap, usageCache, events, lang, cols) {
     lines.push(ev.text.trim());
   }
 
-  return lines.join('\n');
+  return lines.map((line) => line.length > width ? line.slice(0, width - 1) + '…' : line).join('\n');
 }
 
 // ── live loop (only when run directly) ────────────────────────────────────────
@@ -131,6 +131,7 @@ if (require.main === module) {
   process.stdout.write('\x1b[?25l');
 
   function cleanup() {
+    clearInterval(timer);
     process.stdout.write('\x1b[2J\x1b[H\x1b[?25h');
     process.exit(0);
   }
@@ -139,7 +140,7 @@ if (require.main === module) {
 
   let lastGood = null;
   lastGood = tick(lastGood);
-  setInterval(() => { lastGood = tick(lastGood); }, 1000);
+  const timer = setInterval(() => { lastGood = tick(lastGood); }, 1000);
 }
 
 module.exports = { renderFrame };

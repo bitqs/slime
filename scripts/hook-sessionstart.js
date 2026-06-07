@@ -20,6 +20,15 @@ try {
       summons: 0, gear, inTurn: false, updated: Date.now(),
       lastText: '⚔️ Questline — awaiting first encounter',
     });
+    // Update notice — display-only systemMessage; Observer Principle intact.
+    const upd = require('./lib/update-check').checkUpdate();
+    if (upd) {
+      const { sanitize } = require('./lib/hud');
+      const lines = upd.subjects.map((s) => ` · ${sanitize(s, 80)}`).join('\n');
+      process.stdout.write(JSON.stringify({
+        systemMessage: `⬆️ Questline update available (${upd.count} commit${upd.count > 1 ? 's' : ''}):\n${lines}\nSay "更新questline" or run /questline:update.`,
+      }));
+    }
   }
 } catch {}
 process.exit(0);

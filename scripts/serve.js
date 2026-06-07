@@ -141,6 +141,21 @@ function handle404(res) {
   res.end('Not found');
 }
 
+// Exact-match whitelist: no fs paths are derived from user input, so
+// traversal is structurally impossible.
+const STATIC_WHITELIST = new Set(['/arena.js', '/sequencer.js', '/vendor/pixi.min.js']);
+
+function handleStatic(url, res) {
+  try {
+    const body = fs.readFileSync(path.join(PUBLIC_DIR, url));
+    res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+    res.end(body);
+  } catch {
+    res.writeHead(404);
+    res.end('Not found');
+  }
+}
+
 // ── server factory ────────────────────────────────────────────────────────────
 
 function createServer() {
@@ -152,6 +167,8 @@ function createServer() {
       handleState(res);
     } else if (req.method === 'GET' && url === '/events') {
       handleEvents(req, res);
+    } else if (req.method === 'GET' && STATIC_WHITELIST.has(url)) {
+      handleStatic(url, res);
     } else {
       handle404(res);
     }

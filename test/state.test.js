@@ -1,4 +1,4 @@
-const { test } = require('node:test');
+const { test, after } = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -7,6 +7,8 @@ const path = require('node:path');
 // point state at a temp root BEFORE requiring the module
 process.env.CCQ_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-'));
 const state = require('../scripts/lib/state');
+
+after(() => fs.rmSync(process.env.CCQ_ROOT, { recursive: true, force: true }));
 
 test('appendEvent then readEvents round-trips', () => {
   state.appendEvent('s1', { t: 1, kind: 'cast', text: 'hi' });

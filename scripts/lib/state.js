@@ -50,7 +50,7 @@ function writeProfile(p) {
 }
 
 function readStdin() {
-  try { return JSON.parse(require('node:fs').readFileSync(0, 'utf8')); }
+  try { return JSON.parse(fs.readFileSync(0, 'utf8')); }
   catch { return null; }
 }
 

@@ -129,3 +129,78 @@ test('ExitPlanMode result emits plan_approved', () => {
   const evs = lines.map((l) => JSON.parse(l));
   assert.ok(evs.find((e) => e.kind === 'plan_approved'));
 });
+
+test('TodoWrite: completed todos emit minion_down; snap.todos carries rail data', () => {
+  run('hook-posttool.js', {
+    session_id: 'm1', cwd: '/tmp/my-survivor-game', tool_name: 'TodoWrite',
+    tool_input: { todos: [
+      { content: 'write tests', activeForm: 'writing tests', status: 'completed' },
+      { content: 'fix bug', activeForm: 'fixing bug', status: 'in_progress' },
+      { content: 'docs', activeForm: 'writing docs', status: 'pending' },
+    ] }, tool_response: {},
+  });
+  const evs = fs.readFileSync(path.join(ROOT, 'sessions', 'm1.jsonl'), 'utf8')
+    .trim().split('\n').map((l) => JSON.parse(l));
+  const kills = evs.filter((e) => e.kind === 'minion_down');
+  assert.equal(kills.length, 1);
+  assert.match(kills[0].minion, /^MSG (mob 1|·小兵 1)$/u);
+  const snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'm1.json'), 'utf8'));
+  assert.equal(snap.todos.length, 3);
+  assert.equal(snap.todos[1].status, 'in_progress');
+  assert.equal(typeof snap.todos[0].form, 'number');
+});
+
+test('TodoWrite: re-sending same completed todo emits nothing new', () => {
+  run('hook-posttool.js', {
+    session_id: 'm1', cwd: '/tmp/my-survivor-game', tool_name: 'TodoWrite',
+    tool_input: { todos: [
+      { content: 'write tests', activeForm: 'writing tests', status: 'completed' },
+      { content: 'fix bug', activeForm: 'fixing bug', status: 'in_progress' },
+      { content: 'docs', activeForm: 'writing docs', status: 'pending' },
+    ] }, tool_response: {},
+  });
+  const evs = fs.readFileSync(path.join(ROOT, 'sessions', 'm1.jsonl'), 'utf8')
+    .trim().split('\n').map((l) => JSON.parse(l));
+  assert.equal(evs.filter((e) => e.kind === 'minion_down').length, 1);
+});
+
+test('TodoWrite: >3 fresh kills collapse into one multi-kill event', () => {
+  const todos = [1, 2, 3, 4, 5].map((i) => ({ content: `job ${i}`, activeForm: `doing ${i}`, status: 'completed' }));
+  run('hook-posttool.js', {
+    session_id: 'm2', cwd: '/tmp/web', tool_name: 'TodoWrite',
+    tool_input: { todos }, tool_response: {},
+  });
+  const evs = fs.readFileSync(path.join(ROOT, 'sessions', 'm2.jsonl'), 'utf8')
+    .trim().split('\n').map((l) => JSON.parse(l));
+  const kills = evs.filter((e) => e.kind === 'minion_down');
+  assert.equal(kills.length, 1);
+  assert.equal(kills[0].count, 5);
+});
+
+test('TodoWrite: hp→0 sets broken and emits boss_broken exactly once; recovery clears it', () => {
+  run('hook-posttool.js', {
+    session_id: 'm3', cwd: '/tmp/brk', tool_name: 'TodoWrite',
+    tool_input: { todos: [{ content: 'a', activeForm: 'a', status: 'completed' }] }, tool_response: {},
+  });
+  let snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'm3.json'), 'utf8'));
+  assert.equal(snap.boss.broken, true);
+  run('hook-posttool.js', {
+    session_id: 'm3', cwd: '/tmp/brk', tool_name: 'TodoWrite',
+    tool_input: { todos: [{ content: 'a', activeForm: 'a', status: 'completed' }] }, tool_response: {},
+  });
+  let evs = fs.readFileSync(path.join(ROOT, 'sessions', 'm3.jsonl'), 'utf8')
+    .trim().split('\n').map((l) => JSON.parse(l));
+  assert.equal(evs.filter((e) => e.kind === 'boss_broken').length, 1);
+  run('hook-posttool.js', {
+    session_id: 'm3', cwd: '/tmp/brk', tool_name: 'TodoWrite',
+    tool_input: { todos: [
+      { content: 'a', activeForm: 'a', status: 'completed' },
+      { content: 'b', activeForm: 'b', status: 'pending' },
+    ] }, tool_response: {},
+  });
+  snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'm3.json'), 'utf8'));
+  assert.equal(snap.boss.broken, false);
+  evs = fs.readFileSync(path.join(ROOT, 'sessions', 'm3.jsonl'), 'utf8')
+    .trim().split('\n').map((l) => JSON.parse(l));
+  assert.equal(evs.filter((e) => e.kind === 'boss_broken').length, 1);
+});

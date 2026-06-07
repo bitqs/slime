@@ -17,10 +17,48 @@ try {
     if (ev.kill) snap.kills = (snap.kills || 0) + 1;
     if (ev.text) snap.lastText = ev.text;
     if ((p.tool_name || '') === 'TodoWrite' && p.tool_input && p.tool_input.todos && p.cwd) {
-      const b = boss.loadOrCreate(p.cwd, '');
-      b.hp = boss.hpFromTodos(p.tool_input.todos);
-      boss.save(p.cwd, b);
-      snap.boss = { name: b.name, hp: b.hp };
+      const lang = locale.current();
+      const hud = require('./lib/hud');
+      const { hash } = require('./lib/mapper');
+      const todos = p.tool_input.todos;
+      const cwd = p.cwd;
+      const b = boss.loadOrCreate(cwd, '');
+      b.hp = boss.hpFromTodos(todos);
+
+      // broken transitions (one-shot event; silent recovery)
+      if (b.hp === 0 && !b.broken) {
+        b.broken = true;
+        state.appendEvent(id, { t: Date.now(), kind: 'boss_broken', boss: b.name,
+          text: locale.fmt(locale.t('boss.broken', lang), { name: b.name }) });
+      } else if (b.hp > 0 && b.broken) {
+        b.broken = false;
+      }
+      boss.save(cwd, b);
+      snap.boss = { name: b.name, hp: b.hp, broken: !!b.broken };
+
+      // minion rail snapshot + kill diff
+      const list = todos.map((todo, i) => ({
+        content: hud.sanitize(todo.content, 80),
+        status: String(todo.status || 'pending'),
+        label: boss.minionLabel(cwd, i, lang),
+        activeForm: hud.sanitize(todo.activeForm, 60),
+        form: hash(String(todo.content || '')) % 6,
+      }));
+      const prevDone = new Set((Array.isArray(snap.todos) ? snap.todos : [])
+        .filter((t) => t.status === 'completed').map((t) => t.content));
+      const fresh = list.filter((t) => t.status === 'completed' && !prevDone.has(t.content));
+      if (fresh.length > 3) {
+        state.appendEvent(id, { t: Date.now(), kind: 'minion_down',
+          minion: fresh[0].label, count: fresh.length,
+          text: locale.fmt(locale.t('minion.multi', lang), { count: fresh.length }) });
+      } else {
+        for (const k of fresh) {
+          state.appendEvent(id, { t: Date.now(), kind: 'minion_down', minion: k.label,
+            text: locale.fmt(locale.t('minion.down', lang), { minion: k.content }) });
+        }
+      }
+      if (fresh.length) snap.lastText = locale.fmt(locale.t('minion.down', lang), { minion: fresh[fresh.length - 1].content });
+      snap.todos = list;
     }
     snap.updated = Date.now();
     state.writeSnapshot(id, snap);

@@ -22,3 +22,14 @@ test('fmtTokens rounds to nearest 10k with k suffix', () => {
   assert.equal(fmtTokens(334500), '≈330k');
   assert.equal(fmtTokens(25000), '≈30k');
 });
+
+test('CJK chars weigh more than ascii', () => {
+  const zh = estimateTokens('重构整个认证模块并补全测试'.repeat(50));
+  const en = estimateTokens('refactor auth and add tests'.repeat(50));
+  assert.ok(zh > en, `zh ${zh} should exceed en ${en}`);
+});
+
+test('bounds hold with heavy CJK', () => {
+  assert.equal(estimateTokens('改'.repeat(200000)), 900000);
+  assert.ok(estimateTokens('') >= 20000); // floor
+});

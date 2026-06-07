@@ -21,6 +21,7 @@ export interface Snapshot {
   updated?: number;
   boss?: { name: string; hp: number };
   gear?: string[];
+  [key: string]: unknown;
 }
 
 export interface RateWindow {
@@ -95,5 +96,37 @@ export interface StatuslineStdin {
 /** Todo item shape used by TodoWrite tool. */
 export interface TodoItem {
   status: string;
+  [key: string]: unknown;
+}
+
+/** Tool input bag — fields vary by tool; index sig required for HookPayload. */
+export interface ToolInput {
+  file_path?: string;
+  pattern?: string;
+  query?: string;
+  skill?: string;
+  description?: string;
+  prompt?: string;
+  command?: string;
+  new_string?: string;
+  content?: string;
+  plan?: string;
+  todos?: TodoItem[];
+  questions?: Array<{ question?: string; options?: Array<{ label?: string }> }>;
+  answers?: Record<string, string>;
+  [key: string]: unknown;
+}
+
+/**
+ * JSON piped into hook scripts by Claude Code.
+ * Superset of StatuslineStdin — adds the tool / prompt / cwd fields.
+ */
+export interface HookPayload {
+  session_id?: string;
+  tool_name?: string;
+  tool_input?: ToolInput;
+  tool_response?: { is_error?: boolean; answers?: Record<string, string>; [key: string]: unknown };
+  cwd?: string;
+  prompt?: string;
   [key: string]: unknown;
 }

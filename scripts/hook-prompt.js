@@ -1,9 +1,12 @@
 #!/usr/bin/env node
+/** @typedef {import('./lib/types').HookPayload} HookPayload */
+/** @typedef {import('./lib/types').Snapshot} Snapshot */
 const state = require('./lib/state');
 const boss = require('./lib/boss');
 const locale = require('./lib/locale');
 try {
-  const p = state.readStdin();
+  /** @type {HookPayload | null} */
+  const p = /** @type {HookPayload | null} */ (state.readStdin());
   if (p && p.session_id) {
     try { locale.tally(p.prompt); } catch {}
     const id = p.session_id;
@@ -15,7 +18,7 @@ try {
     boss.save(p.cwd || '', b);
     try {
       const cfgPath = require('node:path').join(state.ROOT, 'config.json');
-      const cfg = require('./lib/safe-io').readJson(cfgPath, {}) || {};
+      const cfg = /** @type {{ haikuNaming?: unknown }} */ (require('./lib/safe-io').readJson(cfgPath, {}) || {});
       if (cfg.haikuNaming && b.hp === 100 && !b.named) {
         b.named = true; boss.save(p.cwd || '', b);
         const { spawn } = require('node:child_process');

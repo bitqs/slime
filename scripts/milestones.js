@@ -9,5 +9,5 @@ try {
   }
   lines.push('', `Career: ${prof.totals.turns} turns, ${prof.totals.dmg} dmg, ${prof.totals.kills} kills`);
   console.log(lines.join('\n'));
-} catch (e) { console.log('The wall is unreadable: ' + e.message); }
+} catch (e) { console.log('The wall is unreadable: ' + (e instanceof Error ? e.message : String(e))); }
 process.exit(0);

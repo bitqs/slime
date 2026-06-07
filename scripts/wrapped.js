@@ -14,6 +14,7 @@ function weekly(now = Date.now()) {
   let dmg = 0, kills = 0, hits = 0, turns = 0, potions = 0, summons = 0, maxCombo = 0;
   const activeDaySet = new Set();
 
+  /** @type {string[]} */
   let files = [];
   try { files = fs.readdirSync(sessionsDir).filter((f) => f.endsWith('.jsonl')); }
   catch { /* no sessions dir yet */ }
@@ -53,7 +54,8 @@ function weekly(now = Date.now()) {
     return ts >= cutoff && ts <= now;
   });
 
-  const gearUse = prof.gearUse || prof.gear || {};
+  /** @type {Record<string, number>} */
+  const gearUse = /** @type {Record<string, number>} */ (/** @type {unknown} */ (prof.gearUse || prof.gear || {}));
   const topGear = Object.entries(gearUse)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
@@ -61,17 +63,25 @@ function weekly(now = Date.now()) {
   return { dmg, kills, hits, turns, potions, summons, maxCombo, activeDays: activeDaySet.size, milestones, topGear };
 }
 
+/**
+ * @param {ReturnType<typeof weekly>} data
+ * @param {string} [lang]
+ * @returns {string}
+ */
 function card(data, lang) {
+  /** @param {string} key @returns {string} */
   const T = (key) => locale.t(key, lang);
   const WIDTH = 36;
   const inner = WIDTH - 2; // between the │ chars
 
+  /** @param {string} left @param {string} right @returns {string} */
   function row(left, right) {
     const line = `  ${left}: ${right}`;
     const pad = inner - line.length;
     return `║${line}${' '.repeat(Math.max(0, pad))}║`;
   }
 
+  /** @param {string} text @returns {string} */
   function centre(text) {
     const visible = text.replace(/[̀-ͯ]/g, '').length; // rough
     // emoji width: treat each emoji as 2 chars for centering
@@ -99,7 +109,7 @@ function card(data, lang) {
 
   if (data.topGear && data.topGear.length > 0) {
     lines.push(blank);
-    lines.push(row(T('wrapped.gear'), data.topGear.map(([k, v]) => `${k}×${v}`).join(' ')));
+    lines.push(row(T('wrapped.gear'), data.topGear.map((/** @type {[string, number]} */ [k, v]) => `${k}×${v}`).join(' ')));
   }
 
   if (data.milestones && data.milestones.length > 0) {

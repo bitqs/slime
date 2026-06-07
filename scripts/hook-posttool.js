@@ -1,10 +1,12 @@
 #!/usr/bin/env node
+/** @typedef {import('./lib/types').HookPayload} HookPayload */
 const state = require('./lib/state');
 const mapper = require('./lib/mapper');
 const locale = require('./lib/locale');
 const boss = require('./lib/boss');
 try {
-  const p = state.readStdin();
+  /** @type {HookPayload | null} */
+  const p = /** @type {HookPayload | null} */ (state.readStdin());
   if (p && p.session_id) {
     const id = p.session_id;
     const snap = state.readSnapshot(id) || { sessionId: id, turn: 0, combo: 0, kills: 0, dmg: 0, summons: 0 };

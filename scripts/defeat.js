@@ -25,6 +25,6 @@ try {
     `💡 Sage: quest complete — strike camp (/clear) before the next hunt.`,
   ].join('\n'));
 } catch (e) {
-  console.log('The killing blow glanced off. (' + e.message + ')');
+  console.log('The killing blow glanced off. (' + (e instanceof Error ? e.message : String(e)) + ')');
 }
 process.exit(0);

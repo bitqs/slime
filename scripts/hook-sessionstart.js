@@ -6,6 +6,7 @@ const state = require('./lib/state');
 try {
   const p = state.readStdin();
   if (p && p.session_id) {
+    /** @type {string[]} */
     let gear = [];
     try {
       const cache = process.env.CLAUDE_CONFIG_DIR

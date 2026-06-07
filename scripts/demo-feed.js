@@ -20,6 +20,7 @@ fs.writeFileSync(path.join(ROOT, 'usage.json'), JSON.stringify({
 let snap = { sessionId: sid, turn: 1, combo: 0, kills: 0, dmg: 0, summons: 0, inTurn: true,
   boss: { name: 'The Demo Dragon', hp: 80 }, updated: Date.now() };
 fs.writeFileSync(snapPath, JSON.stringify(snap));
+/** @param {Record<string, unknown>} o */
 const ev = (o) => { fs.appendFileSync(evPath, JSON.stringify({ t: Date.now(), ...o }) + '\n'); fs.writeFileSync(snapPath, JSON.stringify({ ...snap, updated: Date.now() })); };
 
 const script = [

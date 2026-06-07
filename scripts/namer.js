@@ -20,8 +20,8 @@ try {
       : `Invent a short menacing RPG boss name (3-5 words, definite article) for this coding task: "${prompt.slice(0, 200)}". Reply with the name only.`;
     argv = ['claude', '-p', namerPrompt, '--model', 'haiku', '--max-turns', '1'];
   }
-  const name = execFileSync(argv[0], argv.slice(1), { timeout: 30000 })
-    .toString().trim().split('\n').pop().trim();
+  const name = (execFileSync(argv[0], argv.slice(1), { timeout: 30000 })
+    .toString().trim().split('\n').pop() || '').trim();
   if (name && name.length >= 4 && name.length <= 60) {
     const b = boss.loadOrCreate(cwd, prompt);
     b.name = name;

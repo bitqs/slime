@@ -5,6 +5,10 @@
  * Pure observer — never writes any file.
  */
 
+/** @typedef {import('./lib/types').Snapshot} Snapshot */
+/** @typedef {import('./lib/types').UsageCache} UsageCache */
+/** @typedef {import('./lib/types').QLEvent} QLEvent */
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { ROOT, readSnapshot, readEvents, newestSessionId } = require('./lib/state');
@@ -15,16 +19,16 @@ const locale = require('./lib/locale');
 // ── pure render ───────────────────────────────────────────────────────────────
 
 /**
- * renderFrame(snap, usageCache, events, lang, cols) → string
- *
- * snap        – session snapshot object or null
- * usageCache  – usage cache object or null
- * events      – array of event objects (with .text)
- * lang        – locale string ('en'|'zh')
- * cols        – terminal width
+ * @param {Snapshot | null} snap
+ * @param {UsageCache | null} usageCache
+ * @param {QLEvent[]} events
+ * @param {string} [lang]
+ * @param {number} [cols]
+ * @returns {string}
  */
 function renderFrame(snap, usageCache, events, lang, cols) {
   const l = lang || locale.current();
+  /** @param {string} key @param {Record<string, unknown>} [vars] @returns {string} */
   const T = (key, vars) => locale.fmt(locale.t(key, l), vars);
   const width = cols || 60;
 
@@ -81,7 +85,7 @@ function renderFrame(snap, usageCache, events, lang, cols) {
   // ── lines 4-6: last 3 events with non-empty text ─────────────────────────
   const textEvents = events.filter((e) => e.text && e.text.trim()).slice(-3);
   for (const ev of textEvents) {
-    lines.push(ev.text.trim());
+    if (ev.text) lines.push(ev.text.trim());
   }
 
   return lines.map((line) => line.length > width ? line.slice(0, width - 1) + '…' : line).join('\n');
@@ -89,6 +93,10 @@ function renderFrame(snap, usageCache, events, lang, cols) {
 
 // ── live loop (only when run directly) ────────────────────────────────────────
 
+/**
+ * @param {string | null} lastGood
+ * @returns {string | null}
+ */
 function tick(lastGood) {
   try {
     const lang = locale.current();
@@ -121,6 +129,7 @@ if (require.main === module) {
   process.on('SIGINT', cleanup);
   process.on('SIGTERM', cleanup);
 
+  /** @type {string | null} */
   let lastGood = null;
   lastGood = tick(lastGood);
   const timer = setInterval(() => { lastGood = tick(lastGood); }, 1000);

@@ -11,6 +11,7 @@ try {
   const snap = id ? state.readSnapshot(id) : null;
   const lang = locale.current();
   const { readJson } = require('./lib/safe-io');
+  /** @type {string[]} */
   let tips = [];
   const fallbackTips = path.join(__dirname, '..', 'data', 'tips.json');
   if (lang !== 'en') {

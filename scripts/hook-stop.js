@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+/** @typedef {import('./lib/types').HookPayload} HookPayload */
+/** @typedef {import('./lib/types').Snapshot} Snapshot */
+/** @typedef {import('./lib/types').UsageCache} UsageCache */
 const state = require('./lib/state');
 const report = require('./lib/report');
 const boss = require('./lib/boss');
@@ -6,10 +9,12 @@ const usage = require('./lib/usage');
 const sage = require('./lib/sage');
 const locale = require('./lib/locale');
 try {
-  const p = state.readStdin();
+  /** @type {HookPayload | null} */
+  const p = /** @type {HookPayload | null} */ (state.readStdin());
   if (p && p.session_id) {
     const id = p.session_id;
-    const snap = state.readSnapshot(id) || { sessionId: id, turn: 1 };
+    /** @type {Snapshot} */
+    const snap = state.readSnapshot(id) || /** @type {Snapshot} */ ({ sessionId: id, turn: 1, combo: 0, kills: 0, dmg: 0, summons: 0 });
     const events = state.readEvents(id);
     const agg = report.aggregate(events);
     const b = p.cwd ? boss.loadOrCreate(p.cwd, '') : null;
@@ -18,7 +23,7 @@ try {
     const sageLine = sage.advise({ usage: u, bossHp: b ? b.hp : null, lang });
     // boss name is user-prompt- or LLM-derived — sanitize before terminal display
     const { sanitize } = require('./lib/hud');
-    const card = report.render(agg, b && { name: sanitize(b.name), hp: b.hp }, snap, { usage: u, sageLine, lang });
+    const card = report.render(agg, b && { name: sanitize(b.name), hp: b.hp }, snap, { usage: u, sageLine: sageLine ?? undefined, lang });
 
     if (b && p.cwd) { b.turns = snap.turn || 0; boss.save(p.cwd, b); }
 

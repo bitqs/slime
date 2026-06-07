@@ -5,6 +5,9 @@
  * READ-ONLY: never writes under ROOT.
  */
 
+/** @typedef {import('node:http').IncomingMessage} IncomingMessage */
+/** @typedef {import('node:http').ServerResponse} ServerResponse */
+
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
@@ -17,6 +20,7 @@ const PORT = Number(process.env.QL_PORT) || 4117;
 
 // ── route handlers ────────────────────────────────────────────────────────────
 
+/** @param {ServerResponse} res */
 function handleIndex(res) {
   const file = path.join(PUBLIC_DIR, 'index.html');
   try {
@@ -29,6 +33,7 @@ function handleIndex(res) {
   }
 }
 
+/** @param {ServerResponse} res */
 function handleState(res) {
   try {
     const id = newestSessionId();
@@ -43,6 +48,10 @@ function handleState(res) {
   }
 }
 
+/**
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
+ */
 function handleEvents(req, res) {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -114,6 +123,7 @@ function handleEvents(req, res) {
   req.on('error', cleanup);
 }
 
+/** @param {ServerResponse} res */
 function handle404(res) {
   res.writeHead(404);
   res.end('Not found');
@@ -123,6 +133,10 @@ function handle404(res) {
 // traversal is structurally impossible.
 const STATIC_WHITELIST = new Set(['/arena.js', '/sequencer.js', '/vendor/pixi.min.js']);
 
+/**
+ * @param {string} url
+ * @param {ServerResponse} res
+ */
 function handleStatic(url, res) {
   try {
     const body = fs.readFileSync(path.join(PUBLIC_DIR, url));
@@ -138,7 +152,7 @@ function handleStatic(url, res) {
 
 function createServer() {
   const server = http.createServer((req, res) => {
-    const url = req.url.split('?')[0];
+    const url = (req.url || '/').split('?')[0];
     if (req.method === 'GET' && url === '/') {
       handleIndex(res);
     } else if (req.method === 'GET' && url === '/state') {

@@ -68,9 +68,7 @@ and celebrates the result.
 | Skill cast | PostToolUse on `AskUserQuestion` → `choice_made` event (chosen labels) | chosen card flips gold + flies to knight, knight cast animation + white flash; others burn away |
 | Quest scroll | PreToolUse on `ExitPlanMode` → `plan_scroll` event (plan text) | parchment scroll unrolls with typewriter plan summary; approval (`choice_made`) stamps a wax seal |
 
-New hook script `hook-pretool.js` (and a PostToolUse twin or a flag on the
-same script) appends these events to the session jsonl — same observer
-pattern as existing hooks, never blocks, exits 0 always. All text passes
+Implemented by extending the existing `hook-pretool.js` / `hook-posttool.js` (they already observe every tool call); same fail-soft pattern. All text passes
 through the existing sanitize + escHtml paths before rendering.
 
 ## Live RPG Stats Panel

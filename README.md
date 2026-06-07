@@ -48,6 +48,7 @@ That's it — just work. The game plays itself.
 | 🏆 **Turn reports** | Rank S/A/B/C when Claude stops: damage (lines changed), kills (tests passed), max combo |
 | 🏛️ **Milestone Wall** | Every defeated boss, dated — your project chronicle |
 | 💡 **Loading-screen tips** | Long waits teach you real Claude Code technique |
+| 🎬 **Cinematic arena** | Boss intros, victory blowouts, combo escalation, gamified choices, boss forge with token-estimate tiers — PixiJS, vendored, still zero npm deps. Add `?calm=1` (or set OS reduced-motion) for a flash-free arena |
 
 ## The Observer Principle
 

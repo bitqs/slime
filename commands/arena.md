@@ -10,3 +10,5 @@ Start the viewer server in the background if not already running, then tell the 
 ```
 
 Show the user: "⚔️ Arena live — open http://127.0.0.1:4117 (stop it later with: kill $(lsof -ti :4117))"
+
+Flash-sensitive? Open `http://127.0.0.1:4117/?calm=1` — flashes become fades, shake turns off.

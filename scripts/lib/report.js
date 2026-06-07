@@ -35,7 +35,7 @@ function render(agg, bossState, snap) {
     `⚔️ DMG ${agg.dmg} (lines changed) | 💀 Kills ${agg.kills} | 💥 Hits ${agg.hits} | 🔥 Max combo ×${agg.maxCombo}`,
   ].filter(Boolean);
   if (bossState && bossState.hp <= 20) {
-    lines.push(`⚡ ${bossState.name} staggers — confirm the kill with /defeat`);
+    lines.push(`⚡ ${bossState.name} staggers — confirm the kill with /questline:defeat`);
   }
   return lines.join('\n');
 }

@@ -149,21 +149,20 @@
   // ── uiLayer chrome ───────────────────────────────────────────────────────────
   const flashRect = new PIXI.Graphics().rect(0, 0, W, H).fill(0xffffff);
   flashRect.alpha = 0;
-  let flashColor = 0xffffff;
-  const vignette = makeRadial(P.red);   // danger (low token)
-  const vignetteEdge = makeRadial(P.ember); // combo edge flame
-  vignette.alpha = 0; vignetteEdge.alpha = 0;
-  function makeRadial(color) {
-    // ring-ish red/ember frame: four edge gradients approximated with rects.
-    const g = new PIXI.Graphics();
-    const col = colorNum(color);
-    const band = 26;
-    g.rect(0, 0, W, band).fill({ color: col, alpha: 0.6 });
-    g.rect(0, H - band, W, band).fill({ color: col, alpha: 0.6 });
-    g.rect(0, 0, band, H).fill({ color: col, alpha: 0.6 });
-    g.rect(W - band, 0, band, H).fill({ color: col, alpha: 0.6 });
-    return g;
+  function makeRadial(r, g, b, edgeAlpha) {
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+    const grad = ctx.createRadialGradient(160, 90, 60, 160, 90, 185);
+    grad.addColorStop(0, `rgba(${r},${g},${b},0)`);
+    grad.addColorStop(1, `rgba(${r},${g},${b},${edgeAlpha})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    return new PIXI.Sprite(PIXI.Texture.from(cv));
   }
+  const vignette = makeRadial(200, 55, 55, 0.55);   // danger (low token)
+  const vignetteEdge = makeRadial(232, 132, 44, 0.6); // combo edge flame
+  vignette.alpha = 0; vignetteEdge.alpha = 0;
   const letterTop = new PIXI.Graphics().rect(0, 0, W, 24).fill(0x000000);
   const letterBot = new PIXI.Graphics().rect(0, 0, W, 24).fill(0x000000);
   letterTop.y = -24; letterBot.y = H;
@@ -200,20 +199,20 @@
     }
   }
 
-  function floater(text, x, y, color, size) {
+  function floater(text, x, y, color, size, pop) {
     const t = new PIXI.Text({ text: String(text), style: { fontFamily: 'monospace',
       fontSize: size || 8, fontWeight: 'bold', fill: colorNum(color || P.gold) } });
+    if (pop) t.anchor.set(0.5);
     t.x = x; t.y = y;
     fxLayer.addChild(t);
-    fx.floaters.push({ node: t, age: 0, maxAge: 48 });
+    fx.floaters.push({ node: t, age: 0, maxAge: 48, pop: !!pop });
   }
 
   // ── FX primitives ─────────────────────────────────────────────────────────────
   const PRIM = {
     flash({ color = '#ffffff', strength = 0.5 } = {}) {
       if (!governor.allow(frame)) return;
-      flashColor = colorNum(color);
-      flashRect.tint = flashColor;
+      flashRect.tint = colorNum(color);
       flashRect.alpha = CALM ? Math.min(0.25, strength) : strength;
     },
     shake({ amp = 4, frames = 10 } = {}) { if (!CALM) { fx.shake = frames; fx.shakeAmp = amp; } },
@@ -381,6 +380,12 @@
       f.age++;
       f.node.y -= 0.4;
       f.node.alpha = Math.max(0, 1 - f.age / f.maxAge);
+      if (f.pop) {
+        const s = f.age < 0.2 * f.maxAge
+          ? (f.age / (0.2 * f.maxAge)) * 1.3
+          : 1 + 0.3 * (1 - f.age / f.maxAge);
+        f.node.scale.set(s);
+      }
       if (f.age >= f.maxAge) { fxLayer.removeChild(f.node); f.node.destroy(); return false; }
       return true;
     });
@@ -546,7 +551,7 @@
       if (typeof d.dmg === 'number' && d.dmg > 0) {
         floater(`-${d.dmg}`, 230, 110, P.gold);
         PRIM.shake({ amp: 3, frames: 6 });
-        if (d.combo && d.combo > 1) floater(`×${d.combo}`, 250, 100, P.ember, 9);
+        if (d.combo && d.combo > 1) floater(`×${d.combo}`, 250, 100, P.ember, 9, true);
         onCombo(d.combo || 0, d.dmg);
       }
       if (d.kill) { burst(238, 125, P.bone, 8); PRIM.flash({ strength: 0.4 }); }

@@ -735,7 +735,6 @@
   let minionStreak = 0;
   let lastMinionKill = 0;
   QLArena.on((d) => {
-    if (d.kind === 'plan_scroll' && d.est != null) pendingEst = d.est;
     if (d.kind === 'encounter') {
       const isNew = d.bossName && d.bossName !== engagedBoss;
       if (isNew) {

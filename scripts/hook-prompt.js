@@ -15,6 +15,8 @@ try {
     snap.inTurn = true;
     const lang = locale.current();
     const b = boss.loadOrCreate(p.cwd || '', p.prompt || '', lang);
+    const est = require('./lib/estimate').estimateTokens(p.prompt || '');
+    if (!b.estLines) b.estLines = require('./lib/estimate').estLines(est);
     boss.save(p.cwd || '', b);
     try {
       const cfgPath = require('node:path').join(state.ROOT, 'config.json');
@@ -27,7 +29,6 @@ try {
       }
     } catch {}
     snap.boss = { name: b.name, hp: b.hp };
-    const est = require('./lib/estimate').estimateTokens(p.prompt || '');
     snap.est = est; // survives arena refreshes — encounter SSE events do not
     state.appendEvent(id, { t: Date.now(), kind: 'encounter', bossName: b.name, text: locale.fmt(locale.t('encounter', lang), { turn: snap.turn, name: b.name, hp: b.hp }), est });
     snap.lastText = locale.fmt(locale.t('encounter.appears', lang), { name: b.name });

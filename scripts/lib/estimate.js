@@ -19,4 +19,11 @@ function estimateTokens(text) {
 function fmtTokens(n) {
   return `≈${Math.round(n / 10000) * 10}k`;
 }
-module.exports = { estimateTokens, fmtTokens };
+/** Expected lines-changed budget for a quest, with bug-fix headroom.
+ *  est tokens → lines: ~1 line per 450 est-tokens, ×1.3 margin, floor 40.
+ *  @param {number | null | undefined} estTokens @returns {number} */
+function estLines(estTokens) {
+  const t = typeof estTokens === 'number' && estTokens > 0 ? estTokens : 25000;
+  return Math.max(40, Math.round((t / 450) * 1.3));
+}
+module.exports = { estimateTokens, fmtTokens, estLines };

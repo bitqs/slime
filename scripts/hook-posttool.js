@@ -16,6 +16,19 @@ try {
     if (ev.dmg) snap.dmg = (snap.dmg || 0) + ev.dmg;
     if (ev.kill) snap.kills = (snap.kills || 0) + 1;
     if (ev.text) snap.lastText = ev.text;
+    if (ev.dmg && p.cwd) {
+      const b = boss.loadOrCreate(p.cwd, '');
+      b.dmgTaken = (b.dmgTaken || 0) + ev.dmg;
+      if (!b.estLines) b.estLines = require('./lib/estimate').estLines(null);
+      b.hp = Math.max(0, Math.round(100 * (1 - b.dmgTaken / b.estLines)));
+      if (b.hp === 0 && !b.broken) {
+        b.broken = true;
+        state.appendEvent(id, { t: Date.now(), kind: 'boss_broken', boss: b.name,
+          text: locale.fmt(locale.t('boss.broken', locale.current()), { name: b.name }) });
+      }
+      boss.save(p.cwd, b);
+      snap.boss = { name: b.name, hp: b.hp, broken: !!b.broken };
+    }
     if ((p.tool_name || '') === 'TodoWrite' && p.tool_input && p.tool_input.todos && p.cwd) {
       const lang = locale.current();
       const hud = require('./lib/hud');
@@ -23,15 +36,21 @@ try {
       const todos = p.tool_input.todos;
       const cwd = p.cwd;
       const b = boss.loadOrCreate(cwd, '');
-      b.hp = boss.hpFromTodos(todos);
-
-      // broken transitions (one-shot event; silent recovery)
-      if (b.hp === 0 && !b.broken) {
-        b.broken = true;
-        state.appendEvent(id, { t: Date.now(), kind: 'boss_broken', boss: b.name,
-          text: locale.fmt(locale.t('boss.broken', lang), { name: b.name }) });
-      } else if (b.hp > 0 && b.broken) {
+      const allDone = todos.length > 0 && todos.every((t) => t.status === 'completed');
+      if (allDone && b.hp > 0) {
+        // every minion is down but the boss still stands — ULTIMATE finisher
+        b.hp = 0;
+        if (!b.broken) {
+          b.broken = true;
+          state.appendEvent(id, { t: Date.now(), kind: 'ultimate', boss: b.name,
+            text: locale.fmt(locale.t('boss.ultimate', lang), { name: b.name }) });
+          state.appendEvent(id, { t: Date.now(), kind: 'boss_broken', boss: b.name,
+            text: locale.fmt(locale.t('boss.broken', lang), { name: b.name }) });
+        }
+      } else if (!allDone && b.broken && b.hp === 0 && (b.dmgTaken || 0) < (b.estLines || 1)) {
+        // new live todos while not actually out of budget → revive from the budget
         b.broken = false;
+        b.hp = Math.max(1, Math.round(100 * (1 - (b.dmgTaken || 0) / (b.estLines || 1))));
       }
       boss.save(cwd, b);
       snap.boss = { name: b.name, hp: b.hp, broken: !!b.broken };

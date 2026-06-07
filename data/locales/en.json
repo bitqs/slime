@@ -26,6 +26,7 @@
   "wrapped.gear": "favorite gear",
   "wrapped.bosses": "bosses felled",
   "boss.broken": "☠ {name} is broken — finish it!",
+  "boss.ultimate": "⚡ ULTIMATE — {name} is struck down in one blow!",
   "boss.autoDown": "⚡⚡⚡ {name} — DEFEATED ⚡⚡⚡ (milestone #{count})",
   "hud.broken": "👾☠ broken — /defeat to finish",
   "hud.next": "▶ next: {step}",

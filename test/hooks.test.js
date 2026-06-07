@@ -227,3 +227,45 @@ test('TodoWrite: hp→0 sets broken and emits boss_broken exactly once; recovery
     .trim().split('\n').map((l) => JSON.parse(l));
   assert.equal(evs.filter((e) => e.kind === 'boss_broken').length, 1);
 });
+
+test('edits drain boss hp from the code budget', () => {
+  // Create boss via prompt (estLines seeded from estimateTokens)
+  run('hook-prompt.js', { session_id: 'bdg1', prompt: 'fix login', cwd: '/tmp/budget' });
+  // First edit: ~30 lines of dmg
+  const lines30 = Array.from({ length: 30 }, (_, i) => `line${i}`).join('\n');
+  run('hook-posttool.js', {
+    session_id: 'bdg1', cwd: '/tmp/budget', tool_name: 'Edit',
+    tool_input: { new_string: lines30 }, tool_response: {},
+  });
+  let snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'bdg1.json'), 'utf8'));
+  assert.ok(snap.boss.hp < 100, `hp should be < 100, got ${snap.boss.hp}`);
+  assert.ok(snap.boss.hp > 0, `hp should be > 0 after 30 lines, got ${snap.boss.hp}`);
+  const hp1 = snap.boss.hp;
+  // Second bigger edit: another 30 lines → hp lower
+  run('hook-posttool.js', {
+    session_id: 'bdg1', cwd: '/tmp/budget', tool_name: 'Edit',
+    tool_input: { new_string: lines30 }, tool_response: {},
+  });
+  snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'bdg1.json'), 'utf8'));
+  assert.ok(snap.boss.hp < hp1, `hp should decrease after second edit: ${snap.boss.hp} >= ${hp1}`);
+});
+
+test('all todos done with hp left → ultimate + broken', () => {
+  // Create boss via prompt (fresh, hp=100)
+  run('hook-prompt.js', { session_id: 'ult1', prompt: 'add feature', cwd: '/tmp/ult' });
+  // Send all-completed todos without draining hp first
+  run('hook-posttool.js', {
+    session_id: 'ult1', cwd: '/tmp/ult', tool_name: 'TodoWrite',
+    tool_input: { todos: [
+      { content: 'write tests', activeForm: 'writing', status: 'completed' },
+      { content: 'ship it', activeForm: 'shipping', status: 'completed' },
+    ] }, tool_response: {},
+  });
+  const snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'ult1.json'), 'utf8'));
+  assert.equal(snap.boss.hp, 0, `boss hp should be 0, got ${snap.boss.hp}`);
+  assert.equal(snap.boss.broken, true, 'boss should be broken');
+  const evs = fs.readFileSync(path.join(ROOT, 'sessions', 'ult1.jsonl'), 'utf8')
+    .trim().split('\n').map((l) => JSON.parse(l));
+  assert.equal(evs.filter((e) => e.kind === 'ultimate').length, 1, 'should have exactly one ultimate event');
+  assert.equal(evs.filter((e) => e.kind === 'boss_broken').length, 1, 'should have exactly one boss_broken event');
+});

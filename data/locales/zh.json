@@ -65,6 +65,7 @@
   "wrapped.gear": "惯用装备",
   "wrapped.bosses": "Boss 击杀",
   "boss.broken": "☠ {name} 濒死 — 补刀!",
+  "boss.ultimate": "⚡ 大招 — 一击秒杀 {name}!",
   "boss.autoDown": "⚡⚡⚡ {name} — 击杀!⚡⚡⚡ (里程碑 #{count})",
   "hud.broken": "👾☠ 濒死 — /defeat 斩杀",
   "hud.next": "▶ 下一步:{step}",

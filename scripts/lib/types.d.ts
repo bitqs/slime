@@ -7,6 +7,8 @@ export interface BossState {
   created?: number;
   named?: boolean;
   broken?: boolean;
+  estLines?: number;
+  dmgTaken?: number;
 }
 
 export interface Snapshot {

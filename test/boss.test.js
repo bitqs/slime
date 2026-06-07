@@ -15,14 +15,6 @@ test('nameBoss: epithet + compressed base + type, deterministic per prompt', () 
   assert.match(boss.nameBoss('whatever else', '/p/web'), /^The [A-Za-z-]+ Web Golem$/);
 });
 
-test('hpFromTodos: no todos = 100, half done = 50, all done = 0', () => {
-  assert.equal(boss.hpFromTodos([]), 100);
-  assert.equal(boss.hpFromTodos([
-    { status: 'completed' }, { status: 'pending' }
-  ]), 50);
-  assert.equal(boss.hpFromTodos([{ status: 'completed' }]), 0);
-});
-
 test('boss store persists per cwd', () => {
   const b = boss.loadOrCreate('/p/web', 'add dark mode');
   assert.match(b.name, /^The [A-Za-z-]+ Web Hydra$/);

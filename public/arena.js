@@ -953,6 +953,18 @@
     if (d.kind === 'boss_down') { clearSummons(); setScene('battle'); engagedBoss = null; setBroken(false); packSprites.forEach((s) => { s.visible = false; }); tentacleGfx.clear(); playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
     if (d.kind === 'potion') { playScene(SCENE_POTION); if (d.text) pushLog(d.text); }
     if (d.kind === 'boss_broken') { setBroken(true); PRIM.shake({ amp: 2, frames: 8 }); if (d.text) pushLog(d.text); }
+    if (d.kind === 'ultimate') {
+      playScene([
+        { at: 0,  do: 'letterbox', on: true },
+        { at: 0,  do: 'slowmo', factor: 0.3, frames: 30 },
+        { at: 4,  do: 'bigtext', text: '⚡ ULTIMATE ⚡', y: 60 },
+        { at: 8,  do: 'flash', strength: 0.6 },
+        { at: 10, do: 'shake', amp: 6, frames: 14 },
+        { at: 60, do: 'hidetext' },
+        { at: 60, do: 'letterbox', on: false },
+      ]);
+      if (d.text) pushLog(d.text);
+    }
     if (d.kind === 'minion_down') {
       if (window.QLMinions) QLMinions.kill(d.minion, CALM);
       {

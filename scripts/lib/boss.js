@@ -1,5 +1,4 @@
 /** @typedef {import('./types').BossState} BossState */
-/** @typedef {import('./types').TodoItem} TodoItem */
 const fs = require('node:fs');
 const path = require('node:path');
 const state = require('./state');
@@ -73,13 +72,6 @@ function nameBoss(prompt, cwd, lang) {
   return `The ${ep} ${base} ${type}`;
 }
 
-/** @param {TodoItem[] | null | undefined} todos @returns {number} */
-function hpFromTodos(todos) {
-  if (!todos || !todos.length) return 100;
-  const done = todos.filter((todo) => todo.status === 'completed').length;
-  return Math.max(0, Math.round(100 * (1 - done / todos.length)));
-}
-
 /** @param {string} cwd @returns {string} */
 function bossPath(cwd) {
   return path.join(state.ROOT, 'bosses', `${hash(cwd)}.json`);
@@ -122,4 +114,4 @@ function recordDefeat(cwd, b) {
   return prof.milestones.length;
 }
 
-module.exports = { nameBoss, hpFromTodos, loadOrCreate, save, clear, bossPath, compressName, minionLabel, recordDefeat };
+module.exports = { nameBoss, loadOrCreate, save, clear, bossPath, compressName, minionLabel, recordDefeat };

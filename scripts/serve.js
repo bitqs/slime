@@ -11,7 +11,7 @@
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
-const { ROOT, readSnapshot, eventsPath, newestSessionId } = require('./lib/state');
+const { readSnapshot, eventsPath, newestSessionId } = require('./lib/state');
 const { readCache } = require('./lib/usage');
 const locale = require('./lib/locale');
 

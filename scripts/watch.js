@@ -9,8 +9,6 @@
 /** @typedef {import('./lib/types').UsageCache} UsageCache */
 /** @typedef {import('./lib/types').QLEvent} QLEvent */
 
-const fs = require('node:fs');
-const path = require('node:path');
 const { ROOT, readSnapshot, readEvents, newestSessionId } = require('./lib/state');
 const { readCache, hp, restTime } = require('./lib/usage');
 const { bar } = require('./lib/report');

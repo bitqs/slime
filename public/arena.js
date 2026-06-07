@@ -179,6 +179,7 @@
   }
 
   // ── fx state + governor ───────────────────────────────────────────────────────
+  let bossDead = false;
   const fx = { shake: 0, shakeAmp: 4, knightLunge: 0, speed: 1, hitstop: 0, particles: [],
     floaters: [], chromaFrames: 0, edgeFlame: 0, slowmoLeft: null, zoom: 1, zoomLeft: null,
     bossFalling: false, type: null };
@@ -233,12 +234,13 @@
     chroma({ frames: f = 20 } = {}) { if (!CALM) fx.chromaFrames = f; },
     zoom({ scale = 1.12, frames: f = 8 } = {}) { if (!CALM) { fx.zoom = scale; fx.zoomLeft = f; } },
     slam() {
+      bossDead = false;
       boss.visible = true; boss.y = FLOOR_Y - 14;
       this.shake({ amp: 4, frames: 12 });
       burst(boss.x + 8, FLOOR_Y, P.dark, 14);
     },
-    bossdrop() { boss.visible = true; boss.y = -20; fx.bossFalling = true; },
-    bossburst() { boss.visible = false; burst(238, 125, P.bone, 26); },
+    bossdrop() { bossDead = false; boss.visible = true; boss.y = -20; fx.bossFalling = true; },
+    bossburst() { bossDead = true; boss.visible = false; burst(238, 125, P.bone, 26); },
     goldrain() {
       for (let i = 0; i < 40; i++) {
         fx.particles.push({ x: Math.random() * W, y: -Math.random() * 20,
@@ -273,7 +275,7 @@
       { at: 0,   do: 'dim', on: true },
       { at: 6,   do: 'typewriter', text: name, y: 60 },
       { at: 50,  do: 'flash', strength: 0.5 },
-      { at: 58,  do: 'flash', strength: 0.5 },          // governor enforces the gap
+      { at: 58,  do: 'flash', strength: 0.5 },          // 8 frames after the first: governor drops it (photosensitivity cap) — kept as data intent
       { at: 66,  do: 'dim', on: false },
       { at: 66,  do: 'bossdrop' },                       // falls, slams, shakes, dust
       { at: 110, do: 'hidetext' },
@@ -491,7 +493,7 @@
     // boss snapshot
     if (snap) {
       hideOverlay();
-      boss.visible = true;
+      if (!bossDead) boss.visible = true;
       if (snap.boss && snap.boss.name) setText('boss-name', snap.boss.name);
       let pct = null;
       if (snap.boss && typeof snap.boss.hpPct === 'number') pct = snap.boss.hpPct;
@@ -605,6 +607,7 @@
 
   QLArena.on((d) => {
     if (d.kind === 'encounter') {
+      hideOverlay();
       if (d.bossName) { setText('boss-name', d.bossName); }
       playScene(SCENE_BOSS_INTRO(d.bossName || 'A NEW FOE'));
       if (d.text) pushLog(d.text);

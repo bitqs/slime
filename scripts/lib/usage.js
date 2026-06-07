@@ -5,8 +5,9 @@ const { safeWrite, readJson } = require('./safe-io');
 const cachePath = (root) => path.join(root || state.ROOT, 'usage.json');
 
 function readCache(root) {
-  return readJson(cachePath(root),
-    { fiveHour: null, sevenDay: null, contextPct: null, source: null, t: 0 });
+  // `||`: a file containing literal `null` parses successfully — fallback won't fire
+  return readJson(cachePath(root), null)
+    || { fiveHour: null, sevenDay: null, contextPct: null, source: null, t: 0 };
 }
 
 function cacheFromStatusline(stdin, root) {

@@ -118,3 +118,26 @@ test('readEvents skips corrupt JSONL lines instead of throwing', () => {
     delete require.cache[require.resolve('../scripts/lib/state')];
   }
 });
+
+test('literal-null JSON files do not crash locale/usage', () => {
+  const d = tmpdir();
+  process.env.CCQ_ROOT = d;
+  for (const m of ['state', 'locale', 'usage', 'safe-io']) {
+    delete require.cache[require.resolve(`../scripts/lib/${m}`)];
+  }
+  try {
+    fs.writeFileSync(path.join(d, 'config.json'), 'null');
+    fs.writeFileSync(path.join(d, 'usage.json'), 'null');
+    const locale = require('../scripts/lib/locale');
+    const usage = require('../scripts/lib/usage');
+    assert.doesNotThrow(() => locale.current());
+    const cache = usage.readCache();
+    assert.ok(cache && typeof cache === 'object');
+    assert.doesNotThrow(() => usage.cacheFromStatusline({ rate_limits: {} }));
+  } finally {
+    delete process.env.CCQ_ROOT;
+    for (const m of ['state', 'locale', 'usage', 'safe-io']) {
+      delete require.cache[require.resolve(`../scripts/lib/${m}`)];
+    }
+  }
+});

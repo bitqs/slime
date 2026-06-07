@@ -26,7 +26,8 @@ function tally(prompt) {            // called by hook-prompt
 }
 
 function current() {                // config override > majority > 'en'
-  const cfg = readJson(path.join(state.ROOT, 'config.json'), {});
+  // `|| {}`: a file containing literal `null` parses successfully — fallback won't fire
+  const cfg = readJson(path.join(state.ROOT, 'config.json'), {}) || {};
   if (cfg.lang) return cfg.lang;
   try {
     const stats = state.readProfile().langStats || {};

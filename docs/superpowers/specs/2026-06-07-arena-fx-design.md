@@ -53,7 +53,7 @@ FX primitives: `flash`, `shake`, `hitstop`, `zoom`, `letterbox`, `typewriter`,
 | Boss intro | `encounter` event | letterbox → boss name typewriter → double white flash → boss slams down: screen shake + dust particles |
 | Kill / victory | new `boss_down` event — `defeat.js` appends it on confirmed kill | 8-frame hitstop → 0.3× slow-mo boss shatters into particles → white flash → VICTORY banner + gold-coin particle rain + confetti |
 | Battle escalation | `resolve` events (`combo`, `dmg`) | combo ≥5: breathing flame screen edges; combo ≥10: chromatic shake + zoom punch per hit; big dmg: radial speed lines |
-| Danger state | `/state` `playerHp`; `potion` event | HP<30: red vignette heartbeat pulse + low-frequency shake; HP=0: grayscale filter + sleeping Zzz; potion: gulp cutscene (green flash + bubble particles) |
+| Danger state | `/state` usage (Token %); `potion` event | Token<30%: red vignette heartbeat pulse + low-frequency shake; Token=0: grayscale filter + sleeping Zzz; potion: gulp cutscene (green flash + bubble particles) |
 
 ## Choice & Info Gamification
 
@@ -80,8 +80,8 @@ game language and updated live (the `/state` poll already runs every 5s):
 
 | Stat | Source | Game wrapping |
 |---|---|---|
-| 5h window | `usage.fiveHour` (cached) | ⚡HP bar — already in top bar |
-| Weekly window | `usage.sevenDay` (cached) | 🏕️ Stamina bar (small, next to HP) |
+| 5h window | `usage.fiveHour` (cached) | ⚡Token bar — player resource is named **Token**, not HP (user decision 2026-06-07). Rename ripples across statusline, watch.js, arena top bar, locale strings (`hud.restAt` → "Token restores at {time}"), sage advice copy, README. Boss HP keeps the HP name — only the player resource renames. |
+| Weekly window | `usage.sevenDay` (cached) | 🏕️ Stamina bar (small, next to Token bar) |
 | Context window | `usage.contextPct` (cached) | 🔮 Mana bar — drains as context fills; `potion` event = mana chug animation; low mana glows blue-warning |
 | Session cost | `cost.total_cost_usd` (statusline stdin → **new cache fields**) | 💰 Gold counter — coins fly off and counter ticks when it increases |
 | Model | `model.display_name` (statusline stdin → new cache field) | ⚔️ Equipped weapon: Opus = legendary ⭐, Sonnet = rare 🔷, Haiku = swift 🗡️ — small icon + name under the knight |

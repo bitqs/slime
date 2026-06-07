@@ -1,5 +1,7 @@
-function rank({ hits = 0, kills = 0 }) {
+function rank({ hits = 0, kills = 0, dmg = 0 }) {
   if (hits === 0 && kills > 0) return 'S';
+  if (hits === 0 && dmg > 0) return 'A';
+  if (hits === 0) return 'B'; // read-only / scouting turn
   if (hits <= 1) return 'A';
   if (hits <= 3) return 'B';
   return 'C';

@@ -12,6 +12,8 @@ test('rank: S no hits + kills, A few hits, C many hits', () => {
   assert.equal(report.rank({ hits: 1, kills: 0 }), 'A');
   assert.equal(report.rank({ hits: 3, kills: 0 }), 'B');
   assert.equal(report.rank({ hits: 5, kills: 0 }), 'C');
+  assert.equal(report.rank({ hits: 0, kills: 0, dmg: 50 }), 'A');
+  assert.equal(report.rank({ hits: 0, kills: 0, dmg: 0 }), 'B');
 });
 
 test('aggregate sums turn events since last turn_end', () => {

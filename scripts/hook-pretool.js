@@ -33,7 +33,7 @@ try {
       state.appendEvent(id, { t: Date.now(), kind: 'choice_open', questions });
     }
     if (p.tool_name === 'ExitPlanMode' && p.tool_input && p.tool_input.plan) {
-      state.appendEvent(id, { t: Date.now(), kind: 'plan_scroll', plan: String(p.tool_input.plan).slice(0, 1500) });
+      state.appendEvent(id, { t: Date.now(), kind: 'plan_scroll', plan: String(p.tool_input.plan).slice(0, 1500), est: require('./lib/estimate').estimateTokens(p.tool_input.plan) });
     }
   }
 } catch {}

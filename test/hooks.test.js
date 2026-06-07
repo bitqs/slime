@@ -40,6 +40,16 @@ test('prompt hook opens encounter and creates boss', () => {
   assert.equal(snap.boss.name, 'The Myapp Bugbear');
 });
 
+test('prompt hook encounter event has numeric est', () => {
+  run('hook-prompt.js', { session_id: 'h3', prompt: '1. do thing\n2. do more', cwd: '/tmp/myapp' });
+  const lines = fs.readFileSync(path.join(ROOT, 'sessions', 'h3.jsonl'), 'utf8').trim().split('\n');
+  const evs = lines.map((l) => JSON.parse(l));
+  const enc = evs.find((e) => e.kind === 'encounter');
+  assert.ok(enc);
+  assert.equal(typeof enc.est, 'number');
+  assert.ok(enc.est >= 20000);
+});
+
 test('stop hook emits systemMessage card and resets inTurn', () => {
   const out = run('hook-stop.js', { session_id: 'h1', cwd: '/tmp/myapp' });
   const msg = JSON.parse(out);
@@ -104,6 +114,7 @@ test('ExitPlanMode emits plan_scroll with truncated plan', () => {
   const sc = evs.find((e) => e.kind === 'plan_scroll');
   assert.ok(sc);
   assert.ok(sc.plan.length <= 1500);
+  assert.ok(sc.est >= 20000);
 });
 
 test('ExitPlanMode result emits plan_approved', () => {

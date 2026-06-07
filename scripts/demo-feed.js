@@ -23,7 +23,7 @@ fs.writeFileSync(snapPath, JSON.stringify(snap));
 const ev = (o) => { fs.appendFileSync(evPath, JSON.stringify({ t: Date.now(), ...o }) + '\n'); fs.writeFileSync(snapPath, JSON.stringify({ ...snap, updated: Date.now() })); };
 
 const script = [
-  () => ev({ kind: 'encounter', bossName: 'The Demo Dragon', text: '⚡ The Demo Dragon appears!' }),
+  () => ev({ kind: 'encounter', bossName: 'The Demo Dragon', text: '⚡ The Demo Dragon appears!', est: 180000 }),
   () => ev({ kind: 'cast', text: '⚔️ Carves with [Edit] → demo.ts' }),
   () => ev({ kind: 'resolve', dmg: 12, combo: 3, text: '⚔️ hit! 12 dmg 🔥combo×3' }),
   () => ev({ kind: 'resolve', dmg: 30, combo: 6, text: '⚔️ hit! 30 dmg 🔥combo×6' }),
@@ -31,7 +31,7 @@ const script = [
   () => ev({ kind: 'resolve', kill: true, text: '💀 tests pass — minion slain!' }),
   () => ev({ kind: 'choice_open', questions: [{ q: 'Pick a skill', opts: ['Fireball', 'Heal', 'Flee'] }] }),
   () => ev({ kind: 'choice_made', chosen: ['Fireball'] }),
-  () => ev({ kind: 'plan_scroll', plan: '1. Slay dragon\n2. Loot hoard\n3. Profit' }),
+  () => ev({ kind: 'plan_scroll', plan: '1. Slay dragon\n2. Loot hoard\n3. Profit', est: 330000 }),
   () => ev({ kind: 'plan_approved' }),
   () => ev({ kind: 'potion', text: '🧪 potion quaffed' }),
   () => ev({ kind: 'turn_end', text: '🏆 Turn 1 complete — Rank S' }),

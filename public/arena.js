@@ -264,9 +264,27 @@
       }
     },
     dim({ on } = {}) { world.alpha = on ? 0.3 : 1; },
+    forgeparticles() { // particles converge on the boss anchor
+      for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * Math.PI * 2;
+        fx.particles.push({ x: 238 + Math.cos(a) * 70, y: 110 + Math.sin(a) * 50,
+          vx: -Math.cos(a) * 1.6, vy: -Math.sin(a) * 1.1, c: P.gold, age: 0, maxAge: 44, noGravity: true,
+          color: colorNum(P.gold) });
+      }
+    },
   };
 
   function playScene(steps) { activeScenes.push(QLSeq.createTimeline(steps)); }
+
+  // ── token threat helpers ───────────────────────────────────────────────────────
+  function bossTierFor(est) {
+    if (est == null) return { scale: 1, color: '#e8e0d0', label: '' };
+    if (est < 100000) return { scale: 1, color: '#e8e0d0', label: 'normal' };
+    if (est < 300000) return { scale: 1.25, color: '#f0b541', label: 'ELITE' };
+    return { scale: 1.5, color: '#c83737', label: 'RAID BOSS' };
+  }
+  // mirror of scripts/lib/estimate.js fmtTokens (browser has no require)
+  function fmtTokensJs(n) { return `≈${Math.round(n / 10000) * 10}k`; }
 
   // ── cutscene builders ─────────────────────────────────────────────────────────
   function SCENE_BOSS_INTRO(name) {
@@ -298,6 +316,19 @@
     { at: 10, do: 'bigtext', text: '🧪 mana restored', y: 50 },
     { at: 70, do: 'hidetext' },
   ];
+  function SCENE_FORGE(est) {
+    const tier = bossTierFor(est);
+    return [
+      { at: 0,  do: 'dim', on: true },
+      { at: 0,  do: 'bigtext', text: '⚒️ FORGING…', y: 50 },
+      { at: 4,  do: 'forgeparticles' },
+      { at: 40, do: 'flash', strength: 0.4 },
+      { at: 40, do: 'bigtext', text: `${fmtTokensJs(est)} tokens · ${tier.label || 'boss'}`, y: 50 },
+      { at: 44, do: 'bossdrop' },
+      { at: 100, do: 'hidetext' },
+      { at: 100, do: 'dim', on: false },
+    ];
+  }
 
   // ── render loop ───────────────────────────────────────────────────────────────
   app.ticker.add(() => {
@@ -605,10 +636,21 @@
   }
   connectEvents();
 
+  let pendingEst = null;
   QLArena.on((d) => {
+    if (d.kind === 'plan_scroll' && d.est != null) pendingEst = d.est;
     if (d.kind === 'encounter') {
       hideOverlay();
-      if (d.bossName) { setText('boss-name', d.bossName); }
+      const est = d.est != null ? d.est : pendingEst;
+      const tier = bossTierFor(est);
+      boss.scale.set(tier.scale);
+      boss.x = 220 - (tier.scale - 1) * 8;
+      document.getElementById('boss-name').style.color = tier.color;
+      if (d.bossName) {
+        const label = tier.label && tier.label !== 'normal' ? ` · ${tier.label}` : '';
+        const estStr = est != null ? ` · ${fmtTokensJs(est)} tokens` : '';
+        setText('boss-name', `${d.bossName}${estStr}${label}`);
+      }
       playScene(SCENE_BOSS_INTRO(d.bossName || 'A NEW FOE'));
       if (d.text) pushLog(d.text);
     }
@@ -678,6 +720,12 @@
     if (d.kind === 'choice_open') openChoices(d.questions || []);
     if (d.kind === 'choice_made') resolveChoices(d.chosen || []);
     if (d.kind === 'plan_scroll') openPlan(d.plan || '');
-    if (d.kind === 'plan_approved') approvePlan();
+    if (d.kind === 'plan_approved') {
+      approvePlan();
+      if (pendingEst != null) {
+        playScene(SCENE_FORGE(pendingEst));
+        pendingEst = null;
+      }
+    }
   });
 })();

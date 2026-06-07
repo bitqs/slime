@@ -1,5 +1,11 @@
-const { test } = require('node:test');
+const { test, after } = require('node:test');
 const assert = require('node:assert');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+
+process.env.CCQ_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-'));
+after(() => fs.rmSync(process.env.CCQ_ROOT, { recursive: true, force: true }));
 const sage = require('../scripts/lib/sage');
 
 test('advises rest when HP critically low', () => {

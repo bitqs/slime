@@ -1,18 +1,48 @@
 {
-  "verbs.read":  ["窥探", "勘察", "研读"],
-  "verbs.grep":  ["追踪", "狩猎", "嗅探"],
-  "verbs.edit":  ["斩击", "挥砍", "雕琢"],
-  "verbs.write": ["锻造", "凝铸"],
-  "verbs.bash":  ["引爆", "释放"],
-  "verbs.agent": ["召唤", "派遣"],
-  "verbs.web":   ["占卜", "窥视天机"],
-  "verbs.skill": ["发动", "引导"],
-  "verbs.other": ["挥舞", "亮出"],
+  "verbs.read": [
+    "窥探",
+    "勘察",
+    "研读"
+  ],
+  "verbs.grep": [
+    "追踪",
+    "狩猎",
+    "嗅探"
+  ],
+  "verbs.edit": [
+    "斩击",
+    "挥砍",
+    "雕琢"
+  ],
+  "verbs.write": [
+    "锻造",
+    "凝铸"
+  ],
+  "verbs.bash": [
+    "引爆",
+    "释放"
+  ],
+  "verbs.agent": [
+    "召唤",
+    "派遣"
+  ],
+  "verbs.web": [
+    "占卜",
+    "窥视天机"
+  ],
+  "verbs.skill": [
+    "发动",
+    "引导"
+  ],
+  "verbs.other": [
+    "挥舞",
+    "亮出"
+  ],
   "resolve.hit": "⚔️ 命中! {dmg} 伤害 🔥连击×{combo}",
   "resolve.backfire": "💥 [{tool}] 反噬 — 受击!连击中断",
   "resolve.kill": "💀 测试通过 — 小怪击杀!",
-  "hud.idle": "⚔️ Questline — 等待第一场遭遇战",
-  "hud.yourTurn": "⚔️ Questline — 该你下令了,指挥官",
+  "hud.idle": "🟢 史莱姆 — 等待第一场遭遇战",
+  "hud.yourTurn": "🟢 史莱姆 — 该你下令了,指挥官",
   "hud.restAt": "🛌 休息吧,指挥官。Token 将于 {time} 恢复。",
   "hud.restSoon": "🛌 休息吧,指挥官。Token 即将恢复。",
   "report.header": "━━━ 回合 #{turn} ━━━ 评级: {rank}",
@@ -27,7 +57,7 @@
   "sage.pacing": "💡 贤者: Token 已耗一半,Boss 几乎没掉血 — 放慢节奏,磨利每一击。",
   "encounter": "⚡ 回合 {turn} — {name} ({hp}% HP)",
   "encounter.appears": "⚡ {name} 现身!",
-  "wrapped.title": "⚔️  QUESTLINE 周报",
+  "wrapped.title": "🟢  史莱姆周报",
   "wrapped.dmg": "总伤害",
   "wrapped.kills": "击杀",
   "wrapped.turns": "回合",
@@ -36,7 +66,7 @@
   "wrapped.bosses": "Boss 击杀",
   "boss.broken": "☠ {name} 濒死 — 补刀!",
   "boss.autoDown": "⚡⚡⚡ {name} — 击杀!⚡⚡⚡ (里程碑 #{count})",
-  "hud.broken": "🗡️ {name} ☠ 濒死 — /defeat 斩杀",
+  "hud.broken": "👾☠ 濒死 — /defeat 斩杀",
   "hud.next": "▶ 下一步:{step}",
   "minion.down": "✄ 斩杀:{minion}",
   "minion.multi": "✄ ×{count} 连斩!"

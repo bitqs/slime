@@ -23,6 +23,6 @@ try {
   if (!Array.isArray(tips)) tips = [];
   process.stdout.write(hud.render(snap, stdin, tips, Date.now(), usage.readCache(), lang));
 } catch {
-  process.stdout.write('⚔️ Questline');
+  process.stdout.write('🟢 Slime');
 }
 process.exit(0);

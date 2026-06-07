@@ -152,6 +152,7 @@
   }
 
   let bossHpTier = null; // 'hi' | 'mid' | 'lo'
+  let lastBossPct = 100; // cached for tentacle tinting
   const bossTex = { hi: null, mid: null, lo: null };
   function bossTexFor(pct) {
     const tier = pct > 60 ? 'hi' : pct > 30 ? 'mid' : 'lo';
@@ -163,12 +164,25 @@
   boss.visible = false;
   world.addChild(boss);
 
+  // slime textures shared with the rail (minions.js defines window.QLSlimes)
+  const slimeTex = {};
+  function slimeTexFor(form) {
+    const f = ((form | 0) % 6 + 6) % 6;
+    if (!slimeTex[f] && window.QLSlimes) {
+      const d = QLSlimes.designFor(f);
+      slimeTex[f] = texFromMatrix(d.mat, QLSlimes.PALETTES[d.pal]);
+    }
+    return slimeTex[f] || bossTexFor(100).tex;
+  }
+  /** plant a sprite's feet on the floor (scaled height aware) */
+  function ground(s, slump) { s.y = FLOOR_Y - s.height + (slump || 0); }
+
   // ── encounter forms ──────────────────────────────────────────────────────────
   let encForm = 'big';          // 'mini' | 'big' | 'pack' | 'tentacled'
   let lastEncEst = null;        // est used for form decisions (locked at encounter/approval)
   let lastTodos = [];           // latest rail data (from snapshot polls)
   const packSprites = [];       // PIXI sprites, one per todo (cap 5)
-  const PACK_X = [180, 205, 230, 255, 280];
+  const PACK_X = [150, 172, 194, 216, 238];
   const tentacleGfx = new PIXI.Graphics();
   world.addChild(tentacleGfx);
 
@@ -181,13 +195,23 @@
 
   function drawTentacles(aliveCount) {
     tentacleGfx.clear();
-    if (encForm !== 'tentacled' || bossDead) return;
+    if (encForm !== 'tentacled' || bossDead || !boss.visible || bossBroken) return;
     const n = Math.min(6, aliveCount);
+    if (!n) return;
+    const k = Math.max(0.6, Math.min(2.5, boss.scale.x)); // tentacles track body size
+    // tentacles splay OUTWARD from the body onto the floor — alternating
+    // left/right so they read as reaching arms, not get hidden behind the sprite
+    const col = colorNum(bossColors(lastBossPct)[1]); // tentacles match the body color
+    const cx = boss.x + boss.width / 2;
     for (let i = 0; i < n; i++) {
-      const bx = boss.x + 2 + i * (boss.width - 4) / Math.max(1, n - 1);
-      const sway = CALM ? 0 : Math.sin(frame / 14 + i) * 2;
-      tentacleGfx.rect(bx + sway, FLOOR_Y - 4, 2, 4).fill(colorNum(bossColors(50)[1]));
-      tentacleGfx.rect(bx + sway * 1.5, FLOOR_Y - 8, 2, 4).fill(colorNum(bossColors(50)[1]));
+      const side = i % 2 === 0 ? -1 : 1;                 // alternate left/right
+      const reach = (8 + Math.floor(i / 2) * 9) * k;     // spread scales with body
+      const baseX = cx + side * (boss.width / 2 + reach);
+      const sway = CALM ? 0 : Math.sin(frame / 12 + i * 1.7) * 2 * k;
+      // 3 stacked segments tapering to a swaying tip — reads as a reaching arm
+      tentacleGfx.rect(baseX - 1.5 * k, FLOOR_Y - 4 * k, 3 * k, 4 * k).fill(col);
+      tentacleGfx.rect(baseX - k + sway * 0.5, FLOOR_Y - 8.5 * k, 2 * k, 4.5 * k).fill(col);
+      tentacleGfx.rect(baseX - 0.5 * k + sway, FLOOR_Y - 12 * k, k, 3.5 * k).fill(col);
     }
   }
 
@@ -197,22 +221,29 @@
     if (est != null) lastEncEst = est;
     encForm = encounterFormFor(lastEncEst, list.length);
     const alive = list.filter((t) => t.status !== 'completed');
-    if (encForm === 'pack') {
-      boss.visible = false;
-      while (packSprites.length < Math.min(5, list.length)) {
-        const s = new PIXI.Sprite(bossTexFor(100).tex);
-        s.scale.set(0.35);
-        s.x = PACK_X[packSprites.length]; s.y = FLOOR_Y - 6;
-        world.addChild(s);
-        packSprites.push(s);
-      }
-      packSprites.forEach((s, i) => { s.visible = i < list.length && list[i].status !== 'completed'; });
-    } else {
-      packSprites.forEach((s) => { s.visible = false; });
-      if (!bossDead) boss.visible = true;
-      if (encForm === 'mini') { boss.scale.set(0.5); boss.x = 228; }
-      // 'big'/'tentacled' keep tier scale (encounter/feeding own it)
+    // 1:1 stage mobs — every rail card has its slime on the field (cap 5),
+    // same design (t.form), alive ones standing, killed ones gone
+    while (packSprites.length < Math.min(5, list.length)) {
+      const s = new PIXI.Sprite(slimeTexFor(packSprites.length));
+      s.scale.set(1.5); // rail-matched designs, stage-sized
+      s.x = PACK_X[packSprites.length];
+      ground(s);
+      world.addChild(s);
+      packSprites.push(s);
     }
+    packSprites.forEach((s, i) => {
+      const live = i < list.length && list[i].status !== 'completed';
+      s.visible = live;
+      if (live) {
+        const f = list[i].form || 0;
+        if (s._form !== f) { s._form = f; s.texture = slimeTexFor(f); }
+        ground(s);
+      }
+    });
+    // the boss (the quest itself) stays on stage in every form
+    if (!bossDead) boss.visible = true;
+    if (encForm === 'mini' || encForm === 'pack') { boss.scale.set(0.7); boss.x = 252; ground(boss); }
+    // 'big'/'tentacled' keep tier scale (encounter/feeding own it)
     drawTentacles(alive.length);
   }
 
@@ -500,13 +531,13 @@
     // bob every 30 (alternate knight/boss)
     if (frame % 30 === 0) {
       knight.y = FLOOR_Y - 14 - (knight.y < FLOOR_Y - 14 ? 0 : 1);
-      if (!fx.bossFalling) { const baseY = FLOOR_Y - 14 + (bossBroken ? 3 : 0); boss.y = baseY - (boss.y < baseY ? 0 : 1); }
+      if (!fx.bossFalling) { const baseY = FLOOR_Y - boss.height + (bossBroken ? 3 : 0); boss.y = baseY - (boss.y < baseY ? 0 : 1); }
     }
 
     // boss falling
     if (fx.bossFalling) {
       boss.y += 6;
-      if (boss.y >= FLOOR_Y - 14) { boss.y = FLOOR_Y - 14; fx.bossFalling = false; PRIM.slam(); }
+      if (boss.y >= FLOOR_Y - boss.height) { ground(boss); fx.bossFalling = false; PRIM.slam(); }
     }
 
     // knight lunge decay
@@ -524,7 +555,22 @@
       const s = boss.scale.x + (bossScaleTarget - boss.scale.x) * 0.06;
       boss.scale.set(s);
       boss.x = 220 - (s - 1) * 8;
+      ground(boss, bossBroken ? 3 : 0);
       if (Math.abs(s - bossScaleTarget) < 0.01) { boss.scale.set(bossScaleTarget); bossScaleTarget = null; }
+    }
+
+    // slime squash-stretch: feet stay planted, body breathes (CALM: off)
+    if (!CALM && boss.visible && !fx.bossFalling) {
+      boss.scale.y = boss.scale.x * (1 + Math.sin(frame / 9) * 0.05);
+      ground(boss, bossBroken ? 3 : 0);
+    }
+    if (!CALM) {
+      for (let i = 0; i < packSprites.length; i++) {
+        const s = packSprites[i];
+        if (!s.visible) continue;
+        s.scale.y = s.scale.x * (1 + Math.sin(frame / 9 + i * 1.3) * 0.06);
+        ground(s);
+      }
     }
 
     // parallax
@@ -576,7 +622,11 @@
     // edge flame (combo)
     vignetteEdge.alpha = fx.edgeFlame ? 0.25 + Math.sin(frame / 10) * 0.15 : 0;
 
-    if (finishText.visible) finishText.alpha = CALM ? 1 : 0.6 + Math.sin(frame / 8) * 0.4;
+    if (finishText.visible) {
+      finishText.alpha = CALM ? 1 : 0.6 + Math.sin(frame / 8) * 0.4;
+      finishText.x = boss.x + boss.width / 2;
+      finishText.y = Math.max(10, boss.y - 10);
+    }
 
     // danger pulse (low token)
     if (stats.token != null && stats.token > 0 && stats.token < 30) {
@@ -639,14 +689,46 @@
   }
   function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
 
+  // hover titles for every chrome icon — single language, picked from /state lang
+  const TITLES = {
+    en: { title: 'Slime — your coding session as an RPG', boss: 'The current quest (boss)',
+      hp: 'Boss HP', token: 'Token — 5h rate window left', mana: 'Mana — context window left',
+      gold: 'Gold — real session cost (USD)', weapon: 'Weapon — current model',
+      atk: 'ATK — lines added/removed', timer: 'Session time', stamina: 'Camp — weekly quota left',
+      rail: 'Minions — your todo list', calm: 'Flash / calm toggle', help: 'Game guide (h)' },
+    zh: { title: 'Slime — 把写码变成 RPG', boss: '当前任务(Boss)',
+      hp: 'Boss 血量', token: 'Token — 5 小时窗口余量', mana: '蓝量 — 上下文余量',
+      gold: '金币 — 本会话真实花费(美元)', weapon: '武器 — 当前模型',
+      atk: '攻击 — 增/删行数', timer: '本会话时长', stamina: '营地 — 周配额余量',
+      rail: '小怪 — 你的 todo 列表', calm: '闪烁/舒缓 开关', help: '游戏说明 (h)' },
+  };
+  let titlesApplied = '';
+  function applyTitles(lang) {
+    const l = lang === 'zh' ? 'zh' : 'en';
+    if (titlesApplied === l) return;
+    titlesApplied = l;
+    const T = TITLES[l];
+    const set = (id, t, onParent) => {
+      const el = document.getElementById(id);
+      if (el) (onParent ? el.parentElement : el).title = t;
+    };
+    set('title', T.title); set('boss-name', T.boss); set('hp-bar', T.hp);
+    set('player-token', T.token); set('mana-bar', T.mana, true);
+    set('gold', T.gold, true); set('weapon', T.weapon, true); set('atk', T.atk, true);
+    set('timer', T.timer, true); set('stamina', T.stamina, true);
+    set('minion-rail', T.rail); set('calm-btn', T.calm); set('help-btn', T.help);
+  }
+
   function applyState(data) {
     if (!data) return;
+    applyTitles(data.lang);
     const snap = data.snapshot;
 
     // boss snapshot
     if (snap) {
       if (window.QLMinions) QLMinions.render(snap.todos);
-      applyForm(snap.todos, null);
+      // est rides the snapshot so a page refresh can't lose the form decision
+      applyForm(snap.todos, typeof snap.est === 'number' ? snap.est : null);
       hideOverlay();
       // a new boss showed up in a real session → revive the sprite (handles the
       // case where the victory cutscene hid it and no intro fired to reset bossDead)
@@ -654,15 +736,20 @@
         lastPolledBoss = snap.boss.name;
         bossDead = false;
       }
-      if (!bossDead) boss.visible = true;
+      if (!bossDead && encForm !== 'pack') boss.visible = true;
       if (snap.boss && snap.boss.name) setText('boss-name', snap.boss.name);
       let pct = null;
       if (snap.boss && typeof snap.boss.hpPct === 'number') pct = snap.boss.hpPct;
       else if (snap.boss && typeof snap.boss.hp === 'number') pct = snap.boss.hp;
       if (pct != null) {
+        lastBossPct = pct;
         updateBossHpBar(pct);
         const { tier, tex } = bossTexFor(pct);
         if (tier !== bossHpTier) { bossHpTier = tier; boss.texture = tex; }
+        // hp drives the body: full-HP boss looms huge, a battered one shrivels
+        if (scene === 'battle' && encForm !== 'pack' && encForm !== 'mini') {
+          bossScaleTarget = battleScaleFor(lastEncEst, pct);
+        }
       }
       if (snap.boss && typeof snap.boss.broken === 'boolean' && snap.boss.broken !== bossBroken) setBroken(snap.boss.broken);
     } else {
@@ -681,10 +768,21 @@
         token = Math.max(0, Math.round(100 - u.fiveHour.used));
       }
       stats.token = token;
-      setText('player-token', token != null ? `⚡Token ${token}%` : '⚡Token —');
+      // resetsAt rides along (epoch seconds) → show time left in the window
+      let tokenLeft = '';
+      if (u.fiveHour && u.fiveHour.resetsAt) {
+        const h = (u.fiveHour.resetsAt * 1000 - Date.now()) / 3600000;
+        if (h > 0) tokenLeft = h < 1 ? ` · ${Math.max(1, Math.round(h * 60))}m` : ` · ${(Math.round(h * 10) / 10)}h`;
+      }
+      setText('player-token', token != null ? `⚡Token ${token}%${tokenLeft}` : '⚡Token —');
 
       if (u.sevenDay && typeof u.sevenDay.used === 'number') {
-        setText('stamina', `${Math.max(0, Math.round(100 - u.sevenDay.used))}%`);
+        let weekLeft = '';
+        if (u.sevenDay.resetsAt) {
+          const d = (u.sevenDay.resetsAt * 1000 - Date.now()) / 86400000;
+          if (d > 0) weekLeft = d < 1 ? ` · ${Math.max(1, Math.round(d * 24))}h` : ` · ${Math.ceil(d)}d`;
+        }
+        setText('stamina', `${Math.max(0, Math.round(100 - u.sevenDay.used))}%${weekLeft}`);
       }
 
       const fill = document.getElementById('mana-fill');
@@ -782,6 +880,13 @@
   let scene = 'battle';
   let bossScaleTarget = null; // feeding growth tween target
   let lastFedEst = null;
+  /** battle size: tier × hp, exaggerated — a full-HP RAID towers past the canvas top */
+  function battleScaleFor(est, pct) {
+    const tier = bossTierFor(est);
+    const hp = pct == null ? 100 : Math.max(0, Math.min(100, pct));
+    const growth = tier.label === 'RAID BOSS' ? 6.5 : tier.label === 'ELITE' ? 1.8 : 0.9;
+    return Math.max(0.4, tier.scale * (0.6 + (hp / 100) * growth));
+  }
   function setScene(next) {
     if (scene === next) return;
     scene = next;
@@ -789,7 +894,7 @@
     if (next === 'feeding') {
       PRIM.dim({ on: true });
       // baby slime: if no engaged boss yet, show the boss sprite tiny — it IS the creature being fed
-      if (!engagedBoss) { bossDead = false; boss.visible = true; boss.scale.set(0.5); boss.x = 220 + 8; }
+      if (!engagedBoss) { bossDead = false; boss.visible = true; boss.scale.set(0.5); boss.x = 220 + 8; ground(boss); }
       if (counter) counter.style.display = 'block';
     } else {
       PRIM.dim({ on: false });
@@ -808,7 +913,7 @@
       counter.textContent = `≈${fmtTokensJs(est).slice(1)} tokens${tier.label && tier.label !== 'normal' ? ' · ' + tier.label : ''}`;
     }
     if (delta && delta > 0) floater(`+${fmtTokensJs(delta)}`, boss.x + 8, boss.y - 10, P.gold, 9, true);
-    if (CALM) { boss.scale.set(bossScaleTarget); bossScaleTarget = null; return; }
+    if (CALM) { boss.scale.set(bossScaleTarget); ground(boss); bossScaleTarget = null; return; }
     // morsel arc: knight → slime
     const n = small ? 3 : 6;
     for (let i = 0; i < n; i++) {
@@ -831,8 +936,7 @@
         hideOverlay();
         const est = d.est != null ? d.est : pendingEst;
         const tier = bossTierFor(est);
-        boss.scale.set(tier.scale);
-        boss.x = 220 - (tier.scale - 1) * 8;
+        bossScaleTarget = battleScaleFor(est, 100); // fresh boss arrives at full menace
         applyForm(lastTodos, est);
         lockedTierColor = tier.color;
         document.getElementById('boss-name').style.color = tier.color;
@@ -851,13 +955,17 @@
     if (d.kind === 'boss_broken') { setBroken(true); PRIM.shake({ amp: 2, frames: 8 }); if (d.text) pushLog(d.text); }
     if (d.kind === 'minion_down') {
       if (window.QLMinions) QLMinions.kill(d.minion, CALM);
-      if (encForm === 'pack') {
-        const idx = packSprites.findIndex((s) => s.visible);
-        if (idx >= 0) { burst(packSprites[idx].x + 3, packSprites[idx].y + 3, P.bone, 10); packSprites[idx].visible = false; }
-      } else if (encForm === 'tentacled') {
-        burst(boss.x + boss.width / 2, FLOOR_Y - 6, P.bone, 10); // severed tentacle falls
-      } else {
-        burst(238, 125, P.bone, d.count ? 18 : 8);
+      {
+        // 1:1 with the rail: pop the slime whose label matches the kill
+        const idx = lastTodos.findIndex((t) => t.label === d.minion);
+        const s = idx >= 0 ? packSprites[idx] : null;
+        if (s && s.visible) {
+          burst(s.x + s.width / 2, s.y + s.height / 2, P.bone, 12);
+          s.visible = false;
+        } else {
+          burst(boss.x + boss.width / 2, FLOOR_Y - 6, P.bone, d.count ? 18 : 8);
+        }
+        if (encForm === 'tentacled') drawTentacles(Math.max(0, lastTodos.filter((t) => t.status !== 'completed').length - 1));
       }
       PRIM.flash({ strength: 0.35 });
       minionStreak = (d.count || 1) + (Date.now() - lastMinionKill < 8000 ? minionStreak : 0);
@@ -943,6 +1051,7 @@
       lastFedEst = null;
       if (pendingEst != null) {
         const tier = bossTierFor(pendingEst);
+        lastEncEst = pendingEst; // the approved plan re-rates the threat
         lockedTierColor = tier.color;
         const nameEl = document.getElementById('boss-name');
         if (nameEl && !bossBroken) nameEl.style.color = tier.color;
@@ -959,6 +1068,15 @@
     if (!guideEl) return;
     const show = force != null ? force : guideEl.style.display !== 'flex';
     guideEl.style.display = show ? 'flex' : 'none';
+  }
+  const calmBtn = document.getElementById('calm-btn');
+  if (calmBtn) {
+    if (CALM) calmBtn.style.borderColor = '#f0b541';
+    calmBtn.addEventListener('click', () => {
+      const sp = new URLSearchParams(location.search);
+      if (sp.has('calm')) sp.delete('calm'); else sp.set('calm', '1');
+      location.search = sp.toString();
+    });
   }
   const helpBtn = document.getElementById('help-btn');
   if (helpBtn) helpBtn.addEventListener('click', () => toggleGuide());

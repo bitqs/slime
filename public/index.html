@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>⚔️ Questline — Battle Arena</title>
+<title>🟢 Slime · 史莱姆 — Battle Arena</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#1a1d24;color:#e8e0d0;font-family:monospace;overflow:hidden;height:100vh;display:flex;flex-direction:column;align-items:center;user-select:none}
@@ -37,7 +37,7 @@ canvas{display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-
 .gray{filter:grayscale(1)}
 #minion-rail{width:100%;max-width:640px;display:flex;gap:6px;padding:4px 10px;background:#232733;border-top:1px solid #333a4a;min-height:0;overflow-x:auto}
 .minion{display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;min-width:52px;padding:2px}
-.minion canvas{width:24px;height:24px;image-rendering:pixelated}
+.minion canvas{height:26px;width:auto;image-rendering:pixelated}
 .minion.pending{opacity:.45}
 .minion.in_progress{outline:1px solid #f0b541}
 .minion.completed{opacity:.6}
@@ -47,6 +47,7 @@ body.calm .minion-hp-fill{transition:none}
 .minion-name{font-size:8px;color:#7fa8c0;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .minion-grave{position:absolute;top:0;font-size:12px}
 #feed-counter{position:absolute;right:8px;bottom:26px;font-size:10px;color:#f0b541;text-shadow:1px 1px #000;display:none;z-index:3}
+#calm-btn{flex-shrink:0;background:#232733;color:#f0b541;border:1px solid #333a4a;font-family:monospace;font-size:11px;width:18px;height:18px;cursor:pointer;padding:0}
 #help-btn{flex-shrink:0;background:#232733;color:#f0b541;border:1px solid #f0b541;font-family:monospace;font-size:11px;width:18px;height:18px;cursor:pointer}
 #guide-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(26,29,36,.92);z-index:30}
 #guide-box{max-width:85%;max-height:90%;overflow:auto;font-size:10px;line-height:1.5;color:#e8e0d0;background:#232733;border:2px solid #f0b541;padding:10px}
@@ -57,10 +58,11 @@ body.calm .minion-hp-fill{transition:none}
 </head>
 <body>
 <div id="top-bar">
-  <span id="title">⚔️ QUESTLINE</span>
+  <span id="title">🟢 SLIME</span>
   <span id="boss-name">—</span>
   <div id="hp-bar"></div>
   <span id="player-token">⚡Token —</span>
+  <button id="calm-btn" title="flash / calm toggle">✨</button>
   <button id="help-btn" title="game guide (h)">?</button>
 </div>
 <div id="stage-wrap">
@@ -80,7 +82,8 @@ body.calm .minion-hp-fill{transition:none}
         <p>🔥 <b>Combo</b> — consecutive successful tool strikes. <i>连击=连续成功操作。</i></p>
         <p>🍖 <b>Feeding</b> — while planning, every plan update and answered question feeds the boss and it grows. <i>计划和问答越喂越大。</i></p>
         <p>🐺 <b>Summons</b> — subagent dispatches fight beside the knight. <i>召唤兽=subagent。</i></p>
-        <p>Commands: <code>/questline:arena</code> · <code>/questline:defeat</code> · <code>/questline:milestones</code> · <code>/questline:wrapped</code></p>
+        <p>💰 <b>Gold</b> — real session cost (USD). 🔮 mana = context left, ⚔️ weapon = model, 🗡️ ATK = lines changed, ⏳ session time, 🏕️ weekly quota. <i>金币=本会话花费,蓝条=上下文,武器=模型,ATK=改动行数。</i></p>
+    <p>Commands: <code>/questline:arena</code> · <code>/questline:defeat</code> · <code>/questline:milestones</code> · <code>/questline:wrapped</code></p>
         <p id="guide-close-hint">esc / click to close</p>
       </div>
     </div>

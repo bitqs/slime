@@ -5,6 +5,10 @@
 const { bar } = require('./report');
 const usage = require('./usage');
 
+// OSC 8 hyperlink: terminals that support it make 【UI】 clickable → local arena.
+// Composed from constants only — never from state files (sanitize strips ESC).
+const UI_LINK = '\u001b]8;;http://127.0.0.1:4117\u0007【UI】\u001b]8;;\u0007';
+
 // Strip C0/C1 controls (incl. ESC → kills ANSI/OSC); preserve emoji/CJK;
 // truncate by code point. Statusline runs on every keystroke — a planted
 // escape sequence in any state file would replay into the terminal forever.
@@ -50,18 +54,19 @@ function render(snap, stdinJson, tips, now, usageCache, lang) {
   if (!snap.inTurn) return sanitize(snap.lastText, 120) || T('hud.yourTurn');
 
   const parts = [];
-  if (hpVal != null) parts.push(`⚡Token ${hpVal}%`);
+  // plugin badge leads the line; boss shows as a slime icon + hp, never a name
+  parts.push(hpVal != null ? `🟢${UI_LINK} ⚡${hpVal}%` : `🟢${UI_LINK}`);
   const todos = Array.isArray(snap.todos) ? snap.todos : [];
   const doneCnt = todos.filter((t) => t.status === 'completed').length;
   const cnt = todos.length ? ` ⚔${doneCnt}/${todos.length}` : '';
   if (snap.boss && snap.boss.broken) {
-    parts.push(T('hud.broken', { name: sanitize(snap.boss.name) }) + cnt);
+    parts.push(T('hud.broken') + cnt);
   } else if (snap.boss) {
-    parts.push(`🗡️ ${sanitize(snap.boss.name)} ${bar(snap.boss.hp)} ${snap.boss.hp}%${cnt}`);
+    parts.push(`👾 ${bar(snap.boss.hp)} ${snap.boss.hp}%${cnt}`);
   }
   const next = todos.find((t) => t.status === 'in_progress') || todos.find((t) => t.status === 'pending');
   if (next) parts.push(T('hud.next', { step: sanitize(next.activeForm || next.content, 40) }));
-  if (snap.combo > 1) parts.push(`🔥combo×${snap.combo}`);
+  if (snap.combo > 1) parts.push(`🔥×${snap.combo}`);
   if (snap.summons > 0) parts.push(`🐺×${snap.summons}`);
   parts.push(`💀${snap.kills || 0} ⚔️${snap.dmg || 0}`);
   const cost = stdinJson && stdinJson.cost && stdinJson.cost.total_cost_usd;

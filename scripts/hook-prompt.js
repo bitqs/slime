@@ -27,7 +27,9 @@ try {
       }
     } catch {}
     snap.boss = { name: b.name, hp: b.hp };
-    state.appendEvent(id, { t: Date.now(), kind: 'encounter', bossName: b.name, text: locale.fmt(locale.t('encounter', lang), { turn: snap.turn, name: b.name, hp: b.hp }), est: require('./lib/estimate').estimateTokens(p.prompt || '') });
+    const est = require('./lib/estimate').estimateTokens(p.prompt || '');
+    snap.est = est; // survives arena refreshes — encounter SSE events do not
+    state.appendEvent(id, { t: Date.now(), kind: 'encounter', bossName: b.name, text: locale.fmt(locale.t('encounter', lang), { turn: snap.turn, name: b.name, hp: b.hp }), est });
     snap.lastText = locale.fmt(locale.t('encounter.appears', lang), { name: b.name });
     snap.updated = Date.now();
     state.writeSnapshot(id, snap);

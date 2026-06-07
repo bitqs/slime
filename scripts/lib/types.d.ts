@@ -21,6 +21,7 @@ export interface Snapshot {
   lastText?: string;
   updated?: number;
   boss?: { name: string; hp: number; broken?: boolean };
+  est?: number;
   todos?: Array<{ content: string; status: string; label: string; activeForm?: string; form: number }>;
   gear?: string[];
   [key: string]: unknown;

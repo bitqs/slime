@@ -11,7 +11,7 @@ const hud = require('../scripts/lib/hud');
 const TIPS = ['💡 tip one', '💡 tip two'];
 
 test('no snapshot renders idle banner', () => {
-  assert.match(hud.render(null, {}, TIPS, 0), /Questline/);
+  assert.match(hud.render(null, {}, TIPS, 0), /Slime|史莱姆/);
 });
 
 test('fresh battle event renders battle frame with boss and combo', () => {
@@ -21,8 +21,8 @@ test('fresh battle event renders battle frame with boss and combo', () => {
       boss: { name: 'The Web Hydra', hp: 38 }, lastText: '⚔️ Carves with [Edit] → auth.ts…', updated: now },
     { cost: { total_cost_usd: 1.23 } }, TIPS, now
   );
-  assert.match(line, /The Web Hydra/);
-  assert.match(line, /combo×7/);
+  assert.match(line, /👾/); // boss is an icon now — names stay off the statusline
+  assert.match(line, /🔥×7/);
   assert.match(line, /🐺×2/);
   assert.match(line, /\[Edit\]/);
 });
@@ -47,7 +47,7 @@ test('battle frame shows player HP from usage cache', () => {
     {}, TIPS, now,
     { fiveHour: { used: 32, resetsAt: 0 } }
   );
-  assert.match(line, /⚡Token 68%/);
+  assert.match(line, /⚡68%/);
 });
 
 test('zero HP renders rest banner with reset time', () => {

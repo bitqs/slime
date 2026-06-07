@@ -14,20 +14,20 @@ const sid = 'demo';
 const snapPath = path.join(dir, `${sid}.json`);
 const evPath = path.join(dir, `${sid}.jsonl`);
 fs.writeFileSync(path.join(ROOT, 'usage.json'), JSON.stringify({
-  fiveHour: { used: 35, resetsAt: 0 }, sevenDay: { used: 20 }, contextPct: 45,
+  fiveHour: { used: 35, resetsAt: Math.floor(Date.now() / 1000) + 2 * 3600 + 1080 }, sevenDay: { used: 20, resetsAt: Math.floor(Date.now() / 1000) + 3 * 86400 }, contextPct: 45,
   cost: 0.42, model: 'Opus', lines: { added: 120, removed: 30 }, durationMs: 300000, t: Date.now(),
 }));
 const BOSS = 'The Demo Dragon';
 
 // Todos: shape matches exactly what hook-posttool writes (content/status/label/activeForm/form)
 const TODOS_INITIAL = [
-  { content: 'sharpen the demo', status: 'in_progress', label: 'QL mob 1', activeForm: 'Edit', form: 0 },
+  { content: 'sharpen the demo', status: 'in_progress', label: 'QL mob 1', activeForm: '打磨演示节奏', form: 0 },
   { content: 'slay the dragon', status: 'pending',     label: 'QL mob 2', activeForm: '',     form: 1 },
   { content: 'loot the hoard',  status: 'pending',     label: 'QL mob 3', activeForm: '',     form: 2 },
 ];
 const TODOS_FIRST_KILL = [
   { content: 'sharpen the demo', status: 'completed',  label: 'QL mob 1', activeForm: '',     form: 0 },
-  { content: 'slay the dragon', status: 'in_progress', label: 'QL mob 2', activeForm: 'Bash', form: 1 },
+  { content: 'slay the dragon', status: 'in_progress', label: 'QL mob 2', activeForm: '猎杀巨龙', form: 1 },
   { content: 'loot the hoard',  status: 'pending',     label: 'QL mob 3', activeForm: '',     form: 2 },
 ];
 const TODOS_ALL_DONE = [
@@ -38,7 +38,7 @@ const TODOS_ALL_DONE = [
 
 /** @type {import('./lib/types').Snapshot} */
 let snap = { sessionId: sid, turn: 1, combo: 0, kills: 0, dmg: 0, summons: 0, inTurn: true,
-  boss: { name: BOSS, hp: 80 }, todos: TODOS_INITIAL, updated: Date.now() };
+  boss: { name: BOSS, hp: 80 }, est: 180000, todos: TODOS_INITIAL, updated: Date.now() };
 fs.writeFileSync(snapPath, JSON.stringify(snap));
 /** @param {Record<string, unknown>} o */
 const ev = (o) => { fs.appendFileSync(evPath, JSON.stringify({ t: Date.now(), ...o }) + '\n'); fs.writeFileSync(snapPath, JSON.stringify({ ...snap, updated: Date.now() })); };
@@ -47,7 +47,7 @@ const script = [
   // ── encounter + early casts ───────────────────────────────────────────────
   () => {
     snap = { sessionId: sid, turn: 1, combo: 0, kills: 0, dmg: 0, summons: 0, inTurn: true,
-      boss: { name: BOSS, hp: 80 }, todos: TODOS_INITIAL, updated: Date.now() };
+      boss: { name: BOSS, hp: 80 }, est: 180000, todos: TODOS_INITIAL, updated: Date.now() };
     ev({ kind: 'encounter', bossName: BOSS, text: '⚡ The Demo Dragon appears!', est: 180000 });
   },
   () => ev({ kind: 'cast', text: '⚔️ Carves with [Edit] → demo.ts' }),

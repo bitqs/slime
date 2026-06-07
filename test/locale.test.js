@@ -30,7 +30,7 @@ test('config lang overrides majority', () => {
 });
 
 test('t falls back to en then key', () => {
-  assert.equal(locale.t('hud.idle', 'en'), '⚔️ Questline — awaiting first encounter');
+  assert.equal(locale.t('hud.idle', 'en'), '🟢 Slime — awaiting first encounter');
   assert.match(locale.t('hud.idle', 'zh'), /等待/);
   assert.equal(locale.t('no.such.key', 'zh'), 'no.such.key');
 });

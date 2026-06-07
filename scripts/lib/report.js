@@ -29,16 +29,24 @@ function bar(pct) {
   return '█'.repeat(full) + '░'.repeat(10 - full);
 }
 
-function render(agg, bossState, snap) {
+function render(agg, bossState, snap, extras = {}) {
   const r = rank(agg);
   const lines = [
     `━━━ TURN #${snap.turn || '?'} ━━━ Rank: ${r}`,
     bossState ? `🗡️ Boss: ${bossState.name}  ${bar(bossState.hp)} ${bossState.hp}% HP` : null,
     `⚔️ DMG ${agg.dmg} (lines changed) | 💀 Kills ${agg.kills} | 💥 Hits ${agg.hits} | 🔥 Max combo ×${agg.maxCombo}`,
   ].filter(Boolean);
+  const u = extras.usage;
+  if (u && u.fiveHour && u.fiveHour.used != null) {
+    const hp = Math.max(0, Math.round(100 - u.fiveHour.used));
+    const weekly = u.sevenDay && u.sevenDay.used != null
+      ? ` | Weekly ${bar(100 - u.sevenDay.used)} ${Math.round(100 - u.sevenDay.used)}%` : '';
+    lines.push(`⚡ HP ${bar(hp)} ${hp}% (5h window)${weekly}`);
+  }
   if (bossState && bossState.hp <= 20) {
     lines.push(`⚡ ${bossState.name} staggers — confirm the kill with /questline:defeat`);
   }
+  if (extras.sageLine) lines.push(extras.sageLine);
   return lines.join('\n');
 }
 

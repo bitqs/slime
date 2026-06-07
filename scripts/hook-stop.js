@@ -3,6 +3,8 @@ const fs = require('node:fs');
 const state = require('./lib/state');
 const report = require('./lib/report');
 const boss = require('./lib/boss');
+const usage = require('./lib/usage');
+const sage = require('./lib/sage');
 try {
   const p = state.readStdin();
   if (p && p.session_id) {
@@ -11,7 +13,9 @@ try {
     const events = state.readEvents(id);
     const agg = report.aggregate(events);
     const b = p.cwd ? boss.loadOrCreate(p.cwd, '') : null;
-    const card = report.render(agg, b && { name: b.name, hp: b.hp }, snap);
+    const u = usage.readCache();
+    const sageLine = sage.advise({ usage: u, bossHp: b ? b.hp : null });
+    const card = report.render(agg, b && { name: b.name, hp: b.hp }, snap, { usage: u, sageLine });
 
     if (b && p.cwd) { b.turns = snap.turn || 0; boss.save(p.cwd, b); }
 

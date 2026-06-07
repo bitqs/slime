@@ -50,3 +50,16 @@ test('render omits kill prompt at high HP', () => {
   );
   assert.doesNotMatch(txt, /\/questline:defeat/);
 });
+
+test('render shows stamina line and sage line via extras', () => {
+  const txt = report.render(
+    { dmg: 1, kills: 0, hits: 0, maxCombo: 1 },
+    { name: 'The Web Hydra', hp: 90 },
+    { turn: 2 },
+    { usage: { fiveHour: { used: 30 }, sevenDay: { used: 20 } }, sageLine: '💡 Sage: test line' }
+  );
+  assert.match(txt, /⚡ HP/);
+  assert.match(txt, /70%/);
+  assert.match(txt, /Weekly/);
+  assert.match(txt, /💡 Sage: test line/);
+});

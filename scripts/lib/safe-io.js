@@ -21,7 +21,8 @@ function safeWrite(p, content) {
     if (refuse(p)) return false;
     const tmp = `${p}.tmp.${process.pid}`;
     fs.writeFileSync(tmp, content, { mode: 0o600 });
-    fs.renameSync(tmp, p);
+    try { fs.renameSync(tmp, p); }
+    catch (e) { try { fs.unlinkSync(tmp); } catch {} throw e; }
     return true;
   } catch { return false; }
 }
@@ -34,7 +35,7 @@ function safeAppend(p, line) {
     const flags = fs.constants.O_APPEND | fs.constants.O_CREAT | fs.constants.O_WRONLY
       | (fs.constants.O_NOFOLLOW || 0);
     const fd = fs.openSync(p, flags, 0o600);
-    try { fs.writeFileSync(fd, line); } finally { fs.closeSync(fd); }
+    try { fs.writeSync(fd, line); } finally { fs.closeSync(fd); }
     return true;
   } catch { return false; }
 }
@@ -46,6 +47,8 @@ function readJson(p, fallback) {
 
 function safeMkdir(p) {
   try {
+    // Parent-symlink NOT refused here: symlinking the whole ccq root to another
+    // disk is legitimate; file-level clobber is prevented by safeWrite/safeAppend.
     if (isSymlink(p)) return false;
     fs.mkdirSync(p, { recursive: true });
     return true;

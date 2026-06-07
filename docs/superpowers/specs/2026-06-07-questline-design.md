@@ -62,6 +62,13 @@ Mapping principle: **every mapping is simultaneously real information** — "�
 - Large goals = **bosses with HP bars, persisting across turns and sessions**; each turn's progress damages the boss
 - Boss HP model: weighted todo completion (completed/total), with test-pass bonus
 
+**Plan Mode = the boss-forging ritual.** Planning is how the enemy takes shape:
+
+- Entering plan mode → `📜 Scouting the enemy… (plan mode)` — the boss appears as a silhouette (`👁️ ??? — taking shape`)
+- Plan steps materialize as the boss's HP segments / minion roster, live as the plan grows
+- Plan approved (ExitPlanMode) → reveal: `⚡ Boss revealed: AUTH RUINS COLOSSUS — 7 segments. ENGAGE!`
+- **Anti-overplanning nudge:** if scouting drags on (plan keeps growing, no approval), the Sage speaks: `💡 Sage: the enemy is fully scouted, commander. Steel is sharper than ink — you can engage now.`
+
 ### Kill Confirmation = User Acceptance (key mechanic)
 
 - When Claude stops AND (boss HP < 20% OR all todos checked), the report asks: **"Auth Ruins Colossus — confirm kill?"**
@@ -114,6 +121,21 @@ During Claude's turn the statusline is strictly watch-only (no interaction) and 
   - `🐺 Casts [Agent: Explore] — summon dispatched…`
   - `✨ Casts [Skill: superpowers:brainstorming] — gear skill activated!`
   - Announce-then-resolve gives each strike a two-beat rhythm (cast → result), and doubles as a perfect real-time audit of what Claude is doing.
+
+**Naming rule:** weapon/skill names are ALWAYS the real tool/skill/plugin names — `[Grep]`, `[Plan Mode]`, `[superpowers:brainstorming]` — never renamed. Game feel comes from the **verbs**, drawn from a per-category verb pool so the feed doesn't repeat itself:
+
+| Category | Verb pool |
+|---|---|
+| Read / Glob | peers into, surveys, studies |
+| Grep | tracks, hunts, sniffs out |
+| Edit | slashes, strikes, carves |
+| Write | forges, conjures |
+| Bash | detonates, unleashes |
+| Agent | summons, dispatches |
+| WebSearch / WebFetch | divines, scries |
+| Skill | invokes, channels |
+
+Example: `⚔️ Carves with [Edit] → auth.ts … 32 dmg!` / `🔮 Scries with [WebSearch] — "JWT rotation best practice"…`
 - **Loading-screen tips** — every ~20s of continuous waiting, one rotating tip in game voice: `💡 Sage: summons (subagents) fight without draining your context — send them on big hunts`. Tips are real Claude Code technique; the wait screen teaches. Tip pool ships in plugin data, community-extendable.
 
 Turn Report (at Stop):

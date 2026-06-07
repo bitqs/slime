@@ -143,6 +143,59 @@
   boss.visible = false;
   world.addChild(boss);
 
+  // ── encounter forms ──────────────────────────────────────────────────────────
+  let encForm = 'big';          // 'mini' | 'big' | 'pack' | 'tentacled'
+  let lastEncEst = null;        // est used for form decisions (locked at encounter/approval)
+  let lastTodos = [];           // latest rail data (from snapshot polls)
+  const packSprites = [];       // PIXI sprites, one per todo (cap 5)
+  const PACK_X = [180, 205, 230, 255, 280];
+  const tentacleGfx = new PIXI.Graphics();
+  world.addChild(tentacleGfx);
+
+  function encounterFormFor(est, todoCount) {
+    const tier = bossTierFor(est);
+    const big = tier.label === 'ELITE' || tier.label === 'RAID BOSS';
+    if (!big) return todoCount >= 2 ? 'pack' : 'mini';
+    return todoCount >= 3 ? 'tentacled' : 'big';
+  }
+
+  function drawTentacles(aliveCount) {
+    tentacleGfx.clear();
+    if (encForm !== 'tentacled' || bossDead) return;
+    const n = Math.min(6, aliveCount);
+    for (let i = 0; i < n; i++) {
+      const bx = boss.x + 2 + i * (boss.width - 4) / Math.max(1, n - 1);
+      const sway = CALM ? 0 : Math.sin(frame / 14 + i) * 2;
+      tentacleGfx.rect(bx + sway, FLOOR_Y - 4, 2, 4).fill(colorNum(bossColors(50)[1]));
+      tentacleGfx.rect(bx + sway * 1.5, FLOOR_Y - 8, 2, 4).fill(colorNum(bossColors(50)[1]));
+    }
+  }
+
+  function applyForm(todos, est) {
+    const list = Array.isArray(todos) ? todos : [];
+    lastTodos = list;
+    if (est != null) lastEncEst = est;
+    encForm = encounterFormFor(lastEncEst, list.length);
+    const alive = list.filter((t) => t.status !== 'completed');
+    if (encForm === 'pack') {
+      boss.visible = false;
+      while (packSprites.length < Math.min(5, list.length)) {
+        const s = new PIXI.Sprite(bossTexFor(100).tex);
+        s.scale.set(0.35);
+        s.x = PACK_X[packSprites.length]; s.y = FLOOR_Y - 6;
+        world.addChild(s);
+        packSprites.push(s);
+      }
+      packSprites.forEach((s, i) => { s.visible = i < list.length && list[i].status !== 'completed'; });
+    } else {
+      packSprites.forEach((s) => { s.visible = false; });
+      if (!bossDead) boss.visible = true;
+      if (encForm === 'mini') { boss.scale.set(0.5); boss.x = 228; }
+      // 'big'/'tentacled' keep tier scale (encounter/feeding own it)
+    }
+    drawTentacles(alive.length);
+  }
+
   // particle graphics (redrawn each frame)
   const particleGfx = new PIXI.Graphics();
   fxLayer.addChild(particleGfx);
@@ -184,6 +237,7 @@
   function setBroken(on) {
     bossBroken = on;
     boss.tint = on ? 0x777777 : 0xffffff;
+    packSprites.forEach((s) => { s.tint = on ? 0x777777 : 0xffffff; });
     finishText.visible = on;
     const nameEl = document.getElementById('boss-name');
     if (nameEl) nameEl.style.color = on ? '#777777' : lockedTierColor;
@@ -419,6 +473,10 @@
     // torch flicker every 8
     if (frame % 8 === 0) torches.forEach((g) => drawTorch(g, (frame / 8) % 2 === 0));
 
+    if (encForm === 'tentacled' && frame % 4 === 0) {
+      drawTentacles(lastTodos.filter((t) => t.status !== 'completed').length);
+    }
+
     // bob every 30 (alternate knight/boss)
     if (frame % 30 === 0) {
       knight.y = FLOOR_Y - 14 - (knight.y < FLOOR_Y - 14 ? 0 : 1);
@@ -562,6 +620,7 @@
     // boss snapshot
     if (snap) {
       if (window.QLMinions) QLMinions.render(snap.todos);
+      applyForm(snap.todos, null);
       hideOverlay();
       // a new boss showed up in a real session → revive the sprite (handles the
       // case where the victory cutscene hid it and no intro fired to reset bossDead)
@@ -745,6 +804,7 @@
         const tier = bossTierFor(est);
         boss.scale.set(tier.scale);
         boss.x = 220 - (tier.scale - 1) * 8;
+        applyForm(lastTodos, est);
         lockedTierColor = tier.color;
         document.getElementById('boss-name').style.color = tier.color;
         setBroken(false);
@@ -757,12 +817,19 @@
       }
       if (d.text) pushLog(d.text);
     }
-    if (d.kind === 'boss_down') { setScene('battle'); engagedBoss = null; setBroken(false); playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
+    if (d.kind === 'boss_down') { setScene('battle'); engagedBoss = null; setBroken(false); packSprites.forEach((s) => { s.visible = false; }); tentacleGfx.clear(); playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
     if (d.kind === 'potion') { playScene(SCENE_POTION); if (d.text) pushLog(d.text); }
     if (d.kind === 'boss_broken') { setBroken(true); PRIM.shake({ amp: 2, frames: 8 }); if (d.text) pushLog(d.text); }
     if (d.kind === 'minion_down') {
       if (window.QLMinions) QLMinions.kill(d.minion, CALM);
-      burst(238, 125, P.bone, d.count ? 18 : 8);
+      if (encForm === 'pack') {
+        const idx = packSprites.findIndex((s) => s.visible);
+        if (idx >= 0) { burst(packSprites[idx].x + 3, packSprites[idx].y + 3, P.bone, 10); packSprites[idx].visible = false; }
+      } else if (encForm === 'tentacled') {
+        burst(boss.x + boss.width / 2, FLOOR_Y - 6, P.bone, 10); // severed tentacle falls
+      } else {
+        burst(238, 125, P.bone, d.count ? 18 : 8);
+      }
       PRIM.flash({ strength: 0.35 });
       minionStreak = (d.count || 1) + (Date.now() - lastMinionKill < 8000 ? minionStreak : 0);
       lastMinionKill = Date.now();

@@ -50,3 +50,31 @@ test('compressName: multi-word → initials with digits; single word kept or tru
   assert.equal(boss.compressName('/p/supercalifragilistic'), 'Supercal');
   assert.equal(boss.compressName(''), 'Unknown');
 });
+
+test('loadOrCreate with no lang arg defaults to locale.current()', () => {
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-locale-'));
+  // Set locale to 'zh' via config.json
+  fs.mkdirSync(path.join(tmpRoot, 'bosses'), { recursive: true });
+  fs.writeFileSync(path.join(tmpRoot, 'config.json'), JSON.stringify({ lang: 'zh' }));
+
+  // Monkeypatch state.ROOT for this test
+  const stateModule = require('../scripts/lib/state');
+  const origRoot = stateModule.ROOT;
+  Object.defineProperty(stateModule, 'ROOT', { value: tmpRoot, configurable: true });
+
+  // Now load the boss module fresh with the new ROOT
+  delete require.cache[require.resolve('../scripts/lib/boss')];
+  delete require.cache[require.resolve('../scripts/lib/locale')];
+  const freshBoss = require('../scripts/lib/boss');
+
+  const b = freshBoss.loadOrCreate('/p/freshzh', '修复崩溃');
+  assert.match(b.name, /史莱姆$/, `Expected zh slime name, got: ${b.name}`);
+
+  // Restore state.ROOT
+  Object.defineProperty(stateModule, 'ROOT', { value: origRoot, configurable: true });
+  delete require.cache[require.resolve('../scripts/lib/boss')];
+  delete require.cache[require.resolve('../scripts/lib/locale')];
+
+  // Cleanup
+  fs.rmSync(tmpRoot, { recursive: true });
+});

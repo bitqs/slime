@@ -87,8 +87,9 @@ function bossPath(cwd) {
 
 /** @param {string} cwd @param {string | null | undefined} prompt @param {string} [lang] @returns {BossState} */
 function loadOrCreate(cwd, prompt, lang) {
+  const l = lang || require('./locale').current(); // lazy require avoids cycles
   return readJson(bossPath(cwd), null)
-    || { name: nameBoss(prompt, cwd, lang), hp: 100, turns: 0, created: Date.now() };
+    || { name: nameBoss(prompt, cwd, l), hp: 100, turns: 0, created: Date.now() };
 }
 
 /** @param {string} cwd @param {BossState} b @returns {void} */

@@ -98,6 +98,15 @@ Todos already drive boss hp; now they also appear on screen as killable mobs.
 - **Minion looks vary**: each minion picks its sprite matrix + palette from
   a small style pool via `hash(todo content)` — deterministic, so SSE
   replays and refreshes don't reshuffle. No `Math.random`.
+- **Art direction — everything is a slime** (project is being renamed to
+  Slime in a separate batch): the minion style pool is mini-slime variants
+  (palette + tiny feature swaps: horns, drips, eyes), and each boss type
+  maps to a big slime form — Bugbear = horned slime, Hydra = three-headed
+  slime, Colossus = giant blocky slime, Wraith = ghost slime, Sphinx =
+  scroll slime, Golem = rock slime. The zh brand is **史莱姆**, and every
+  slime form gets a zh translation — `TYPES_ZH` becomes slime forms
+  (错虫史莱姆 / 重构史莱姆 / 九头史莱姆 / 试炼史莱姆 / 文档史莱姆 /
+  岩石史莱姆); en type names follow in the rename batch.
 - **Arena minion rail**: a side rail renders the todo list — pending = dim
   lurker, in_progress = front-line engaged, completed = tombstone. Every
   minion has a mini HP bar; on `minion_down` the bar **drains to zero

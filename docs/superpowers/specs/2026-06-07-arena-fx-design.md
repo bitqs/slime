@@ -95,6 +95,25 @@ render as "—"). `serve.js` `/state` already serializes the whole cache, so no
 route change. Stat changes animate (gold tick, mana drain pulse); panel is
 compact — full detail on hover, minimal chrome by default.
 
+## Boss Forge & Token Estimate
+
+Plan creation (= boss creation) is visualized, with an estimated token cost
+shaping the boss (user request 2026-06-07).
+
+- `scripts/lib/estimate.js` — pure heuristic, **no LLM call** (observer
+  principle): `estimateTokens(text)` = 25k base + 30k per detected plan step
+  (lines starting with `-`/`*`/`1.`) + 3 per char, clamped to [20k, 900k].
+  Precision is irrelevant — it's a gamified threat assessment.
+- `hook-pretool.js` attaches `est` to `plan_scroll`; `hook-prompt.js` attaches
+  `est` (from the prompt text) to `encounter`.
+- Boss tiers by estimate: <100k normal (1.0×), <300k elite (1.25×, gold name),
+  ≥300k raid boss (1.5×, red name). Sprite scale + name color only; the HP bar
+  still tracks real todo progress.
+- Threat label "≈330k tokens" shown in the boss intro cutscene and next to the
+  boss HP bar.
+- Forge cutscene on `plan_approved`: wax seal → particles converge into the
+  boss silhouette → HP bar charges 0→100%.
+
 ## Flash Safety
 
 - Respect `prefers-reduced-motion`; manual `?calm=1` URL param.

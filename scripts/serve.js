@@ -8,34 +8,12 @@
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
-const { ROOT, readSnapshot, eventsPath } = require('./lib/state');
+const { ROOT, readSnapshot, eventsPath, newestSessionId } = require('./lib/state');
 const { readCache } = require('./lib/usage');
 const locale = require('./lib/locale');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const PORT = Number(process.env.QL_PORT) || 4117;
-
-// ── helpers ──────────────────────────────────────────────────────────────────
-
-/** Return the session id whose .json snapshot has the newest mtime, or null. */
-function newestSessionId() {
-  const dir = path.join(ROOT, 'sessions');
-  let best = null;
-  let bestMtime = 0;
-  try {
-    for (const f of fs.readdirSync(dir)) {
-      if (!f.endsWith('.json')) continue;
-      try {
-        const st = fs.statSync(path.join(dir, f));
-        if (st.mtimeMs > bestMtime) {
-          bestMtime = st.mtimeMs;
-          best = f.slice(0, -5);
-        }
-      } catch { /* skip evicted files */ }
-    }
-  } catch { /* sessions dir missing */ }
-  return best;
-}
 
 // ── route handlers ────────────────────────────────────────────────────────────
 

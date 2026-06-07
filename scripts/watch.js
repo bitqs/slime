@@ -7,27 +7,10 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { ROOT, readSnapshot, readEvents } = require('./lib/state');
+const { ROOT, readSnapshot, readEvents, newestSessionId } = require('./lib/state');
 const { readCache, hp, restTime } = require('./lib/usage');
 const { bar } = require('./lib/report');
 const locale = require('./lib/locale');
-
-// ── helpers ──────────────────────────────────────────────────────────────────
-
-function newestSessionId(root) {
-  const dir = path.join(root, 'sessions');
-  let best = null, bestMtime = 0;
-  try {
-    for (const f of fs.readdirSync(dir)) {
-      if (!f.endsWith('.json')) continue;
-      try {
-        const st = fs.statSync(path.join(dir, f));
-        if (st.mtimeMs > bestMtime) { bestMtime = st.mtimeMs; best = f.slice(0, -5); }
-      } catch { /* skip */ }
-    }
-  } catch { /* dir missing */ }
-  return best;
-}
 
 // ── pure render ───────────────────────────────────────────────────────────────
 
@@ -110,7 +93,7 @@ function tick(lastGood) {
   try {
     const lang = locale.current();
     const cols = process.stdout.columns || 60;
-    const sessionId = newestSessionId(ROOT);
+    const sessionId = newestSessionId();
     const snap    = sessionId ? readSnapshot(sessionId) : null;
     const cache   = readCache(ROOT);
     const events  = sessionId ? readEvents(sessionId) : [];

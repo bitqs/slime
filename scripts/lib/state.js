@@ -55,6 +55,21 @@ function writeProfile(p) {
   safeWrite(profilePath(), JSON.stringify(p, null, 2));
 }
 
+function newestSessionId() {
+  const dir = path.join(ROOT, 'sessions');
+  let best = null, bestMtime = 0;
+  try {
+    for (const f of fs.readdirSync(dir)) {
+      if (!f.endsWith('.json')) continue;
+      try {
+        const st = fs.statSync(path.join(dir, f));
+        if (st.mtimeMs > bestMtime) { bestMtime = st.mtimeMs; best = f.slice(0, -5); }
+      } catch { /* evicted */ }
+    }
+  } catch { /* missing */ }
+  return best;
+}
+
 function readStdin() {
   try { return JSON.parse(fs.readFileSync(0, 'utf8')); }
   catch { return null; }
@@ -63,4 +78,5 @@ function readStdin() {
 module.exports = {
   ROOT, appendEvent, readEvents, readSnapshot, writeSnapshot,
   readProfile, writeProfile, eventsPath, snapshotPath, reportPath, ensureDirs, readStdin,
+  newestSessionId,
 };

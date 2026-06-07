@@ -47,3 +47,20 @@ test('namer renames boss file using injected command', () => {
   });
   assert.equal(boss.loadOrCreate('/tmp/namerapp', '').name, 'The Crimson Hydra of Namerapp');
 });
+
+test('defeat appends boss_down to the newest session', () => {
+  const sid = 'deadbeef';
+  fs.mkdirSync(path.join(ROOT, 'sessions'), { recursive: true });
+  fs.writeFileSync(path.join(ROOT, 'sessions', `${sid}.json`), '{}');
+
+  const boss = require('../scripts/lib/boss');
+  const b = boss.loadOrCreate('/tmp/defeat-event-app', 'fix event');
+  boss.save('/tmp/defeat-event-app', b);
+
+  execFileSync('node', [S('defeat.js'), '/tmp/defeat-event-app'], { env: ENV });
+
+  const lines = fs.readFileSync(path.join(ROOT, 'sessions', `${sid}.jsonl`), 'utf8').trim().split('\n');
+  const ev = JSON.parse(lines[lines.length - 1]);
+  assert.equal(ev.kind, 'boss_down');
+  assert.ok(ev.boss);
+});

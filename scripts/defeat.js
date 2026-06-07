@@ -17,6 +17,8 @@ try {
   });
   state.writeProfile(prof);
   boss.clear(cwd);
+  const sid = state.newestSessionId();
+  if (sid) state.appendEvent(sid, { t: Date.now(), kind: 'boss_down', boss: b.name, text: `⚡⚡⚡ ${b.name} — DEFEATED ⚡⚡⚡` });
   console.log([
     `⚡⚡⚡ ${b.name} — DEFEATED ⚡⚡⚡`,
     `Recorded on the Milestone Wall (${prof.milestones.length} total).`,

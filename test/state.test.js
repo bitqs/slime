@@ -35,3 +35,12 @@ test('profile defaults then persists', () => {
   state.writeProfile(p);
   assert.equal(state.readProfile().milestones.length, 1);
 });
+
+test('newestSessionId returns the most recently touched session', () => {
+  state.ensureDirs();
+  const dir = path.join(process.env.CCQ_ROOT, 'sessions');
+  fs.writeFileSync(path.join(dir, 'old.json'), '{}');
+  fs.utimesSync(path.join(dir, 'old.json'), new Date(Date.now() - 60000), new Date(Date.now() - 60000));
+  fs.writeFileSync(path.join(dir, 'new.json'), '{}');
+  assert.equal(state.newestSessionId(), 'new');
+});

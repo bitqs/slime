@@ -166,7 +166,26 @@ already exists: `hook-pretool.js` emits `plan_scroll` with `est`,
 - `?calm=1` / `prefers-reduced-motion`: no wobble/arc/pulse — instant scale
   set and a static counter. Flash governor applies throughout.
 
-## 7. Game guide (游戏说明)
+## 7. Battle styles — Claude Code mechanics on stage (战斗方式)
+
+How the work is executed should be visible as how the battle is fought.
+Presentation-only; the hooks already emit `cast` events with tool names and
+track `snap.summons`.
+
+- **Inline execution = the knight fights**: direct tool casts lunge the
+  knight (existing behavior).
+- **Subagent dispatch = summons fight**: a `cast` whose tool is `Agent` /
+  `Task` (and `verbs.agent` flavored casts) spawns a **summon sprite** — a
+  mini knight-wolf — that takes the field beside the knight and
+  periodically lunges at the minion pack/boss while active. Multiple
+  parallel subagents = multiple summons on field (cap 4). A summon fades
+  out with a small burst at `turn_end` (subagent results folded back).
+- Existing mappings stay and complete the metaphor: plan = feeding (§6),
+  AskUserQuestion = choice skill-cards, `/compact` = potion, context = mana,
+  rate window = Token, model = weapon badge.
+- `?calm=1`: summons appear/disappear without bursts, no lunge animation.
+
+## 8. Game guide (游戏说明)
 
 New players (and the public demo) get no explanation of the metaphor today.
 

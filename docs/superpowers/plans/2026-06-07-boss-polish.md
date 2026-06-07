@@ -1102,6 +1102,61 @@ In the ticker (after the torch flicker line) keep tentacles swaying:
 - [ ] **Step 3: Eyeball** — demo feed: confirm form picks per the spec table (tweak demo est/todos to hit all four: mini, big, pack, tentacled), tentacles sway and shrink as todos complete, pack slimes burst one by one; `?calm=1` = no sway.
 - [ ] **Step 4: Commit** `git commit -am "feat: encounter forms — mini/big slime, slime pack, tentacled raid boss from est+todos"`
 
+### Task 12c: arena.js — summons (subagent battles on stage)
+
+**Files:**
+- Modify: `public/arena.js`
+
+Spec §7: subagent dispatch = summon sprite fighting beside the knight;
+inline = knight lunges (existing). Cap 4 summons; fade at `turn_end`.
+
+- [ ] **Step 1: summon sprites** — near the knight setup add:
+
+```js
+  // ── summons (subagent battles) ────────────────────────────────────────────────
+  const summons = []; // { sprite, born }
+  function spawnSummon() {
+    if (summons.length >= 4) return;
+    const s = new PIXI.Sprite(knightTex);
+    s.scale.set(0.6);
+    s.tint = 0x7fa8c0;
+    s.x = 60 + summons.length * 14; s.y = FLOOR_Y - 9;
+    world.addChild(s);
+    summons.push({ sprite: s, born: frame });
+    if (!CALM) burst(s.x + 4, s.y + 4, P.steel, 6);
+  }
+  function clearSummons() {
+    for (const su of summons) {
+      if (!CALM) burst(su.sprite.x + 4, su.sprite.y + 4, P.steel, 4);
+      world.removeChild(su.sprite); su.sprite.destroy();
+    }
+    summons.length = 0;
+  }
+```
+
+In the ticker (next to the knight lunge decay) add the summon lunge:
+
+```js
+    if (!CALM && summons.length && frame % 45 === 0) {
+      const su = summons[frame / 45 % summons.length | 0];
+      if (su) su.sprite.x += 8; // lunge
+    }
+    for (const su of summons) if (su.sprite.x > 60 + summons.indexOf(su) * 14) su.sprite.x -= 1; // settle back
+```
+
+- [ ] **Step 2: wire events** — in `handleEvent`:
+  - `cast` handler: after `fx.knightLunge = 6;` add:
+
+```js
+      if (/\b(Agent|Task)\b/.test(d.tool || '') || /召唤|派遣|summon/i.test(d.text || '')) spawnSummon();
+```
+
+  - `turn_end` handler: add `clearSummons();` first line.
+  - `boss_down` handler (first `QLArena.on`): add `clearSummons();`
+
+- [ ] **Step 3: Eyeball** — demo feed includes an Agent cast beat (add one in Task 14 if missing: `ev({ kind: 'cast', tool: 'Agent', text: '🐺 召唤:investigator' })`); confirm summon spawns, lunges, fades at turn end; cap holds at 4; `?calm=1` = no bursts/lunges.
+- [ ] **Step 4: Commit** `git commit -am "feat: summons — subagent dispatches fight on stage beside the knight"`
+
 ### Task 13: Game guide overlay + README legend
 
 **Files:**

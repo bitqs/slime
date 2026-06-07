@@ -42,7 +42,7 @@ Product language: **English** (global audience; locales later).
 | Edit / Write | ⚔️ Attack | damage = lines changed |
 | Consecutive clean Edits | 🔥 Combo ×N | damage bonus |
 | Bash test pass | 💀 Minion slain | XP +50 |
-| Bash error / test fail | 💥 Hit taken | HP −10 |
+| Bash error / test fail | 💥 Hit taken | combo breaks, rank penalty |
 | Same error 3× in a row | 😵 Debuff: Confused | flagged in report |
 | Agent (subagent spawn) | 🐺 Summon | parallel front +1 |
 | WebSearch / WebFetch | 🔮 Divination | intel +1 |
@@ -51,7 +51,7 @@ Product language: **English** (global audience; locales later).
 | Permission prompt | ⏸️ Awaiting commander | your reaction turn |
 | Stop (turn ends) | 🏆 Turn report | rank S/A/B/C |
 
-Player HP is per-turn flavor: it starts full each turn, drops on hits, and only affects the turn rank (S requires no hits). HP zero = rank capped at C, never blocks work. Boss HP is the real cross-turn state.
+Player HP **is** real usage: HP = remaining 5-hour-window usage; the weekly limit is the deeper fatigue bar. HP regenerates in real time as the window rolls — an energy system, mobile-game-proven. HP hitting zero = you literally cannot fight; Questline computes the regen time from transcript timestamps and tells you when to come back ("🛌 Rest, commander. HP restored at 14:30"). Burning HP fast while the boss barely moves triggers a pacing warning ("HP dropping fast, boss at 82% — slow your pulls"). Hits taken (errors) break combo and hurt rank, not HP.
 
 Mapping principle: **every mapping is simultaneously real information** — "🐺×3" means 3 subagents running; empty mana = time to `/compact`.
 
@@ -73,9 +73,19 @@ Mapping principle: **every mapping is simultaneously real information** — "�
 
 Confirmed kills write to the **Milestone Wall**: date, boss name, turns taken, stamina spent, drops. The wall is a project chronicle, rendered via `/milestones`, exportable as a share card (P4).
 
-### Stamina = Usage Limits
+### HP = Usage Limits (energy system)
 
-Every turn report shows stamina = real remaining Claude usage (5-hour window + weekly). Real resource, zero fiction — players learn to plan "how many fights left today."
+Every turn report shows HP = real remaining Claude usage (5-hour window) plus the weekly fatigue bar. Real resource, zero fiction — players learn to plan "how many fights left today." HP regen time is computed from transcript timestamps; at zero HP the game says when to return instead of letting you stare at a rate-limit error.
+
+### The Sage (advisor mechanics)
+
+The game watches gear and inventory state and gives real optimization advice in game language:
+
+- **Unequip suggestions:** every installed plugin adds tools/skills to context (carry weight). A plugin unused for N days → "🎒 desktop-commander: dust-covered, carry weight −2k tokens/turn. Unequip?"
+- **Equip suggestions:** recurring task patterns with no matching gear → suggest known plugins that fit
+- **Context potions:** context near limit → "🔵 Mana low — potion (/compact) or camp (/clear)?" After a confirmed boss kill → "Quest complete. Strike camp (/clear) before the next hunt — fresh context fights better."
+
+Advice is event-driven, max one Sage line per turn report, never mid-turn interruptions.
 
 ### Gear = Installed Plugins & Skills
 
@@ -147,7 +157,28 @@ hooks (collect) → events.jsonl (state) → statusline (HUD) + stop-report (tur
 3. **P3 Spectacle:** web pixel-art live viewer
 4. **P4 Spread:** Weekly Wrapped card, milestone wall image export
 
-## 6. Out of Scope (YAGNI)
+## 6. Local Data Source Inventory (surveyed 2026-06-07)
+
+Everything Claude Code already writes to disk that Questline can mine, with the mechanic each feeds:
+
+| Source | Fields | Mechanic |
+|---|---|---|
+| Transcript JSONL (`~/.claude/projects/<proj>/*.jsonl`) | per-message `usage` (input/output/cache tokens), `model`, `timestamp`, `gitBranch`, `cwd`, `isSidechain`, tool calls/results | damage log, mana, HP estimation, summon tracking, battlefield = branch |
+| `~/.claude/history.jsonl` | every prompt ever: text, timestamp, project, sessionId | career stats, days-played streaks, peak "hunting hours", Weekly Wrapped |
+| Statusline stdin JSON | model, workspace, `cost.total_cost_usd`, `total_duration_ms`, `total_lines_added/removed`, context % | live HUD: damage, gold spent, session clock, mana bar |
+| Hook events | SessionStart/End, UserPromptSubmit, Pre/PostToolUse, Notification, Stop, SubagentStop, PreCompact | all combat triggers; SubagentStop = summon returns; PreCompact = potion animation |
+| `~/.claude/plugins/` | installed plugins + versions | gear inventory, gear drops, dust detection (Sage) |
+| Skills list (plugin + `~/.claude/skills/`) | available skills | skill book, "gear skill activated" |
+| `~/.claude/todos/` | per-session todo state | minion lists, boss HP model |
+| `~/.claude/plans/` | plan-mode documents | quest scrolls (a named plan = a quest contract) |
+| `~/.claude/file-history/` | undo/rewind snapshots | "time magic" usage stats |
+| `model` per message | Opus/Sonnet/Haiku | class fiction: Opus = Heavy Knight, Sonnet = Ranger, Haiku = Scout; fast mode = Haste buff |
+| `cost.total_cost_usd` | session spend | gold ledger, Wrapped |
+| Git state (branch, commits during session) | branch names, commit count | battlefield zones, victory banners |
+
+Competitor implementation reference: claude-code-achievements persists to `~/.claude/achievements/state.json` and uses event hooks + native OS notifications — validates the hooks-to-local-state architecture. claude-quest layers quests/tutorials over the same events. Neither touches usage, plugins-as-gear, todos-as-minions, nor wait-time rendering.
+
+## 7. Out of Scope (YAGNI)
 
 - Cloud sync / accounts / leaderboards
 - Interactive mini-games during wait (decided against: attention should stay on the battle = the work)

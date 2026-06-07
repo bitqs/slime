@@ -17,12 +17,31 @@ const TYPES = [
 
 /** @type {Record<string, string>} */
 const TYPES_ZH = {
-  Bugbear: '错虫王',
-  Colossus: '重构巨像',
-  Hydra: '九头蛇',
-  Wraith: '试炼怨灵',
-  Sphinx: '文档斯芬克斯',
-  Golem: '魔像',
+  Bugbear: '错虫史莱姆',
+  Colossus: '重构史莱姆',
+  Hydra: '九头史莱姆',
+  Wraith: '试炼史莱姆',
+  Sphinx: '文档史莱姆',
+  Golem: '岩石史莱姆',
+};
+
+/** @type {Record<string, string[]>} */
+const EPITHETS = {
+  Bugbear: ['Rabid', 'Festering', 'Creeping', 'Glitched', 'Howling', 'Venomous', 'Spiteful', 'Crashing'],
+  Colossus: ['Ancient', 'Crumbling', 'Towering', 'Rusted', 'Mossbound', 'Forgotten', 'Granite', 'Iron'],
+  Hydra: ['Twin-headed', 'Sprouting', 'Ravenous', 'Coiling', 'Emerald', 'Spawning', 'Restless', 'Wild'],
+  Wraith: ['Silent', 'Hollow', 'Veiled', 'Moaning', 'Pale', 'Drifting', 'Grim', 'Sleepless'],
+  Sphinx: ['Riddling', 'Dusty', 'All-knowing', 'Inkstained', 'Whispering', 'Cryptic', 'Patient', 'Sealed'],
+  Golem: ['Nameless', 'Lumbering', 'Mudborn', 'Stitched', 'Waking', 'Blank', 'Heavy', 'Stoneheart'],
+};
+/** @type {Record<string, string[]>} */
+const EPITHETS_ZH = {
+  Bugbear: ['狂暴', '溃烂', '潜伏', '错乱', '咆哮', '剧毒', '怨怒', '崩坏'],
+  Colossus: ['远古', '崩裂', '擎天', '锈蚀', '苔缚', '遗忘', '花岗', '钢铁'],
+  Hydra: ['双首', '增殖', '贪噬', '盘绕', '翠鳞', '滋生', '不眠', '狂野'],
+  Wraith: ['无声', '空洞', '蒙面', '哀嚎', '苍白', '游荡', '冷峻', '失眠'],
+  Sphinx: ['谜语', '积尘', '全知', '墨染', '低语', '晦涩', '静候', '封印'],
+  Golem: ['无名', '蹒跚', '泥生', '缝合', '初醒', '空白', '沉重', '石心'],
 };
 
 /** @param {string} s @returns {string} */
@@ -44,11 +63,14 @@ function compressName(cwd) {
 function nameBoss(prompt, cwd, lang) {
   const found = TYPES.find(([re]) => re.test(prompt || ''));
   const type = found ? found[1] : 'Golem';
-  const base = cap((cwd || 'unknown').split(/[\\/]/).filter(Boolean).pop() || 'unknown');
+  const base = compressName(cwd);
+  const h = hash(prompt || '');
   if (lang === 'zh') {
-    return `「${base}」${TYPES_ZH[type]}`;
+    const adj = EPITHETS_ZH[type][h % EPITHETS_ZH[type].length];
+    return `「${adj}・${base}」${TYPES_ZH[type]}`;
   }
-  return `The ${base} ${type}`;
+  const ep = EPITHETS[type][h % EPITHETS[type].length];
+  return `The ${ep} ${base} ${type}`;
 }
 
 /** @param {TodoItem[] | null | undefined} todos @returns {number} */

@@ -37,7 +37,7 @@ test('posttool hook accumulates damage and combo in snapshot', () => {
 test('prompt hook opens encounter and creates boss', () => {
   run('hook-prompt.js', { session_id: 'h2', prompt: 'fix login bug', cwd: '/tmp/myapp' });
   const snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'h2.json'), 'utf8'));
-  assert.equal(snap.boss.name, 'The Myapp Bugbear');
+  assert.match(snap.boss.name, /^The [A-Za-z-]+ Myapp Bugbear$/);
 });
 
 test('prompt hook encounter event has numeric est', () => {

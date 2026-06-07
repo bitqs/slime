@@ -7,11 +7,12 @@ const path = require('node:path');
 process.env.CCQ_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-'));
 const boss = require('../scripts/lib/boss');
 
-test('nameBoss classifies task type from prompt keywords', () => {
-  assert.equal(boss.nameBoss('fix the login crash', '/p/questline'), 'The Questline Bugbear');
-  assert.equal(boss.nameBoss('refactor auth module', '/p/api'), 'The Api Colossus');
-  assert.equal(boss.nameBoss('add dark mode', '/p/web'), 'The Web Hydra');
-  assert.equal(boss.nameBoss('whatever else', '/p/web'), 'The Web Golem');
+test('nameBoss: epithet + compressed base + type, deterministic per prompt', () => {
+  const a = boss.nameBoss('fix the login crash', '/p/questline');
+  assert.match(a, /^The [A-Za-z-]+ Questline Bugbear$/);
+  assert.equal(boss.nameBoss('fix the login crash', '/p/questline'), a); // deterministic
+  assert.match(boss.nameBoss('refactor auth', '/p/my-survivor-game'), /^The [A-Za-z-]+ MSG Colossus$/);
+  assert.match(boss.nameBoss('whatever else', '/p/web'), /^The [A-Za-z-]+ Web Golem$/);
 });
 
 test('hpFromTodos: no todos = 100, half done = 50, all done = 0', () => {
@@ -24,21 +25,22 @@ test('hpFromTodos: no todos = 100, half done = 50, all done = 0', () => {
 
 test('boss store persists per cwd', () => {
   const b = boss.loadOrCreate('/p/web', 'add dark mode');
-  assert.equal(b.name, 'The Web Hydra');
+  assert.match(b.name, /^The [A-Za-z-]+ Web Hydra$/);
   b.hp = 40;
   boss.save('/p/web', b);
   assert.equal(boss.loadOrCreate('/p/web', 'ignored').hp, 40);
 });
 
-test('zh boss names use 「base」type format', () => {
-  assert.equal(boss.nameBoss('修复登录bug', '/p/web', 'zh'), '「Web」错虫王');
-  assert.equal(boss.nameBoss('重构认证模块', '/p/api', 'zh'), '「Api」重构巨像');
-  assert.equal(boss.nameBoss('添加暗黑模式', '/p/web', 'zh'), '「Web」九头蛇');
-  assert.equal(boss.nameBoss('随便什么', '/p/web', 'zh'), '「Web」魔像');
+test('nameBoss zh: 「形容词・base」slime-form type', () => {
+  assert.match(boss.nameBoss('修复登录bug', '/p/web', 'zh'), /^「.+・Web」错虫史莱姆$/);
+  assert.match(boss.nameBoss('重构认证模块', '/p/2d-three-kindom', 'zh'), /^「.+・2TK」重构史莱姆$/);
+  assert.match(boss.nameBoss('随便什么', '/p/web', 'zh'), /^「.+・Web」岩石史莱姆$/);
 });
 
-test('en nameBoss unchanged without lang', () => {
-  assert.equal(boss.nameBoss('fix crash', '/p/web'), 'The Web Bugbear');
+test('nameBoss: different prompts of same type can draw different epithets', () => {
+  const names = new Set(['a', 'fix b', 'fix cc', 'fix ddd', 'fix eeee', 'fix one more', 'fix again', 'fix x']
+    .map((p) => boss.nameBoss('fix ' + p, '/p/web')));
+  assert.ok(names.size > 1);
 });
 
 test('compressName: multi-word → initials with digits; single word kept or truncated', () => {

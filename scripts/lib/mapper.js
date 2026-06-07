@@ -38,13 +38,14 @@ function hash(s) {
 }
 
 function target(input = {}) {
-  if (input.file_path) return path.basename(input.file_path);
-  if (input.pattern) return `"${input.pattern}"`;
-  if (input.query) return `"${input.query}"`;
-  if (input.skill) return input.skill;
-  if (input.description) return input.description;
-  if (input.prompt) { const s = String(input.prompt); return s.length > 40 ? s.slice(0, 40) + '…' : s; }
-  if (input.command) { const s = String(input.command); return s.length > 40 ? s.slice(0, 40) + '…' : s; }
+  const { sanitize } = require('./hud');
+  if (input.file_path) return sanitize(path.basename(input.file_path), 40);
+  if (input.pattern) return `"${sanitize(input.pattern, 40)}"`;
+  if (input.query) return `"${sanitize(input.query, 40)}"`;
+  if (input.skill) return sanitize(input.skill, 40);
+  if (input.description) return sanitize(input.description, 40);
+  if (input.prompt) return sanitize(input.prompt, 40);
+  if (input.command) return sanitize(input.command, 40);
   return '';
 }
 

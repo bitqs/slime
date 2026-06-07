@@ -29,20 +29,20 @@ function render(snap, stdinJson, tips, now, usageCache, lang) {
   const idleMs = now - (snap.updated || 0);
 
   if (snap.inTurn && idleMs > 20000 && tips.length) {
-    return tips[Math.floor(now / 20000) % tips.length];
+    return sanitize(tips[Math.floor(now / 20000) % tips.length], 120);
   }
 
-  if (!snap.inTurn) return snap.lastText || T('hud.yourTurn');
+  if (!snap.inTurn) return sanitize(snap.lastText, 120) || T('hud.yourTurn');
 
   const parts = [];
   if (hpVal != null) parts.push(`⚡HP ${hpVal}%`);
-  if (snap.boss) parts.push(`🗡️ ${snap.boss.name} ${bar(snap.boss.hp)} ${snap.boss.hp}%`);
+  if (snap.boss) parts.push(`🗡️ ${sanitize(snap.boss.name)} ${bar(snap.boss.hp)} ${snap.boss.hp}%`);
   if (snap.combo > 1) parts.push(`🔥combo×${snap.combo}`);
   if (snap.summons > 0) parts.push(`🐺×${snap.summons}`);
   parts.push(`💀${snap.kills || 0} ⚔️${snap.dmg || 0}`);
   const cost = stdinJson && stdinJson.cost && stdinJson.cost.total_cost_usd;
   if (cost) parts.push(`💰$${cost.toFixed(2)}`);
-  if (snap.lastText) parts.push(snap.lastText);
+  if (snap.lastText) parts.push(sanitize(snap.lastText, 120));
   return parts.join(' | ');
 }
 

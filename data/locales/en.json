@@ -15,5 +15,7 @@
   "turn.complete": "🏆 Turn {turn} complete — Rank {rank}",
   "sage.rest": "💡 Sage: 🛌 your HP is nearly spent — rest, the window restores it.",
   "sage.potion": "💡 Sage: mana runs low — a potion (/compact) or strike camp (/clear).",
-  "sage.pacing": "💡 Sage: half your HP gone, the boss barely scratched — slow your pace, sharpen each strike."
+  "sage.pacing": "💡 Sage: half your HP gone, the boss barely scratched — slow your pace, sharpen each strike.",
+  "encounter": "⚡ Turn {turn} — {name} ({hp}% HP)",
+  "encounter.appears": "⚡ {name} appears!"
 }

@@ -24,5 +24,7 @@
   "turn.complete": "🏆 回合 {turn} 结束 — 评级 {rank}",
   "sage.rest": "💡 贤者: 🛌 你的 HP 快耗尽了 — 休息,时间窗会恢复它。",
   "sage.potion": "💡 贤者: 蓝量告急 — 喝药 (/compact) 或扎营 (/clear)。",
-  "sage.pacing": "💡 贤者: HP 已耗一半,Boss 几乎没掉血 — 放慢节奏,磨利每一击。"
+  "sage.pacing": "💡 贤者: HP 已耗一半,Boss 几乎没掉血 — 放慢节奏,磨利每一击。",
+  "encounter": "⚡ 回合 {turn} — {name} ({hp}% HP)",
+  "encounter.appears": "⚡ {name} 现身!"
 }

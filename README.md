@@ -65,6 +65,14 @@ Force one with `"lang": "zh"` in `~/.claude/ccq/config.json`.
 | `/questline:milestones` | Show the Milestone Wall |
 | `/questline:battlelog` | Replay this session's turn reports |
 
+### Top-of-terminal battle pane (tmux)
+
+```bash
+tmux split-window -bv -l 6 "node \"$(pwd)/scripts/watch.js\""
+```
+
+A read-only live monitor: boss bar, your HP, combo, and the last three strikes — refreshed every second.
+
 ## How It Works
 
 ```

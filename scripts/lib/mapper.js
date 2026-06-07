@@ -1,6 +1,10 @@
+/** @typedef {import('./types').QLEvent} QLEvent */
+
 const path = require('node:path');
 const locale = require('./locale');
 
+/** @typedef {{ [key: string]: string[] }} VerbTable */
+/** @type {VerbTable} */
 const VERBS = {
   read:  ['peers into', 'surveys', 'studies'],
   grep:  ['tracks', 'hunts', 'sniffs out'],
@@ -13,11 +17,13 @@ const VERBS = {
   other: ['wields', 'brandishes'],
 };
 
+/** @type {Record<string, string>} */
 const ICONS = {
   read: '🔍', grep: '🕵️', edit: '⚔️', write: '🛠️', bash: '💥',
   agent: '🐺', web: '🔮', skill: '✨', other: '🎲',
 };
 
+/** @param {string | null | undefined} tool @returns {string} */
 function category(tool) {
   const t = (tool || '').toLowerCase();
   if (t === 'read' || t === 'glob') return 'read';
@@ -31,12 +37,22 @@ function category(tool) {
   return 'other';
 }
 
+/** @param {string} s @returns {number} */
 function hash(s) {
   let h = 0;
   for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return h;
 }
 
+/**
+ * @typedef {{
+ *   file_path?: string; pattern?: string; query?: string; skill?: string;
+ *   description?: string; prompt?: string; command?: string;
+ *   [key: string]: unknown;
+ * }} ToolInput
+ */
+
+/** @param {ToolInput} [input] @returns {string} */
 function target(input = {}) {
   const { sanitize } = require('./hud');
   if (input.file_path) return sanitize(path.basename(input.file_path), 40);
@@ -49,8 +65,24 @@ function target(input = {}) {
   return '';
 }
 
+/** @param {string} s @returns {string} */
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
+/**
+ * @typedef {{
+ *   tool_name?: string;
+ *   tool_input?: ToolInput;
+ *   tool_response?: { is_error?: boolean; [key: string]: unknown };
+ *   [key: string]: unknown;
+ * }} HookPayload
+ */
+
+/**
+ * @param {HookPayload | null | undefined} payload
+ * @param {number | string} count
+ * @param {string} [lang]
+ * @returns {QLEvent}
+ */
 function cast(payload, count, lang) {
   payload = payload || {};
   const tool = payload.tool_name || 'Unknown';
@@ -75,15 +107,23 @@ function cast(payload, count, lang) {
 
 const TEST_CMD = /\b(test|spec|pytest|jest|vitest|tape|--test)\b/;
 
+/** @param {unknown} s @returns {number} */
 function lineCount(s) { return s ? String(s).split('\n').length : 0; }
 
+/**
+ * @param {HookPayload | null | undefined} payload
+ * @param {{ combo?: number; [key: string]: unknown }} [snap]
+ * @param {string} [lang]
+ * @returns {QLEvent}
+ */
 function resolve(payload, snap = {}, lang) {
   payload = payload || {};
   const tool = payload.tool_name || 'Unknown';
   const cat = category(tool);
-  const input = payload.tool_input || {};
+  const input = /** @type {ToolInput} */ (payload.tool_input || {});
   const isError = Boolean(payload.tool_response && payload.tool_response.is_error);
   let combo = snap.combo || 0;
+  /** @type {QLEvent} */
   const ev = { t: Date.now(), kind: 'resolve', tool };
 
   if (isError) {

@@ -7,6 +7,17 @@ const os = require('node:os');
 const path = require('node:path');
 const { readJson } = require('./safe-io');
 
+/**
+ * @typedef {{
+ *   plugins?: Record<string, [{ gitCommitSha?: string }?, ...unknown[]]>;
+ * }} InstalledPlugins
+ *
+ * @typedef {{
+ *   extraKnownMarketplaces?: Record<string, { source?: { source?: string; path?: string } }>;
+ * }} ClaudeSettings
+ */
+
+/** @param {string} dir @param {string[]} args @returns {string} */
 function git(dir, args) {
   return execFileSync('git', ['-C', dir, ...args], {
     timeout: 2000, stdio: ['ignore', 'pipe', 'ignore'],
@@ -14,16 +25,17 @@ function git(dir, args) {
 }
 
 // cfgDirOverride is for tests; production callers pass nothing.
+/** @param {string} [cfgDirOverride] @returns {{ count: number; subjects: string[] } | null} */
 function checkUpdate(cfgDirOverride) {
   try {
     const cfgDir = cfgDirOverride
       || process.env.CLAUDE_CONFIG_DIR
       || path.join(os.homedir(), '.claude');
-    const installed = readJson(path.join(cfgDir, 'plugins', 'installed_plugins.json'), null);
+    const installed = /** @type {InstalledPlugins | null} */ (readJson(path.join(cfgDir, 'plugins', 'installed_plugins.json'), null));
     const entry = installed && installed.plugins && installed.plugins['questline@questline'];
     const sha = entry && entry[0] && entry[0].gitCommitSha;
     if (!sha) return null;
-    const settings = readJson(path.join(cfgDir, 'settings.json'), null);
+    const settings = /** @type {ClaudeSettings | null} */ (readJson(path.join(cfgDir, 'settings.json'), null));
     const mp = settings && settings.extraKnownMarketplaces && settings.extraKnownMarketplaces.questline;
     if (!mp || !mp.source || mp.source.source !== 'directory' || !mp.source.path) return null;
     const head = git(mp.source.path, ['rev-parse', 'HEAD']);

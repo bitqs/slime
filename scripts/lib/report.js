@@ -1,3 +1,12 @@
+/** @typedef {import('./types').BossState} BossState */
+/** @typedef {import('./types').UsageCache} UsageCache */
+/** @typedef {import('./types').QLEvent} QLEvent */
+
+/**
+ * @typedef {{ dmg?: number; kills?: number; hits?: number }} RankInput
+ */
+
+/** @param {RankInput} param0 @returns {string} */
 function rank({ hits = 0, kills = 0, dmg = 0 }) {
   if (hits === 0 && kills > 0) return 'S';
   if (hits === 0 && dmg > 0) return 'A';
@@ -7,6 +16,7 @@ function rank({ hits = 0, kills = 0, dmg = 0 }) {
   return 'C';
 }
 
+/** @param {QLEvent[]} events @returns {{ dmg: number; kills: number; hits: number; casts: number; maxCombo: number }} */
 function aggregate(events) {
   const lastEnd = events.map((e) => e.kind).lastIndexOf('turn_end');
   const turn = events.slice(lastEnd + 1);
@@ -24,14 +34,29 @@ function aggregate(events) {
   return a;
 }
 
+/** @param {number} pct @returns {string} */
 function bar(pct) {
   const full = Math.round(pct / 10);
   return '█'.repeat(full) + '░'.repeat(10 - full);
 }
 
+/**
+ * @typedef {{ dmg: number; kills: number; hits: number; casts: number; maxCombo: number }} AggResult
+ * @typedef {{ turn?: number | string; [key: string]: unknown }} SnapLike
+ * @typedef {{ lang?: string; usage?: UsageCache | null; sageLine?: string }} RenderExtras
+ */
+
+/**
+ * @param {AggResult} agg
+ * @param {BossState | null | undefined} bossState
+ * @param {SnapLike} snap
+ * @param {RenderExtras} [extras]
+ * @returns {string}
+ */
 function render(agg, bossState, snap, extras = {}) {
   const locale = require('./locale');
   const lang = extras.lang || locale.current();
+  /** @param {string} key @param {Record<string, unknown>} [vars] @returns {string} */
   const T = (key, vars) => locale.fmt(locale.t(key, lang), vars);
   const r = rank(agg);
   const lines = [

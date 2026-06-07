@@ -1,6 +1,6 @@
 # Session Coordination Board
 
-Two Claude Code sessions share this working tree. Rules:
+Three Claude Code sessions share this working tree. Rules:
 
 1. **Only touch files you've claimed below.** Re-read this file before claiming more.
 2. **`git add` explicit paths only** — never `-A`/`.` (the index is shared; you'd commit the other session's work-in-progress).
@@ -27,5 +27,16 @@ Claimed:
 - `commands/setup.md`
 - `README.md` (one switcher line), `README.zh-CN.md`
 - `docs/superpowers/specs/2026-06-07-i18n-design.md`
+
+## Session C — caveman-style hardening + distribution
+
+Spec: `docs/superpowers/specs/2026-06-07-caveman-hardening-design.md`
+
+Claimed:
+- `scripts/lib/safe-io.js` (new), `scripts/lib/state.js`, `scripts/lib/boss.js`, `scripts/lib/usage.js`, `scripts/lib/locale.js`, `scripts/lib/hud.js`, `scripts/lib/mapper.js` — **internal changes only, lib API frozen** (B's scripts import these)
+- `scripts/statusline.js`, `scripts/hook-prompt.js`, `scripts/hook-stop.js`, `scripts/hook-sessionstart.js`
+- `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` (new)
+- `README.md` — Quick Start + Requirements + Uninstall sections only (B owns the switcher line; re-read before edit)
+- `test/safe-io.test.js` (new)
 
 Shared (append-only protocol): `data/locales/en.json`, `data/locales/zh.json`

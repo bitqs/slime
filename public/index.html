@@ -90,8 +90,8 @@ body.calm .minion-hp-fill{transition:none}
 #user-status .us-track::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 7px,rgba(0,0,0,.4) 7px 8px)}
 body.calm #user-status .us-fill{transition:none}
 #user-status .us-val{position:absolute;right:3px;top:50%;transform:translateY(-50%);z-index:2;color:#fff;font-size:8px;font-weight:bold;text-shadow:1px 1px 0 #000,0 0 2px #000}
-#calm-btn,#help-btn,#lang-btn,#day-btn,#sound-btn,#gh-btn,#issue-btn{position:relative;z-index:4;flex-shrink:0;background:var(--btn-bg);color:var(--btn-fg);border:1px solid var(--btn-border);font-family:monospace;font-size:11px;width:19px;height:19px;cursor:pointer;padding:0;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
-#calm-btn:hover,#help-btn:hover,#lang-btn:hover,#day-btn:hover,#sound-btn:hover,#gh-btn:hover,#issue-btn:hover{color:#fff;box-shadow:inset 0 0 0 1px var(--accent)}
+#calm-btn,#help-btn,#lang-btn,#day-btn,#music-btn,#sfx-btn,#gh-btn,#issue-btn{position:relative;z-index:4;flex-shrink:0;background:var(--btn-bg);color:var(--btn-fg);border:1px solid var(--btn-border);font-family:monospace;font-size:11px;width:19px;height:19px;cursor:pointer;padding:0;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+#calm-btn:hover,#help-btn:hover,#lang-btn:hover,#day-btn:hover,#music-btn:hover,#sfx-btn:hover,#gh-btn:hover,#issue-btn:hover{color:#fff;box-shadow:inset 0 0 0 1px var(--accent)}
 #guide-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(13,15,20,.93);z-index:30}
 #guide-box{max-width:85%;max-height:90%;overflow:auto;font-size:10px;line-height:1.5;color:var(--ink);background:var(--panel-bg);border:1px solid var(--rule);box-shadow:var(--panel-bevel);padding:14px}
 #guide-box b{color:var(--accent)}
@@ -104,7 +104,8 @@ body.calm #user-status .us-fill{transition:none}
 <div id="top-bar" class="uw"><span class="uw-rule"></span>
   <span id="title">⚓ SLIME · 史莱姆</span>
   <span style="flex:1"></span>
-  <button id="sound-btn" title="sound on / off">🔇</button>
+  <button id="music-btn" title="music on / off">🎵</button>
+  <button id="sfx-btn" title="sound effects on / off">🔊</button>
   <button id="day-btn" title="day / night theme">🌙</button>
   <button id="lang-btn" title="language / 语言">🌐</button>
   <button id="calm-btn" title="flash / calm toggle">✨</button>

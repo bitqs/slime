@@ -50,8 +50,8 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live, level) {
   const lv = level ? ` ✦Lv${level}` : '';
   const hpVal = usage.hp(usageCache);
   const wtkVal = usage.week(usageCache);
-  // DTK (daily, 5h window) + WTK (weekly, 7-day window) meters, shown together.
-  const meters = [hpVal != null ? `⚡${hpVal}%` : '', wtkVal != null ? `🏕${wtkVal}%` : ''].filter(Boolean).join(' ');
+  // DTK (daily, 5h window) + WTK (weekly, 7-day window) meters, labelled.
+  const meters = [hpVal != null ? `⚡ DTK${hpVal}%` : '', wtkVal != null ? `🏕 WTK${wtkVal}%` : ''].filter(Boolean).join('  ');
   const mSuffix = meters ? ' ' + meters : '';
   if (hpVal === 0) {
     const t = usage.restTime(usageCache);
@@ -71,7 +71,7 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live, level) {
   }
 
   const parts = [];
-  // plugin badge leads the line, then DTK/WTK meters; boss shows as a slime icon + hp
+  // plugin badge + arena link lead the line, then DTK/WTK meters; boss is a slime icon + hp
   parts.push(`🟢${uiLink(live)}${lv}${mSuffix}`);
   const todos = Array.isArray(snap.todos) ? snap.todos : [];
   const doneCnt = todos.filter((t) => t.status === 'completed').length;

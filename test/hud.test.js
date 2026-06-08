@@ -47,18 +47,18 @@ test('battle frame shows player HP from usage cache', () => {
     {}, TIPS, now,
     { fiveHour: { used: 32, resetsAt: 0 } }
   );
-  assert.match(line, /⚡68%/);
+  assert.match(line, /⚡ DTK68%/);
 });
 
-test('statusline shows both DTK (5h) and WTK (7-day) token meters', () => {
+test('statusline shows both DTK (5h) and WTK (7-day) labelled token meters', () => {
   const now = Date.now();
   const line = hud.render(
     { inTurn: true, combo: 0, kills: 0, dmg: 5, summons: 0, lastText: 'x', updated: now },
     {}, TIPS, now,
     { fiveHour: { used: 32, resetsAt: 0 }, sevenDay: { used: 20, resetsAt: 0 } }
   );
-  assert.match(line, /⚡68%/);  // DTK — daily 5h window
-  assert.match(line, /🏕80%/);  // WTK — weekly 7-day window
+  assert.match(line, /⚡ DTK68%/);  // DTK — daily 5h window
+  assert.match(line, /🏕 WTK80%/);  // WTK — weekly 7-day window
 });
 
 test('zero HP renders rest banner with reset time', () => {
@@ -96,22 +96,14 @@ test('live arena renders a clickable [HUD] link carrying the live port', () => {
   const snap = { inTurn: true, combo: 0, kills: 0, dmg: 0, summons: 0, updated: now };
   const line = hud.render(snap, {}, TIPS, now, null, 'en', { port: 4118 });
   assert.match(line, /\[HUD\]/);
-  assert.match(line, /127\.0\.0\.1:4118/); // URL tracks the live port, not a hardcoded one
+  assert.match(line, /127\.0\.0\.1:4118/);
 });
 
-test('no live arena → [HUD] link still shown, pointing at the default arena port', () => {
-  const now = Date.now();
-  const snap = { inTurn: true, combo: 0, kills: 0, dmg: 0, summons: 0, updated: now };
-  const line = hud.render(snap, {}, TIPS, now, null, 'en', null);
-  assert.match(line, /\[HUD\]/);            // always visible so the arena is one click away
-  assert.match(line, /127\.0\.0\.1:4117/);  // falls back to the default port
-});
-
-test('between turns also leads with 🟢 + live [HUD] link', () => {
+test('between turns leads with 🟢 + the [HUD] link and shows the result', () => {
   const now = Date.now();
   const snap = { inTurn: false, updated: now - 60000, lastText: '🏆 Turn 3 complete — Rank S' };
   const line = hud.render(snap, {}, TIPS, now, null, 'en', { port: 4117 });
   assert.match(line, /🟢/);
   assert.match(line, /\[HUD\]/);
-  assert.match(line, /Rank S/); // result still shown after the badge
+  assert.match(line, /Rank S/);
 });

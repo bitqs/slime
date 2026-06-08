@@ -119,16 +119,37 @@
   if (DAY) {
     bgFar.visible = bgNear.visible = false;
     const sky = new PIXI.Graphics();
-    sky.rect(0, 0, W, FLOOR_Y).fill({ color: 0xbfe0f5, alpha: 0.5 });            // soft sky wash
-    sky.circle(48, 30, 13).fill(0xfff1b0);                                        // sun core
-    sky.circle(48, 30, 19).fill({ color: 0xffe680, alpha: 0.28 });               // sun glow
+    // vertical gradient: deeper blue up top fading to pale at the horizon
+    const SKY_BANDS = [0x8cc0ec, 0xa0cdef, 0xb6daf3, 0xcde7f6, 0xdceef8];
+    const bh = Math.ceil(FLOOR_Y / SKY_BANDS.length);
+    SKY_BANDS.forEach((c, i) => sky.rect(0, i * bh, W, bh + 1).fill(c));
+    // layered rolling hills for depth
+    sky.ellipse(60, FLOOR_Y + 6, 95, 30).fill({ color: 0x9ec98c, alpha: 0.5 });
+    sky.ellipse(230, FLOOR_Y + 8, 120, 34).fill({ color: 0x86bd80, alpha: 0.6 });
+    sky.ellipse(150, FLOOR_Y + 12, 150, 30).fill({ color: 0x74ad72, alpha: 0.7 });
+    // sun with soft glow
+    sky.circle(50, 30, 22).fill({ color: 0xfff0a8, alpha: 0.22 });
+    sky.circle(50, 30, 16).fill({ color: 0xffe680, alpha: 0.32 });
+    sky.circle(50, 30, 12).fill(0xfff4c2);
     const cloud = (cx, cy, s) => {
-      sky.ellipse(cx, cy, 13 * s, 5 * s).fill({ color: 0xffffff, alpha: 0.85 });
-      sky.ellipse(cx + 9 * s, cy + 1, 9 * s, 4 * s).fill({ color: 0xffffff, alpha: 0.85 });
-      sky.ellipse(cx - 9 * s, cy + 1, 8 * s, 4 * s).fill({ color: 0xf0f6ff, alpha: 0.8 });
+      sky.ellipse(cx, cy, 13 * s, 5 * s).fill({ color: 0xffffff, alpha: 0.9 });
+      sky.ellipse(cx + 9 * s, cy + 1, 9 * s, 4 * s).fill({ color: 0xffffff, alpha: 0.9 });
+      sky.ellipse(cx - 9 * s, cy + 1, 8 * s, 4 * s).fill({ color: 0xeef6ff, alpha: 0.85 });
+      sky.ellipse(cx, cy - 2, 8 * s, 4 * s).fill({ color: 0xffffff, alpha: 0.9 });
     };
-    cloud(120, 26, 1); cloud(232, 18, 1.3); cloud(180, 44, 0.8);
+    cloud(120, 26, 1); cloud(232, 18, 1.3); cloud(180, 46, 0.8);
     world.addChildAt(sky, 0);
+  }
+
+  // Re-randomize the night starfield (the "new area" wipe after a victory walk).
+  // Day's sky is static, so it's a no-op there.
+  function repaintBackdrop() {
+    bgFar.clear(); bgNear.clear();
+    if (DAY) return;
+    const paint = (g, n, alpha) => {
+      for (let i = 0; i < n; i++) g.rect(Math.random() * W * 2, Math.random() * (FLOOR_Y - 10), 1, 1).fill({ color: 0xffffff, alpha });
+    };
+    paint(bgFar, 40, 0.35); paint(bgNear, 28, 0.6);
   }
 
   // ── sky decor: sci-fi / AI things that drift across the starfield ──────────────
@@ -293,10 +314,17 @@
   }
 
   const floorBar = new PIXI.Graphics();
-  floorBar.rect(0, FLOOR_Y + 3, W, 3).fill(0x141821);                 // recess shadow below lip
-  floorBar.rect(0, FLOOR_Y, W, 3).fill(P.floor);                       // floor body
-  floorBar.rect(0, FLOOR_Y, W, 1).fill({ color: 0x4a5570, alpha: 0.9 }); // lit top edge
-  for (let tx = 0; tx < W; tx += 8) floorBar.rect(tx, FLOOR_Y + 1, 1, 2).fill({ color: 0x12151d, alpha: 0.6 }); // tile seams
+  if (DAY) {
+    floorBar.rect(0, FLOOR_Y + 3, W, 4).fill(0x6b5a44);                  // dirt recess below lip
+    floorBar.rect(0, FLOOR_Y, W, 3).fill(0xb6a98c);                       // warm sunlit stone body
+    floorBar.rect(0, FLOOR_Y, W, 1).fill({ color: 0xe6dcc2, alpha: 0.95 }); // bright lit top edge
+    for (let tx = 0; tx < W; tx += 8) floorBar.rect(tx, FLOOR_Y + 1, 1, 2).fill({ color: 0x7a6c52, alpha: 0.55 }); // tile seams
+  } else {
+    floorBar.rect(0, FLOOR_Y + 3, W, 3).fill(0x141821);                 // recess shadow below lip
+    floorBar.rect(0, FLOOR_Y, W, 3).fill(P.floor);                       // floor body
+    floorBar.rect(0, FLOOR_Y, W, 1).fill({ color: 0x4a5570, alpha: 0.9 }); // lit top edge
+    for (let tx = 0; tx < W; tx += 8) floorBar.rect(tx, FLOOR_Y + 1, 1, 2).fill({ color: 0x12151d, alpha: 0.6 }); // tile seams
+  }
   world.addChild(floorBar);
 
   // ground shadows + boss target ring (drawn each frame, behind the units)
@@ -313,6 +341,12 @@
   function drawTorch(g, hot) {
     const tx = g._tx;
     g.clear();
+    if (DAY) {
+      // daylight: an unlit post — a lit flame in bright sun reads as a mistake
+      g.rect(tx, FLOOR_Y - 18, 3, 18).fill(0x6b5036);          // wooden post
+      g.rect(tx - 1, FLOOR_Y - 22, 5, 4).fill(0x4a4038);       // cold, unlit head
+      return;
+    }
     // soft glow halo around the flame
     g.circle(tx + 1, FLOOR_Y - 22, 11).fill({ color: hot ? 0xf0b541 : 0xe8842c, alpha: 0.06 });
     g.circle(tx + 1, FLOOR_Y - 22, 6).fill({ color: 0xf0b541, alpha: 0.1 });
@@ -450,12 +484,15 @@
   function groundBoss(slump) { boss.y = BOSS_FLOOR - boss.height + (slump || 0); }
   /** a faked stone dome (3 stacked ellipses) the duelists stand on — Pokemon's
    *  platform read, KOEI's muted stone palette. Drawn into groundFx behind units. */
+  const DAIS = DAY
+    ? { shadow: 0x6b5a44, base: 0x8a7c64, mid: 0xa89a7e, top: 0xc8bc9c }   // sunlit stone
+    : { shadow: 0x1d222c, base: 0x1d222c, mid: 0x2e3547, top: 0x3a4456 };  // night stone
   function drawDais(g, cx, fy, rx, ry) {
     const x = Math.round(cx), y = Math.round(fy);
-    g.ellipse(x, y + 2, rx, ry).fill({ color: 0x1d222c, alpha: 0.55 });        // cast shadow
-    g.ellipse(x, y, rx, ry).fill(0x1d222c);                                     // base
-    g.ellipse(x, y - 1, rx * 0.9, ry * 0.78).fill(0x2e3547);                    // mid
-    g.ellipse(x, y - 2, rx * 0.74, ry * 0.5).fill({ color: 0x3a4456, alpha: 0.9 }); // top crescent
+    g.ellipse(x, y + 2, rx, ry).fill({ color: DAIS.shadow, alpha: 0.55 });      // cast shadow
+    g.ellipse(x, y, rx, ry).fill(DAIS.base);                                    // base
+    g.ellipse(x, y - 1, rx * 0.9, ry * 0.78).fill(DAIS.mid);                    // mid
+    g.ellipse(x, y - 2, rx * 0.74, ry * 0.5).fill({ color: DAIS.top, alpha: 0.9 }); // top crescent
   }
 
   // ── encounter forms ──────────────────────────────────────────────────────────
@@ -678,6 +715,7 @@
       }
     },
     dim({ on } = {}) { world.alpha = on ? 0.3 : 1; },
+    walkforward() { if (CALM) { repaintBackdrop(); dropNextFoe(); return; } fx.walk = { phase: 'out', to: W + 20 }; },
     forgeparticles() { // particles converge on the boss anchor
       for (let i = 0; i < 24; i++) {
         const a = (i / 24) * Math.PI * 2;
@@ -689,6 +727,16 @@
   };
 
   function playScene(steps) { activeScenes.push(SlimeSeq.createTimeline(steps)); }
+
+  // After the victory walk reaches the fresh arena, the next foe drops in — a new
+  // look (re-seeded), full HP, falling from the top to slam onto its dais.
+  function dropNextFoe() {
+    regenBoss('foe-' + frame);
+    boss.scale.set(SLIME_MIN_SCALE);
+    boss.x = 220 - (SLIME_MIN_SCALE - 1) * 8;
+    lastBossPct = 100;
+    PRIM.bossdrop();
+  }
 
   // ── token threat helpers ───────────────────────────────────────────────────────
   function bossTierFor(est) {
@@ -723,6 +771,7 @@
     { at: 44,  do: 'goldrain' },
     { at: 60,  do: 'confetti' },
     { at: 200, do: 'hidetext' },
+    { at: 206, do: 'walkforward' },   // knight strides on; the area refreshes
   ];
   const SCENE_POTION = [
     { at: 0,  do: 'flash', color: '#6abe30', strength: 0.35 },
@@ -761,15 +810,16 @@
       slowmoAcc -= 1;
     }
 
-    // advance scenes → dispatch due steps
+    // advance scenes as a QUEUE: only the front timeline plays; when it finishes
+    // the next begins (it has its own frame counter, so it starts from the top).
+    // One cutscene at a time → no overlapping flashes/text.
     if (activeScenes.length) {
-      for (const tl of activeScenes) {
-        for (const step of SlimeSeq.advance(tl)) {
-          const fn = step.do && PRIM[step.do];
-          if (fn) { try { fn.call(PRIM, step.args || step); } catch {} }
-        }
+      const tl = activeScenes[0];
+      for (const step of SlimeSeq.advance(tl)) {
+        const fn = step.do && PRIM[step.do];
+        if (fn) { try { fn.call(PRIM, step.args || step); } catch {} }
       }
-      activeScenes = activeScenes.filter((tl) => !tl.done);
+      if (tl.done) activeScenes.shift();
     }
 
     // flash decay
@@ -819,7 +869,7 @@
     }
 
     // knight bob every 30 (boss stays planted — grounded every frame below)
-    if (frame % 30 === 0) {
+    if (!fx.walk && frame % 30 === 0) {
       knight.y = FLOOR_Y - 14 - (knight.y < FLOOR_Y - 14 ? 0 : 1);
     }
 
@@ -831,7 +881,22 @@
 
     // knight lunge decay
     if (fx.knightLunge > 0) fx.knightLunge = Math.max(0, fx.knightLunge - 1);
-    knight.x = 40 + fx.knightLunge;
+    if (fx.walk) {
+      // post-victory march: knight strides off the right, the area refreshes,
+      // then the knight walks back in from the left — "on to the next quest".
+      knight.x += 1.8;
+      knight.y = FLOOR_Y - 14 - ((Math.floor(frame / 5) % 2) ? 1 : 0);   // walk bob
+      if (fx.walk.phase === 'out' && knight.x >= fx.walk.to) {
+        repaintBackdrop();
+        knight.x = -16; fx.walk.phase = 'in'; fx.walk.to = 40;
+        if (!CALM) PRIM.flash({ color: '#e8e0d0', strength: 0.3 });
+      } else if (fx.walk.phase === 'in' && knight.x >= fx.walk.to) {
+        knight.x = 40; knight.y = FLOOR_Y - 14; fx.walk = null;
+        dropNextFoe();   // the next slime boss drops into the new scene
+      }
+    } else {
+      knight.x = 40 + fx.knightLunge;
+    }
 
     if (!CALM && summons.length && frame % 45 === 0) {
       const su = summons[(frame / 45) % summons.length | 0];
@@ -1233,7 +1298,7 @@
   /** Map a battle event to a sound (no-op when muted / audio absent). */
   function audioFor(d) {
     const A = window.SlimeAudio;
-    if (!A || A.isMuted()) return;
+    if (!A) return;                 // play()/startBgm() self-gate on the sfx/music toggles
     switch (d.kind) {
       case 'encounter': A.play('encounter'); A.startBgm(); break;
       case 'resolve': A.play(d.kill ? 'kill' : (d.combo >= 10 ? 'crit' : 'hit')); break;
@@ -1254,6 +1319,7 @@
       if (isNew) {
         setScene('battle');
         engagedBoss = d.bossName;
+        if (fx.walk) { fx.walk = null; knight.x = 40; knight.y = FLOOR_Y - 14; } // cancel any victory stroll
         hideOverlay();
         regenBoss(d.bossName);                 // seed the look from the boss's name
         const est = bossAppearanceEst();        // size/form/tier from identity, not tokens
@@ -1418,20 +1484,18 @@
       location.search = sp.toString();
     });
   }
-  const soundBtn = document.getElementById('sound-btn');
-  if (soundBtn && window.SlimeAudio) {
-    const sync = () => {
-      const m = window.SlimeAudio.isMuted();
-      soundBtn.textContent = m ? '🔇' : '🔊';
-      soundBtn.title = m ? 'sound off — click for sound' : 'sound on';
-      soundBtn.style.borderColor = m ? '' : '#f0b541';
-    };
+  const A = window.SlimeAudio;
+  const musicBtn = document.getElementById('music-btn');
+  if (musicBtn && A) {
+    const sync = () => { musicBtn.style.opacity = A.isMusicOn() ? '1' : '0.5'; musicBtn.style.borderColor = A.isMusicOn() ? '#f0b541' : ''; musicBtn.title = A.isMusicOn() ? 'music on' : 'music off'; };
     sync();
-    soundBtn.addEventListener('click', async () => {
-      window.SlimeAudio.unlock();                       // user gesture → unlock AudioContext
-      await window.SlimeAudio.setMuted(!window.SlimeAudio.isMuted());
-      sync();
-    });
+    musicBtn.addEventListener('click', async () => { A.unlock(); await A.setMusic(!A.isMusicOn()); sync(); });
+  }
+  const sfxBtn = document.getElementById('sfx-btn');
+  if (sfxBtn && A) {
+    const sync = () => { sfxBtn.style.opacity = A.isSfxOn() ? '1' : '0.5'; sfxBtn.style.borderColor = A.isSfxOn() ? '#f0b541' : ''; sfxBtn.title = A.isSfxOn() ? 'sound effects on' : 'sound effects off'; };
+    sync();
+    sfxBtn.addEventListener('click', async () => { A.unlock(); await A.setSfx(!A.isSfxOn()); A.play('ui'); sync(); });
   }
   const dayBtn = document.getElementById('day-btn');
   if (dayBtn) {

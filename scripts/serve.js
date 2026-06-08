@@ -11,8 +11,9 @@
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
-const { readSnapshot, eventsPath, newestSessionId } = require('../core/state');
+const { readSnapshot, eventsPath, newestSessionId, ROOT } = require('../core/state');
 const { readCache } = require('../core/usage');
+const { safeWrite, readJson } = require('../core/safe-io');
 const locale = require('../core/locale');
 const arenaStatus = require('../core/arena-status');
 
@@ -149,6 +150,25 @@ function handleStatic(url, res) {
   }
 }
 
+/**
+ * Set the language preference (the one place the viewer writes: a user UI
+ * preference in config.json — NOT game state, and it never affects the real
+ * session, so the observer principle holds). 127.0.0.1-only, validated.
+ * @param {IncomingMessage} req @param {ServerResponse} res
+ */
+function handleSetLang(req, res) {
+  try {
+    const lang = new URL(req.url || '', 'http://localhost').searchParams.get('lang');
+    if (lang !== 'en' && lang !== 'zh') { res.writeHead(400); res.end('bad lang'); return; }
+    const cfgPath = path.join(ROOT, 'config.json');
+    const cfg = /** @type {Record<string, unknown>} */ (readJson(cfgPath, {}) || {});
+    cfg.lang = lang;
+    safeWrite(cfgPath, JSON.stringify(cfg, null, 2));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, lang }));
+  } catch { res.writeHead(500); res.end('{}'); }
+}
+
 // ── server factory ────────────────────────────────────────────────────────────
 
 function createServer() {
@@ -160,6 +180,8 @@ function createServer() {
       handleState(res);
     } else if (req.method === 'GET' && url === '/events') {
       handleEvents(req, res);
+    } else if (req.method === 'POST' && url === '/set-lang') {
+      handleSetLang(req, res);
     } else if (req.method === 'GET' && STATIC_WHITELIST.has(url)) {
       handleStatic(url, res);
     } else {

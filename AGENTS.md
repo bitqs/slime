@@ -21,8 +21,12 @@ installed, the agent's behavior must be byte-identical to without it. Therefore:
 - Hooks are **fail-soft**: whole body in `try/catch`, always `process.exit(0)`,
   never block, **no LLM calls** in the hot path (the heuristic `core/estimate.js`
   exists precisely to avoid one).
-- Consumers (`statusline.js`, `watch.js`, `serve.js`) are **read-only** w.r.t. the
-  game state dir. They never write `SLIME_ROOT`.
+- Consumers (`statusline.js`, `watch.js`, `serve.js`) are **read-only** w.r.t.
+  game state. The sole exception: `serve.js` writes the `lang` preference to
+  `config.json` on an explicit user click (`POST /set-lang`, 127.0.0.1-only,
+  validated) — a UI preference, not game state, and it never touches Claude's
+  session, so the observer principle still holds. Nothing else under `SLIME_ROOT`
+  is written by a consumer.
 
 ## The other hard rules
 

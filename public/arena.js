@@ -763,6 +763,7 @@
       rail: '小怪 — 你的 todo 列表', calm: '闪烁/舒缓 开关', help: '游戏说明 (h)' },
   };
   let titlesApplied = '';
+  let lastDataLang = 'en'; // current display language (from /state) — the lang button toggles it
   function applyTitles(lang) {
     const l = lang === 'zh' ? 'zh' : 'en';
     if (titlesApplied === l) return;
@@ -781,6 +782,7 @@
 
   function applyState(data) {
     if (!data) return;
+    lastDataLang = data.lang || lastDataLang;
     applyTitles(data.lang);
     const snap = data.snapshot;
 
@@ -1166,6 +1168,12 @@
       location.search = sp.toString();
     });
   }
+  const langBtn = document.getElementById('lang-btn');
+  if (langBtn) langBtn.addEventListener('click', async () => {
+    const next = lastDataLang === 'zh' ? 'en' : 'zh'; // global toggle via config.json
+    try { await fetch('/set-lang?lang=' + next, { method: 'POST' }); } catch {}
+    location.reload();
+  });
   const helpBtn = document.getElementById('help-btn');
   if (helpBtn) helpBtn.addEventListener('click', () => toggleGuide());
   if (guideEl) guideEl.addEventListener('click', () => toggleGuide(false));

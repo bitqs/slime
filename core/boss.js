@@ -101,10 +101,11 @@ function minionLabel(cwd, idx, lang) {
   return lang === 'zh' ? `${base}·小兵 ${idx + 1}` : `${base} mob ${idx + 1}`;
 }
 
-/** Push a milestone, award XP, recompute level, and clear the boss file.
+/** Push a milestone, award XP, recompute level, unlock any newly-earned badges,
+ *  and clear the boss file.
  *  @param {string} cwd @param {BossState} b
  *  @param {{ dmg?: number; kills?: number; maxCombo?: number }} [stats]
- *  @returns {{ total: number, level: number, leveledUp: boolean, titleKey: string }} */
+ *  @returns {{ total: number, level: number, leveledUp: boolean, titleKey: string, newBadges: string[] }} */
 function recordDefeat(cwd, b, stats = {}) {
   const prof = state.readProfile();
   const m = {
@@ -121,9 +122,14 @@ function recordDefeat(cwd, b, stats = {}) {
   prof.xp = (prof.xp || 0) + prog.xpForDefeat(m);
   const lv = prog.levelFor(prof.xp);
   prof.level = lv.level;
+  // badges: evaluate against the now-updated profile, persist new ones
+  prof.badges = prof.badges || [];
+  const newBadges = prog.evaluateBadges(prof);
+  const now = Date.now();
+  for (const id of newBadges) prof.badges.push({ id, unlockedAt: now });
   state.writeProfile(prof);
   clear(cwd);
-  return { total: prof.milestones.length, level: lv.level, leveledUp: lv.level > fromLevel, titleKey: lv.titleKey };
+  return { total: prof.milestones.length, level: lv.level, leveledUp: lv.level > fromLevel, titleKey: lv.titleKey, newBadges };
 }
 
 module.exports = { nameBoss, loadOrCreate, save, clear, bossPath, compressName, minionLabel, recordDefeat };

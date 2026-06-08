@@ -6,6 +6,8 @@ const path = require('node:path');
 
 process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
 const boss = require('../core/boss');
+const state = require('../core/state');
+const prog = require('../core/progression');
 
 test('nameBoss: epithet + compressed base + type, deterministic per prompt', () => {
   const a = boss.nameBoss('fix the login crash', '/p/slime');
@@ -114,4 +116,32 @@ test('recordDefeat: stats optional — dmg falls back to boss.dmgTaken, others t
   assert.equal(m.dmg, 15);
   assert.equal(m.kills, 0);
   assert.equal(m.maxCombo, 0);
+});
+
+test('recordDefeat: unlocks first-blood on the first kill and returns it', () => {
+  // Reset badges so this test starts from a clean slate (prior tests may have earned them)
+  const pReset = state.readProfile(); pReset.badges = []; state.writeProfile(pReset);
+  const b = boss.loadOrCreate('/p/badge1', 'do work');
+  const r = boss.recordDefeat('/p/badge1', b, { dmg: 5, kills: 1, maxCombo: 2 });
+  assert.ok(Array.isArray(r.newBadges));
+  assert.ok(r.newBadges.includes('first-blood'));
+  const prof = state.readProfile();
+  assert.ok((prof.badges || []).some((x) => x.id === 'first-blood'));
+  assert.ok(prof.badges.find((x) => x.id === 'first-blood').unlockedAt > 0);
+});
+
+test('recordDefeat: badge unlock is idempotent — not re-awarded next kill', () => {
+  const b1 = boss.loadOrCreate('/p/badge2', 'do work');
+  boss.recordDefeat('/p/badge2', b1, { dmg: 1, kills: 0, maxCombo: 0 });
+  const b2 = boss.loadOrCreate('/p/badge2', 'more work');
+  const r2 = boss.recordDefeat('/p/badge2', b2, { dmg: 1, kills: 0, maxCombo: 0 });
+  assert.ok(!r2.newBadges.includes('first-blood'), 'first-blood re-awarded');
+  const prof = state.readProfile();
+  assert.equal(prof.badges.filter((x) => x.id === 'first-blood').length, 1);
+});
+
+test('recordDefeat: combo-king unlocks when maxCombo ≥ 10', () => {
+  const b = boss.loadOrCreate('/p/badge3', 'do work');
+  const r = boss.recordDefeat('/p/badge3', b, { dmg: 0, kills: 0, maxCombo: 10 });
+  assert.ok(r.newBadges.includes('combo-king'));
 });

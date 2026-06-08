@@ -8,6 +8,19 @@ const boss = require('../core/boss');
 const usage = require('../core/usage');
 const sage = require('../core/sage');
 const locale = require('../core/locale');
+
+/** @param {string} lang @returns {string | null} */
+function codexUiFooter(lang) {
+  if (process.env.SLIME_HARNESS !== 'codex') return null;
+  const live = require('../core/arena-status').readLive();
+  if (live) {
+    return locale.fmt(locale.t('codex.uiLive', lang), {
+      url: `http://127.0.0.1:${live.port}`,
+    });
+  }
+  return locale.t('codex.uiHint', lang);
+}
+
 try {
   /** @type {HookPayload | null} */
   const p = /** @type {HookPayload | null} */ (state.readStdin());
@@ -23,7 +36,9 @@ try {
     const sageLine = sage.advise({ usage: u, bossHp: b ? b.hp : null, lang });
     // boss name is user-prompt- or LLM-derived — sanitize before terminal display
     const { sanitize } = require('../core/hud');
-    const card = report.render(agg, b && { name: sanitize(b.name), hp: b.hp }, snap, { usage: u, sageLine: sageLine ?? undefined, lang });
+    let card = report.render(agg, b && { name: sanitize(b.name), hp: b.hp }, snap, { usage: u, sageLine: sageLine ?? undefined, lang });
+    const uiFooter = codexUiFooter(lang);
+    if (uiFooter) card += `\n${uiFooter}`;
 
     if (b && p.cwd) {
       b.turns = snap.turn || 0;
@@ -35,6 +50,10 @@ try {
         if (r.leveledUp) {
           state.appendEvent(id, { t: Date.now(), kind: 'level_up',
             text: locale.fmt(locale.t('boss.levelup', lang), { level: r.level, title: locale.t(r.titleKey, lang) }) });
+        }
+        for (const bid of r.newBadges) {
+          state.appendEvent(id, { t: Date.now(), kind: 'badge_unlocked', badge: bid,
+            text: locale.fmt(locale.t('badge.unlocked', lang), { name: locale.t(require('../core/progression').nameKeyFor(bid) || bid, lang) }) });
         }
         delete snap.boss;
         delete snap.todos;

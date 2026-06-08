@@ -23,8 +23,6 @@ canvas{display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-
 #player-token{color:#f0b541;font-size:11px;white-space:nowrap;flex-shrink:0}
 #stats{width:100%;max-width:640px;display:flex;gap:14px;padding:3px 10px;background:#232733;font-size:10px;color:#7fa8c0;border-top:1px solid #333a4a}
 #stats b{color:#e8e0d0;font-weight:normal}
-#mana-bar{display:inline-block;width:50px;height:6px;background:#1a1d24;border:1px solid #7fa8c0;vertical-align:middle}
-#mana-fill{height:100%;background:#7fa8c0;transition:width .4s}
 .gold-tick{animation:goldpop .5s}
 @keyframes goldpop{30%{color:#f0b541;transform:scale(1.25)}}
 #choice-overlay,#plan-overlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-end;z-index:20;padding-bottom:8px}
@@ -82,7 +80,7 @@ body.calm .minion-hp-fill{transition:none}
         <p>🔥 <b>Combo</b> — consecutive successful tool strikes. <i>连击=连续成功操作。</i></p>
         <p>🍖 <b>Feeding</b> — while planning, every plan update and answered question feeds the boss and it grows. <i>计划和问答越喂越大。</i></p>
         <p>🐺 <b>Summons</b> — subagent dispatches fight beside the knight. <i>召唤兽=subagent。</i></p>
-        <p>💰 <b>Gold</b> — real session cost (USD). 🔮 mana = context left, ⚔️ weapon = model, 🗡️ ATK = lines changed, ⏳ session time, 🏕️ weekly quota. <i>金币=本会话花费,蓝条=上下文,武器=模型,ATK=改动行数。</i></p>
+        <p>💰 <b>Gold</b> — real session cost (USD). ⚔️ weapon = model, 🗡️ ATK = lines changed, ⏳ session time, 🏕️ weekly quota. <i>金币=本会话花费,武器=模型,ATK=改动行数。</i></p>
     <p>Commands: <code>/slime:arena</code> · <code>/slime:defeat</code> · <code>/slime:milestones</code> · <code>/slime:wrapped</code></p>
         <p id="guide-close-hint">esc / click to close</p>
       </div>
@@ -91,7 +89,6 @@ body.calm .minion-hp-fill{transition:none}
 </div>
 <div id="minion-rail"></div>
 <div id="stats">
-  <span>🔮 <span id="mana-bar"><span id="mana-fill" style="width:100%"></span></span></span>
   <span>💰 <b id="gold">—</b></span>
   <span>⚔️ <b id="weapon">—</b></span>
   <span>🗡️ <b id="atk">—</b></span>

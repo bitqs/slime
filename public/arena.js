@@ -240,6 +240,9 @@
       if (live) {
         const f = list[i].form || 0;
         if (s._form !== f) { s._form = f; s.texture = slimeTexFor(f); }
+        // motley pack: size varies per mob, derived from design+slot so it stays
+        // deterministic (replay-stable) yet reads as a random rabble, not clones.
+        s.scale.set(1.15 + ((f + i) % 5) * 0.16); // 1.15 … 1.79
         ground(s);
       }
     });
@@ -695,12 +698,12 @@
   // hover titles for every chrome icon — single language, picked from /state lang
   const TITLES = {
     en: { title: 'Slime — your coding session as an RPG', boss: 'The current quest (boss)',
-      hp: 'Boss HP', token: 'Token — 5h rate window left', mana: 'Mana — context window left',
+      hp: 'Boss HP', token: 'Token — 5h rate window left',
       gold: 'Gold — real session cost (USD)', weapon: 'Weapon — current model',
       atk: 'ATK — lines added/removed', timer: 'Session time', stamina: 'Camp — weekly quota left',
       rail: 'Minions — your todo list', calm: 'Flash / calm toggle', help: 'Game guide (h)' },
     zh: { title: 'Slime — 把写码变成 RPG', boss: '当前任务(Boss)',
-      hp: 'Boss 血量', token: 'Token — 5 小时窗口余量', mana: '蓝量 — 上下文余量',
+      hp: 'Boss 血量', token: 'Token — 5 小时窗口余量',
       gold: '金币 — 本会话真实花费(美元)', weapon: '武器 — 当前模型',
       atk: '攻击 — 增/删行数', timer: '本会话时长', stamina: '营地 — 周配额余量',
       rail: '小怪 — 你的 todo 列表', calm: '闪烁/舒缓 开关', help: '游戏说明 (h)' },
@@ -716,7 +719,7 @@
       if (el) (onParent ? el.parentElement : el).title = t;
     };
     set('title', T.title); set('boss-name', T.boss); set('hp-bar', T.hp);
-    set('player-token', T.token); set('mana-bar', T.mana, true);
+    set('player-token', T.token);
     set('gold', T.gold, true); set('weapon', T.weapon, true); set('atk', T.atk, true);
     set('timer', T.timer, true); set('stamina', T.stamina, true);
     set('minion-rail', T.rail); set('calm-btn', T.calm); set('help-btn', T.help);
@@ -786,11 +789,6 @@
           if (d > 0) weekLeft = d < 1 ? ` · ${Math.max(1, Math.round(d * 24))}h` : ` · ${Math.ceil(d)}d`;
         }
         setText('stamina', `${Math.max(0, Math.round(100 - u.sevenDay.used))}%${weekLeft}`);
-      }
-
-      const fill = document.getElementById('mana-fill');
-      if (fill && typeof u.contextPct === 'number') {
-        fill.style.width = `${Math.max(0, Math.min(100, 100 - u.contextPct))}%`;
       }
 
       if (typeof u.cost === 'number') {

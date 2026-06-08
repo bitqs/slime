@@ -1,0 +1,8 @@
+[
+  { "id": "first-blood", "nameKey": "badge.firstBlood", "stat": "bossCount",  "gte": 1 },
+  { "id": "combo-king",  "nameKey": "badge.comboKing",  "stat": "maxCombo",   "gte": 10 },
+  { "id": "slayer",      "nameKey": "badge.slayer",     "stat": "kills",      "gte": 50 },
+  { "id": "polyglot",    "nameKey": "badge.polyglot",   "stat": "projects",   "gte": 3 },
+  { "id": "night-owl",   "nameKey": "badge.nightOwl",   "stat": "nightKills", "gte": 1 },
+  { "id": "veteran",     "nameKey": "badge.veteran",    "stat": "bossCount",  "gte": 25 }
+]

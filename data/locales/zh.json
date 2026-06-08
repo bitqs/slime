@@ -77,5 +77,16 @@
   "title.adept": "好手",
   "title.veteran": "老兵",
   "title.master": "大师",
-  "title.grandmaster": "宗师"
+  "title.grandmaster": "宗师",
+  "badge.unlocked": "🏅 解锁徽章 — {name}",
+  "badge.firstBlood": "首杀",
+  "badge.comboKing": "连击之王",
+  "badge.slayer": "屠戮者",
+  "badge.polyglot": "多面手",
+  "badge.nightOwl": "夜枭",
+  "badge.veteran": "老兵",
+  "ach.title": "🏅  成就",
+  "ach.level": "Lv{level} {title}  ({into}/{span} 经验)",
+  "ach.badgesHeader": "徽章 ({owned}/{total})",
+  "ach.locked": "未解锁"
 }

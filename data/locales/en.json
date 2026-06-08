@@ -38,5 +38,16 @@
   "title.adept": "Adept",
   "title.veteran": "Veteran",
   "title.master": "Master",
-  "title.grandmaster": "Grandmaster"
+  "title.grandmaster": "Grandmaster",
+  "badge.unlocked": "🏅 Badge unlocked — {name}",
+  "badge.firstBlood": "First Blood",
+  "badge.comboKing": "Combo King",
+  "badge.slayer": "Slayer",
+  "badge.polyglot": "Polyglot",
+  "badge.nightOwl": "Night Owl",
+  "badge.veteran": "Veteran",
+  "ach.title": "🏅  ACHIEVEMENTS",
+  "ach.level": "Lv{level} {title}  ({into}/{span} XP)",
+  "ach.badgesHeader": "Badges ({owned}/{total})",
+  "ach.locked": "locked"
 }

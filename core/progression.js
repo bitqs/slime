@@ -109,4 +109,74 @@ function nameKeyFor(id) {
   return d ? d.nameKey : undefined;
 }
 
-module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS, BADGES, deriveStats, evaluateBadges, nameKeyFor, QUEST_DEFS };
+/** Local calendar day as YYYY-MM-DD (NOT UTC — streaks track the user's own day).
+ *  @param {number} ms epoch ms @returns {string} */
+function dayStr(ms) {
+  const d = new Date(ms);
+  /** @param {number} n */
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** Advance the activity streak at most once per local day. Same day = no-op,
+ *  exactly-yesterday = +1, any gap = reset to 1. Mutates + returns profile.streak.
+ *  @param {Profile} profile @param {number} now epoch ms
+ *  @returns {{ days: number, lastActiveDay: string }} */
+function bumpActivity(profile, now) {
+  const today = dayStr(now);
+  const s = profile.streak || { days: 0, lastActiveDay: '' };
+  if (s.lastActiveDay !== today) {
+    // local midnight today, minus 1ms → yesterday's local date (DST-safe)
+    const midnight = new Date(now);
+    midnight.setHours(0, 0, 0, 0);
+    const yesterday = dayStr(midnight.getTime() - 1);
+    s.days = s.lastActiveDay === yesterday ? (s.days || 0) + 1 : 1;
+    s.lastActiveDay = today;
+  }
+  profile.streak = s;
+  return s;
+}
+
+/** Current progress for a quest of the given kind.
+ *  @param {Profile} profile @param {Quest} q @param {number} now @returns {number} */
+function questProgress(profile, q, now) {
+  if (q.kind === 'streak_days') return (profile.streak && profile.streak.days) || 0;
+  if (q.kind === 'weekly_kills') {
+    const windowStart = Math.max(q.startedAt, now - 7 * 86400000);
+    return ((profile.milestones) || []).filter(
+      (m) => typeof m.at === 'number' && m.at >= windowStart).length;
+  }
+  return 0;
+}
+
+/** Refresh auto-quest progress against `now`: seed a missing active quest per
+ *  kind, recompute progress, and on completion stamp `doneAt`, roll a fresh
+ *  active quest (window reset for weekly, target escalation for streak), and
+ *  report the completed id. Mutates + returns profile.quests. Idempotent: a
+ *  quest already carrying `doneAt` is never re-completed.
+ *  @param {Profile} profile @param {number} now
+ *  @returns {{ quests: Quest[], completed: string[] }} */
+function evaluateQuests(profile, now) {
+  const quests = (profile.quests || []).slice();
+  const completed = [];
+  for (const def of QUEST_DEFS) {
+    let q = quests.find((x) => x.kind === def.kind && !x.doneAt);
+    if (!q) {
+      q = { id: def.kind, kind: def.kind, target: def.target, progress: 0, startedAt: now };
+      quests.push(q);
+    }
+    q.progress = questProgress(profile, q, now);
+    if (q.progress >= q.target && !q.doneAt) {
+      q.doneAt = now;
+      completed.push(q.id);
+      const nextTarget = def.kind === 'streak_days' ? q.target + def.target : def.target;
+      const next = { id: def.kind, kind: def.kind, target: nextTarget, progress: 0, startedAt: now };
+      next.progress = questProgress(profile, next, now);
+      quests.push(next);
+    }
+  }
+  profile.quests = quests;
+  return { quests, completed };
+}
+
+module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS, BADGES, deriveStats, evaluateBadges, nameKeyFor, QUEST_DEFS, dayStr, bumpActivity, evaluateQuests };

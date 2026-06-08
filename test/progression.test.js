@@ -125,3 +125,104 @@ test('evaluateBadges: returns multiple new badges at once', () => {
   // bossCount 1 → first-blood; maxCombo 12 → combo-king
   assert.ok(got.includes('first-blood') && got.includes('combo-king'));
 });
+
+test('dayStr: local YYYY-MM-DD', () => {
+  const ms = new Date(2026, 5, 8, 14, 30).getTime(); // local June 8 2026
+  assert.equal(prog.dayStr(ms), '2026-06-08');
+});
+
+test('bumpActivity: first activity seeds streak at 1', () => {
+  const p = {};
+  const now = new Date(2026, 5, 8, 10).getTime();
+  prog.bumpActivity(p, now);
+  assert.deepEqual(p.streak, { days: 1, lastActiveDay: '2026-06-08' });
+});
+
+test('bumpActivity: same day is a no-op', () => {
+  const p = { streak: { days: 3, lastActiveDay: '2026-06-08' } };
+  prog.bumpActivity(p, new Date(2026, 5, 8, 23).getTime());
+  assert.deepEqual(p.streak, { days: 3, lastActiveDay: '2026-06-08' });
+});
+
+test('bumpActivity: consecutive day increments', () => {
+  const p = { streak: { days: 3, lastActiveDay: '2026-06-07' } };
+  prog.bumpActivity(p, new Date(2026, 5, 8, 9).getTime());
+  assert.deepEqual(p.streak, { days: 4, lastActiveDay: '2026-06-08' });
+});
+
+test('bumpActivity: a gap resets the streak to 1', () => {
+  const p = { streak: { days: 9, lastActiveDay: '2026-06-05' } };
+  prog.bumpActivity(p, new Date(2026, 5, 8, 9).getTime());
+  assert.deepEqual(p.streak, { days: 1, lastActiveDay: '2026-06-08' });
+});
+
+test('evaluateQuests: seeds one active quest per kind on a blank profile', () => {
+  const p = { milestones: [] };
+  const now = new Date(2026, 5, 8, 12).getTime();
+  const { quests, completed } = prog.evaluateQuests(p, now);
+  assert.equal(completed.length, 0);
+  assert.deepEqual(quests.map((q) => q.kind).sort(), ['streak_days', 'weekly_kills']);
+  assert.ok(quests.every((q) => q.progress === 0 && q.startedAt === now && !q.doneAt));
+});
+
+test('evaluateQuests: weekly_kills counts milestones inside the rolling 7-day window', () => {
+  const now = new Date(2026, 5, 8, 12).getTime();
+  const day = 86400000;
+  const p = { milestones: [
+    { at: now - 1 * day }, { at: now - 2 * day }, { at: now - 9 * day }, // 9d ago is outside
+  ] };
+  prog.evaluateQuests(p, now); // seed (startedAt = now → window start = now, nothing counts yet)
+  // back-date the seeded quest so the window opens 7d back
+  p.quests.find((q) => q.kind === 'weekly_kills').startedAt = now - 7 * day;
+  const { completed } = prog.evaluateQuests(p, now);
+  const wk = p.quests.find((q) => q.kind === 'weekly_kills' && !q.doneAt);
+  assert.equal(wk.progress, 2);          // two kills inside the window
+  assert.equal(completed.length, 0);     // target 5 not met
+});
+
+test('evaluateQuests: weekly_kills completes, rolls a fresh window-reset quest', () => {
+  const now = new Date(2026, 5, 8, 12).getTime();
+  const day = 86400000;
+  const ms = [];
+  for (let i = 1; i <= 5; i++) ms.push({ at: now - i * 3600000 }); // 5 kills today
+  const p = { milestones: ms };
+  prog.evaluateQuests(p, now); // seed
+  p.quests.find((q) => q.kind === 'weekly_kills').startedAt = now - 7 * day;
+  const { completed } = prog.evaluateQuests(p, now);
+  assert.deepEqual(completed, ['weekly_kills']);
+  const active = p.quests.filter((q) => q.kind === 'weekly_kills' && !q.doneAt);
+  assert.equal(active.length, 1);
+  assert.equal(active[0].startedAt, now);   // window reset
+  assert.equal(active[0].progress, 0);      // nothing after `now`
+  assert.equal(active[0].target, 5);        // constant target
+});
+
+test('evaluateQuests: streak_days completes and escalates the next target', () => {
+  const p = { milestones: [], streak: { days: 7, lastActiveDay: '2026-06-08' } };
+  const now = new Date(2026, 5, 8, 12).getTime();
+  const { completed } = prog.evaluateQuests(p, now);
+  assert.deepEqual(completed, ['streak_days']);
+  const active = p.quests.find((q) => q.kind === 'streak_days' && !q.doneAt);
+  assert.equal(active.target, 14);   // 7 + 7 escalation
+  assert.equal(active.progress, 7);  // absolute streak; below the new target
+});
+
+test('evaluateQuests: a completed quest is not re-completed on the next call', () => {
+  const p = { milestones: [], streak: { days: 7, lastActiveDay: '2026-06-08' } };
+  const now = new Date(2026, 5, 8, 12).getTime();
+  prog.evaluateQuests(p, now);                       // completes streak (7/7)
+  const second = prog.evaluateQuests(p, now);         // target now 14, streak still 7
+  assert.equal(second.completed.length, 0);
+});
+
+test('bumpActivity: increments across a month boundary', () => {
+  const p = { streak: { days: 4, lastActiveDay: '2026-04-30' } };
+  prog.bumpActivity(p, new Date(2026, 4, 1, 9).getTime()); // local May 1 2026
+  assert.deepEqual(p.streak, { days: 5, lastActiveDay: '2026-05-01' });
+});
+
+test('bumpActivity: increments across a year boundary', () => {
+  const p = { streak: { days: 9, lastActiveDay: '2025-12-31' } };
+  prog.bumpActivity(p, new Date(2026, 0, 1, 9).getTime()); // local Jan 1 2026
+  assert.deepEqual(p.streak, { days: 10, lastActiveDay: '2026-01-01' });
+});

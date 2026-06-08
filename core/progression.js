@@ -62,6 +62,7 @@ function deriveStats(profile) {
   for (const m of ms) {
     if (typeof m.maxCombo === 'number' && m.maxCombo > maxCombo) maxCombo = m.maxCombo;
     if (m.project) projects.add(m.project);
+    // Intentionally LOCAL time: "night owl" means coding after midnight in the user's own timezone.
     if (typeof m.at === 'number' && new Date(m.at).getHours() < 6) nightKills++;
   }
   return {

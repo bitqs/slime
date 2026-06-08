@@ -90,3 +90,35 @@ test('nameKeyFor: maps id to its locale key, undefined for unknown', () => {
   assert.equal(prog.nameKeyFor('combo-king'), 'badge.comboKing');
   assert.equal(prog.nameKeyFor('nope'), undefined);
 });
+
+test('evaluateBadges: veteran unlocks at exactly 25 bosses, not 24', () => {
+  const mk = (n) => ({ milestones: Array.from({ length: n }, (_, i) => ({ boss: 'B' + i, date: '2026-06-01', turns: 1, project: '/p/x' })), totals: { turns: n, dmg: 0, kills: 0 }, badges: [] });
+  assert.ok(!prog.evaluateBadges(mk(24)).includes('veteran'));
+  assert.ok(prog.evaluateBadges(mk(25)).includes('veteran'));
+});
+
+test('evaluateBadges: slayer at kills>=50, polyglot at projects>=3', () => {
+  const profile = {
+    milestones: [
+      { boss: 'A', date: '2026-06-01', turns: 1, project: '/p/a' },
+      { boss: 'B', date: '2026-06-01', turns: 1, project: '/p/b' },
+      { boss: 'C', date: '2026-06-01', turns: 1, project: '/p/c' },
+    ],
+    totals: { turns: 3, dmg: 0, kills: 50 },
+    badges: [],
+  };
+  const got = prog.evaluateBadges(profile);
+  assert.ok(got.includes('slayer'));     // kills 50
+  assert.ok(got.includes('polyglot'));   // 3 distinct projects
+});
+
+test('evaluateBadges: returns multiple new badges at once', () => {
+  const profile = {
+    milestones: [{ boss: 'A', date: '2026-06-01', turns: 1, project: '/p/x', maxCombo: 12 }],
+    totals: { turns: 1, dmg: 0, kills: 0 },
+    badges: [],
+  };
+  const got = prog.evaluateBadges(profile);
+  // bossCount 1 → first-blood; maxCombo 12 → combo-king
+  assert.ok(got.includes('first-blood') && got.includes('combo-king'));
+});

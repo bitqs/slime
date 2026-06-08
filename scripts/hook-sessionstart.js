@@ -19,10 +19,8 @@ function autoHudEnabled() {
 }
 
 // Install Slime's statusline into the user's settings.json if — and only if — no
-// statusLine is configured yet (never clobber an existing one). Claude only;
-// Codex has no stable statusline equivalent.
+// statusLine is configured yet (never clobber an existing one).
 function ensureStatusline() {
-  if (String(process.env.SLIME_HARNESS || '').toLowerCase() === 'codex') return;
   const dir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
   const settingsPath = path.join(dir, 'settings.json');
   const io = require('../core/safe-io');

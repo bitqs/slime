@@ -53,7 +53,7 @@ test('serves /state and / and 404', async () => {
     const base = `http://127.0.0.1:${srv.address().port}`;
     const st = await (await fetch(`${base}/state`)).json();
     assert.equal(st.snapshot.turn, 2);
-    assert.equal(st.harness, process.env.SLIME_HARNESS || 'claude-code');
+    assert.equal(st.harness, 'claude-code');
     const home = await fetch(base);
     assert.equal(home.status, 200);
     const html = await home.text();

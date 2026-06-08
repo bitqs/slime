@@ -62,28 +62,6 @@ test('stop hook emits systemMessage card and resets inTurn', () => {
   assert.equal(snap.inTurn, false);
 });
 
-test('codex stop hook appends arena hint when no live arena exists', () => {
-  const out = execFileSync('node', [S('hook-stop.js')], {
-    input: JSON.stringify({ session_id: 'codex1', cwd: '/tmp/codex-ui' }),
-    env: { ...ENV, SLIME_HARNESS: 'codex', SLIME_ARENA_MARKER: path.join(ROOT, 'missing-arena.json') },
-  }).toString();
-  const msg = JSON.parse(out);
-  assert.match(msg.systemMessage, /Pixel Arena/);
-  assert.match(msg.systemMessage, /\/slime:arena/);
-});
-
-test('codex stop hook appends live arena link when marker is alive', () => {
-  const marker = path.join(ROOT, 'live-arena.json');
-  fs.writeFileSync(marker, JSON.stringify({ port: 4555, pid: process.pid }));
-  const out = execFileSync('node', [S('hook-stop.js')], {
-    input: JSON.stringify({ session_id: 'codex2', cwd: '/tmp/codex-ui-live' }),
-    env: { ...ENV, SLIME_HARNESS: 'codex', SLIME_ARENA_MARKER: marker },
-  }).toString();
-  const msg = JSON.parse(out);
-  assert.match(msg.systemMessage, /Arena live/);
-  assert.match(msg.systemMessage, /http:\/\/127\.0\.0\.1:4555/);
-});
-
 test('hooks never crash on garbage stdin (observer principle)', () => {
   for (const s of ['hook-pretool.js', 'hook-posttool.js', 'hook-prompt.js',
                    'hook-sessionstart.js', 'hook-subagentstop.js', 'hook-precompact.js',

@@ -110,17 +110,6 @@ tmux split-window -bv -l 6 "node \"$(pwd)/scripts/watch.js\""
 
 Hook 把真实事件翻译成 `~/.claude/slime/` 下的游戏状态;状态栏、tmux 窗格、浏览器竞技场负责渲染。零 npm 依赖,全程离线可用。
 
-## Codex 适配器(预览)
-
-本仓库还带了一个早期的 Codex 插件接口:
-
-- `.codex-plugin/plugin.json` 把 Slime 暴露为 Codex 插件。
-- `hooks.json` 通过 `scripts/dispatch.js` 接入 Codex 兼容的 hook 事件。
-- `adapters/codex/` 在 dispatch 复用现有观察脚本前,先归一化 Codex 的 hook/status 载荷。
-- 当 hook 以 `SLIME_HARNESS=codex` 运行时,Codex 状态默认落在 `~/.codex/slime`。
-
-Codex 目前还没有稳定的命令式状态栏,所以完整 HUD 不会镜像到 TUI 底栏。取而代之,每份回合报告都带上 Slime 战斗卡片,外加竞技场链接或 `/slime:arena` 提示。竞技场、battlelog、milestones、wrapped 都以 `SLIME_HARNESS=codex` 读取共享状态。
-
 ## 开发
 
 ```bash

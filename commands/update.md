@@ -5,9 +5,7 @@ allowed-tools: Bash
 
 Update the Slime plugin:
 
-Claude Code only. Codex plugin updates use `codex plugin add slime@<marketplace>`
-or the installed marketplace's upgrade flow once Slime is published there; do not
-run `claude plugin ...` commands for Codex.
+Claude Code only.
 
 1. Run `claude plugin marketplace update slime` (refreshes the marketplace source).
 2. Run `claude plugin update slime@slime` (installs the new version).

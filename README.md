@@ -110,17 +110,6 @@ A local pixel-art battle stage — your knight strikes in real time as Claude wo
 
 Hooks translate real events into game state under `~/.claude/slime/`; the statusline, tmux pane, and browser arena render it. Zero npm dependencies. Everything works offline.
 
-## Codex adapter (preview)
-
-This repo also includes an early Codex plugin surface:
-
-- `.codex-plugin/plugin.json` exposes Slime as a Codex plugin.
-- `hooks.json` wires Codex-compatible hook events through `scripts/dispatch.js`.
-- `adapters/codex/` normalizes Codex hook/status payloads before dispatch reuses the existing observer scripts.
-- Codex state defaults to `~/.codex/slime` when hooks run with `SLIME_HARNESS=codex`.
-
-Codex has no stable command-backed statusline yet, so the full HUD is not mirrored in the TUI footer. Instead each turn report carries the Slime battle card plus an Arena link or `/slime:arena` hint. Arena, battlelog, milestones, and wrapped all read the shared state with `SLIME_HARNESS=codex`.
-
 ## Develop
 
 ```bash

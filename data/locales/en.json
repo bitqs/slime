@@ -12,8 +12,6 @@
   "report.stamina": "⚡ Token {bar} {hp}% (5h window){weekly}",
   "report.weekly": " | Weekly {bar} {pct}%",
   "report.stagger": "⚡ {name} staggers — it falls on its own when you stop",
-  "codex.uiLive": "【UI】 Arena live: {url}",
-  "codex.uiHint": "【UI】 Pixel Arena: run /slime:arena to open it.",
   "hud.openHint": "🟢 Slime arena live — Cmd+Click the [HUD] link in your statusline to watch the battle.",
   "hud.awaiting": "⚔️ Slime — awaiting first encounter",
   "summon.back": "🐺 A summon returns from the hunt",

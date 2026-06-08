@@ -66,11 +66,10 @@ test('defeat appends boss_down to the newest session', () => {
   assert.ok(ev.boss);
 });
 
-test('slash commands document Codex state routing where supported', () => {
+test('slash commands document Claude Code state routing', () => {
   for (const name of ['arena', 'battlelog', 'milestones', 'wrapped']) {
     const doc = fs.readFileSync(path.join(__dirname, '..', 'commands', `${name}.md`), 'utf8');
-    assert.match(doc, /SLIME_HARNESS=codex/, `${name} command sets Codex harness`);
-    assert.match(doc, /\.codex-plugin\/plugin\.json/, `${name} command explains Codex plugin root`);
+    assert.match(doc, /CLAUDE_PLUGIN_ROOT/, `${name} command uses CLAUDE_PLUGIN_ROOT`);
   }
   const setup = fs.readFileSync(path.join(__dirname, '..', 'commands', 'setup.md'), 'utf8');
   assert.match(setup, /Claude Code only/);

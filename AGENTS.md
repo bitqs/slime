@@ -74,7 +74,7 @@ event stream, the source of truth), `sessions/<id>.json` (live Snapshot),
 ## Where it's going (in-progress architecture)
 
 Slime is being decoupled from Claude Code so it can run on other harnesses
-(Copilot CLI, Gemini CLI, Codex) and so features can be added/removed cleanly.
+(Copilot CLI, Gemini CLI) and so features can be added/removed cleanly.
 The plan (`docs/superpowers/specs/2026-06-08-harness-portable-architecture-design.md`):
 
 - **core/** — done: the engine moved here, consuming normalized contracts.
@@ -86,9 +86,6 @@ The plan (`docs/superpowers/specs/2026-06-08-harness-portable-architecture-desig
 
 When you add code, put harness-agnostic logic in `core/`, keep Claude-Code-only
 glue in `scripts/`/`hooks/`/`.claude-plugin/`, and surface new strings via locales.
-The current Codex preview lives in `.codex-plugin/`, root `hooks.json`,
-`scripts/dispatch.js`, and `adapters/codex/`; keep Codex-specific parsing or
-install metadata there.
 
 ## How to work (the loop)
 

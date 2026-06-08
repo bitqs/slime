@@ -51,8 +51,6 @@
   "report.stamina": "⚡ Token {bar} {hp}% (5小时窗口){weekly}",
   "report.weekly": " | 周 {bar} {pct}%",
   "report.stagger": "⚡ {name} 摇摇欲坠 — 收工时自动斩杀",
-  "codex.uiLive": "【UI】 Arena 已启动:{url}",
-  "codex.uiHint": "【UI】 Pixel Arena:运行 /slime:arena 打开。",
   "hud.openHint": "🟢 Slime 竞技场已启动 — Cmd+左键点击状态栏的 [HUD] 链接看战斗画面。",
   "hud.awaiting": "⚔️ Slime — 等待首次遭遇",
   "summon.back": "🐺 召唤兽狩猎归来",

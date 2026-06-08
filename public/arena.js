@@ -167,9 +167,10 @@
   // ── on-stage HP bars (boss + every live mob) + a player HUD above the knight ──
   const hpBars = new PIXI.Graphics();
   const playerHud = new PIXI.Text({ text: '', style: {
-    fontFamily: 'monospace', fontSize: 6, fill: 0xf0b541,
-    stroke: { color: 0x000000, width: 2 }, align: 'center',
+    fontFamily: 'monospace', fontSize: 9, fontWeight: 'bold', fill: 0xf0b541,
+    stroke: { color: 0x000000, width: 3 }, align: 'center',
   } });
+  playerHud.resolution = 3;       // crisp at the canvas's pixelated upscale
   playerHud.anchor.set(0.5, 1);
   world.addChild(hpBars, playerHud);
   /** tiny HP pip above a sprite: bg track + colored fill */

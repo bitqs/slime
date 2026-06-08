@@ -669,11 +669,13 @@
     },
     shake({ amp = 4, frames = 10 } = {}) { if (!CALM) { fx.shake = frames; fx.shakeAmp = amp; } },
     hitstop({ frames: f = 8 } = {}) { if (!CALM) fx.hitstop = f; },
-    slowmo({ factor = 0.3, frames: f = 40 } = {}) { fx.speed = factor; fx.slowmoLeft = f; },
+    slowmo({ factor = 0.3, frames: f = 40 } = {}) { if (CALM) return; fx.speed = factor; fx.slowmoLeft = f; },
     letterbox({ on } = {}) { letterboxOn = !!on; },
     typewriter({ text, y = 60 } = {}) {
-      fx.type = { text: String(text || ''), shown: 0 };
-      bigText.text = '';
+      const t = String(text || '');
+      // reduced-motion: skip the reveal, show the full name at once
+      fx.type = { text: t, shown: CALM ? t.length : 0 };
+      bigText.text = CALM ? t : '';
       bigText.y = y; bigText.visible = true;
     },
     bigtext({ text, y = 60 } = {}) {
@@ -688,12 +690,13 @@
       bossDead = false;
       boss.visible = true; groundBoss();
       this.shake({ amp: 4, frames: 12 });
-      burst(boss.x + 8, BOSS_FLOOR, P.dark, 14);
+      if (!CALM) burst(boss.x + 8, BOSS_FLOOR, P.dark, 14);
     },
-    bossdrop() { bossDead = false; boss.visible = true; boss.y = -20; fx.bossFalling = true; },
-    bossburst() { bossDead = true; burst(boss.x + boss.width / 2, boss.y + boss.height / 2, P.bone, 26); boss.visible = false; },
+    // reduced-motion: skip the fall animation, plant the boss on its dais directly
+    bossdrop() { bossDead = false; boss.visible = true; if (CALM) { groundBoss(); } else { boss.y = -20; fx.bossFalling = true; } },
+    bossburst() { bossDead = true; burst(boss.x + boss.width / 2, boss.y + boss.height / 2, P.bone, CALM ? 6 : 26); boss.visible = false; },
     goldrain() {
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0, n = CALM ? 6 : 40; i < n; i++) {
         fx.particles.push({ x: Math.random() * W, y: -Math.random() * 20,
           vx: 0, vy: 0.8 + Math.random(), age: 0, maxAge: 160,
           color: colorNum(P.gold), noGravity: true });
@@ -701,14 +704,14 @@
     },
     confetti() {
       const cols = [P.gold, P.ember, P.steel, P.green].map(colorNum);
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0, n = CALM ? 6 : 30; i < n; i++) {
         fx.particles.push({ x: W / 2 + (Math.random() * 80 - 40), y: 40,
           vx: Math.random() * 2 - 1, vy: -(1 + Math.random() * 1.5),
           age: 0, maxAge: 90, color: cols[i % cols.length] });
       }
     },
     bubbles() {
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0, n = CALM ? 4 : 12; i < n; i++) {
         fx.particles.push({ x: 46 + (Math.random() * 8 - 4), y: FLOOR_Y - 10,
           vx: Math.random() * 0.4 - 0.2, vy: -(0.4 + Math.random() * 0.6),
           age: 0, maxAge: 80, color: colorNum(P.green), noGravity: true });
@@ -716,10 +719,11 @@
     },
     dim({ on } = {}) { world.alpha = on ? 0.3 : 1; },
     walkforward() { if (CALM) { repaintBackdrop(); dropNextFoe(); return; } fx.walk = { phase: 'out', to: W + 20 }; },
-    forgeparticles() { // particles converge on the boss anchor
-      for (let i = 0; i < 24; i++) {
-        const a = (i / 24) * Math.PI * 2;
-        fx.particles.push({ x: 238 + Math.cos(a) * 70, y: 110 + Math.sin(a) * 50,
+    forgeparticles() { // particles converge on the boss anchor (boss-relative)
+      const cx = boss.x + boss.width / 2, cy = 110;
+      for (let i = 0, n = CALM ? 8 : 24; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        fx.particles.push({ x: cx + Math.cos(a) * 70, y: cy + Math.sin(a) * 50,
           vx: -Math.cos(a) * 1.6, vy: -Math.sin(a) * 1.1, age: 0, maxAge: 44, noGravity: true,
           color: colorNum(P.gold) });
       }
@@ -754,8 +758,7 @@
       { at: 0,   do: 'letterbox', on: true },
       { at: 0,   do: 'dim', on: true },
       { at: 6,   do: 'typewriter', text: name, y: 60 },
-      { at: 50,  do: 'flash', strength: 0.5 },
-      { at: 58,  do: 'flash', strength: 0.5 },          // 8 frames after the first: governor drops it (photosensitivity cap) — kept as data intent
+      { at: 50,  do: 'flash', strength: 0.55 },          // single reveal flash; the bossdrop slam at 66 is the second beat
       { at: 66,  do: 'dim', on: false },
       { at: 66,  do: 'bossdrop' },                       // falls, slams, shakes, dust
       { at: 110, do: 'hidetext' },

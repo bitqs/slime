@@ -275,7 +275,7 @@
   }
   function spawnRibbon() {
     const t = new PIXI.Text({ text: pick(RIBBONS), style: { fontFamily: 'monospace',
-      fontSize: rnd(7, 10) | 0, fontWeight: 'bold', fill: colorNum(pick([P.gold, P.steel, P.green, P.bone])) } });
+      fontSize: rnd(7, 10) | 0, fontWeight: 'bold', fill: colorNum(pick(DAY ? [P.gold, P.steel, P.green, P.ember] : [P.gold, P.steel, P.green, P.bone])) } });
     t.resolution = 2;
     const dir = Math.random() < 0.5 ? 1 : -1;
     const y = rnd(8, FLOOR_Y - 30);
@@ -588,14 +588,15 @@
     const cv = document.createElement('canvas');
     cv.width = W; cv.height = H;
     const ctx = cv.getContext('2d');
-    const grad = ctx.createRadialGradient(160, 90, 60, 160, 90, 185);
+    const grad = ctx.createRadialGradient(W / 2, H / 2, 60, W / 2, H / 2, 185);
     grad.addColorStop(0, `rgba(${r},${g},${b},0)`);
     grad.addColorStop(1, `rgba(${r},${g},${b},${edgeAlpha})`);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
     return new PIXI.Sprite(PIXI.Texture.from(cv));
   }
-  const vignette = makeRadial(200, 55, 55, 0.55);   // danger (low token)
+  // danger (low token) — deeper, more saturated red on the bright day sky so it still reads
+  const vignette = DAY ? makeRadial(150, 20, 20, 0.6) : makeRadial(200, 55, 55, 0.55);
   const vignetteEdge = makeRadial(232, 132, 44, 0.6); // combo edge flame
   vignette.alpha = 0; vignetteEdge.alpha = 0;
   const letterTop = new PIXI.Graphics().rect(0, 0, W, 24).fill(0x000000);
@@ -1326,6 +1327,7 @@
       case 'cast': if (d.tool === 'Agent') A.play('summon'); break;
       case 'potion': A.play('potion'); break;
       case 'loot_drop': A.play('loot'); break;
+      case 'turn_end': case 'plan_scroll': case 'plan_approved': A.play('ui'); break; // soft punctuation
       default: break;
     }
   }

@@ -26,6 +26,7 @@ export interface Snapshot {
   est?: number;
   todos?: Array<{ content: string; status: string; label: string; activeForm?: string; form: number }>;
   gear?: string[];
+  resolves?: number;
   [key: string]: unknown;
 }
 
@@ -109,6 +110,9 @@ export interface SlimeEvent {
   count?: number;
   badge?: string;
   quest?: string;
+  loot?: string;
+  xp?: number;
+  fx?: string;
 }
 
 /** Shape of JSON piped from the Claude Code statusline to our scripts. */

@@ -62,10 +62,10 @@ function readProfile() {
     || { milestones: [], totals: { turns: 0, dmg: 0, kills: 0 }, gear: {} };
 }
 
-/** @param {Profile} p @returns {void} */
+/** @param {Profile} p @returns {boolean} */
 function writeProfile(p) {
   ensureDirs();
-  safeWrite(profilePath(), JSON.stringify(p, null, 2));
+  return safeWrite(profilePath(), JSON.stringify(p, null, 2));
 }
 
 function newestSessionId() {

@@ -6,6 +6,7 @@ const locale = require('../core/locale');
 const boss = require('../core/boss');
 const report = require('../core/report');
 const defeatFlow = require('../core/defeat-flow');
+const loot = require('../core/loot');
 try {
   /** @type {HookPayload | null} */
   const p = /** @type {HookPayload | null} */ (state.readStdin());
@@ -33,6 +34,23 @@ try {
       }
       boss.save(p.cwd, b);
       snap.boss = { name: b.name, hp: b.hp, broken: !!b.broken };
+      // loot: a damaging resolve has a small, deterministic chance to drop bonus XP.
+      // Seed = sessionId + a per-session counter (persisted on snap) → no Math.random
+      // in the hot path. XP is applied once here; the loot_drop event is display-only,
+      // so SSE replay never re-rolls or double-counts.
+      const seed = id + ':' + (snap.resolves = (snap.resolves || 0) + 1);
+      const drop = loot.roll(seed);
+      if (drop) {
+        const prof = state.readProfile();
+        prof.xp = (prof.xp || 0) + drop.xp;
+        // only announce the reward if the XP actually persisted — never show fake XP
+        if (state.writeProfile(prof)) {
+          const lang = locale.current();
+          const lootText = locale.fmt(locale.t('loot.drop', lang), { xp: drop.xp, name: locale.t(drop.nameKey, lang) });
+          state.appendEvent(id, { t: Date.now(), kind: 'loot_drop', loot: drop.id, xp: drop.xp, fx: drop.fx, text: lootText });
+          snap.lastText = lootText;
+        }
+      }
     }
     if ((p.tool_name || '') === 'TodoWrite' && p.tool_input && p.tool_input.todos && p.cwd) {
       const lang = locale.current();

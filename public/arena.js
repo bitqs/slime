@@ -1236,6 +1236,12 @@
         pushLog(line);
       }
     }
+    if (d.kind === 'loot_drop') {
+      floater(`+${d.xp} XP`, 238, 100, P.gold, 10, true);
+      floater('✨', 238, 88, P.gold, 11, true);
+      if (!CALM && d.fx === 'burst') burst(238, 112, P.gold, 9);
+      if (d.text) pushLog(d.text);
+    }
     EXTRA_HANDLERS.forEach((h) => { try { h(d); } catch {} });
   }
 
@@ -1308,7 +1314,7 @@
       case 'level_up': case 'badge_unlocked': case 'quest_done': A.play('levelup'); break;
       case 'choice_open': case 'choice_made': A.play('choice'); break;
       case 'cast': if (d.tool === 'Agent') A.play('summon'); break;
-      case 'potion': A.play('potion'); break;
+      case 'potion': case 'loot_drop': A.play('potion'); break;
       default: break;
     }
   }

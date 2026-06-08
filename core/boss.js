@@ -102,12 +102,18 @@ function minionLabel(cwd, idx, lang) {
 }
 
 /** Push a milestone for this boss and clear its file. Returns total milestone count.
- *  @param {string} cwd @param {BossState} b @returns {number} */
-function recordDefeat(cwd, b) {
+ *  @param {string} cwd @param {BossState} b
+ *  @param {{ dmg?: number; kills?: number; maxCombo?: number }} [stats]
+ *  @returns {number} */
+function recordDefeat(cwd, b, stats = {}) {
   const prof = state.readProfile();
   prof.milestones.push({
     boss: b.name, date: new Date().toISOString().slice(0, 10),
     turns: b.turns || 0, project: cwd,
+    at: Date.now(),
+    dmg: typeof stats.dmg === 'number' ? stats.dmg : (b.dmgTaken || 0),
+    kills: stats.kills || 0,
+    maxCombo: stats.maxCombo || 0,
   });
   state.writeProfile(prof);
   clear(cwd);

@@ -51,6 +51,10 @@ export interface Milestone {
   date: string;
   turns: number;
   project: string;
+  at?: number;        // epoch ms of the kill (enables later time/streak features)
+  dmg?: number;       // lines changed during the fight
+  kills?: number;     // minions felled
+  maxCombo?: number;  // peak combo in the fight
 }
 
 export interface Profile {

@@ -89,3 +89,29 @@ test('recordDefeat: milestone pushed, boss file cleared, count returned', () => 
   const prof = state.readProfile();
   assert.equal(prof.milestones[prof.milestones.length - 1].boss, b.name);
 });
+
+test('recordDefeat: captures at + fight stats from the stats arg', () => {
+  const state = require('../core/state');
+  const b = boss.loadOrCreate('/p/stats', 'do work');
+  b.turns = 4; b.dmgTaken = 30;
+  const before = Date.now();
+  boss.recordDefeat('/p/stats', b, { dmg: 42, kills: 3, maxCombo: 7 });
+  const prof = state.readProfile();
+  const m = prof.milestones[prof.milestones.length - 1];
+  assert.equal(m.dmg, 42);
+  assert.equal(m.kills, 3);
+  assert.equal(m.maxCombo, 7);
+  assert.ok(typeof m.at === 'number' && m.at >= before);
+});
+
+test('recordDefeat: stats optional — dmg falls back to boss.dmgTaken, others to 0', () => {
+  const state = require('../core/state');
+  const b = boss.loadOrCreate('/p/nostats', 'do work');
+  b.dmgTaken = 15;
+  boss.recordDefeat('/p/nostats', b);
+  const prof = state.readProfile();
+  const m = prof.milestones[prof.milestones.length - 1];
+  assert.equal(m.dmg, 15);
+  assert.equal(m.kills, 0);
+  assert.equal(m.maxCombo, 0);
+});

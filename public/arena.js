@@ -5,7 +5,8 @@
   const calmStored = (() => { try { return localStorage.getItem('slimeCalm'); } catch (e) { return null; } })();
   const CALM = new URLSearchParams(location.search).has('calm')
     || calmStored === '1'
-    || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    // OS reduced-motion is the default, but an explicit stored '0' (user clicked "restore motion") overrides it
+    || (calmStored !== '0' && window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   if (CALM) document.body.classList.add('calm');
   // Day (light) / night (dark) theme. The page sets body.day from localStorage
   // before paint; the arena reads it to render a daytime sky vs the night starfield.

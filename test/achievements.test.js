@@ -28,3 +28,21 @@ test('render: empty profile is safe (Lv1, all locked)', () => {
   assert.match(out, /Lv1/);
   assert.doesNotMatch(out, /✅/);                // nothing owned
 });
+
+test('render: shows both quests with progress/target, defaulting to 0 when unseeded', () => {
+  const ach = require('../scripts/achievements');
+  const out = ach.render({ xp: 0, badges: [], milestones: [] }, 'en');
+  assert.match(out, /Quests/);
+  assert.match(out, /Weekly Hunter\s+0\/5/);
+  assert.match(out, /Daily Grind\s+0\/7/);
+});
+
+test('render: reflects an active quest instance progress/target', () => {
+  const ach = require('../scripts/achievements');
+  const profile = {
+    xp: 0, badges: [], milestones: [],
+    quests: [{ id: 'weekly_kills', kind: 'weekly_kills', target: 5, progress: 3, startedAt: 1 }],
+  };
+  const out = ach.render(profile, 'en');
+  assert.match(out, /Weekly Hunter\s+3\/5/);
+});

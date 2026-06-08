@@ -23,6 +23,16 @@ function render(profile, lang) {
     if (owned.has(d.id)) lines.push(`  ✅ ${name}`);
     else lines.push(`  🔒 ${name}  (${locale.t('ach.locked', lang)})`);
   }
+  lines.push('');
+  lines.push(locale.t('ach.questsHeader', lang));
+  for (const def of prog.QUEST_DEFS) {
+    const q = (profile.quests || []).find((x) => x.kind === def.kind && !x.doneAt);
+    lines.push(locale.fmt(locale.t('ach.questLine', lang), {
+      name: locale.t(def.nameKey, lang),
+      progress: q ? q.progress : 0,
+      target: q ? q.target : def.target,
+    }));
+  }
   return lines.join('\n');
 }
 

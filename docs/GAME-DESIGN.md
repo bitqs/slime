@@ -73,7 +73,7 @@ type lives, and its health:
 | Minion kills | per todo done | deterministic | ✅ strong |
 | Turn rank (S/A/B…) | per turn | deterministic | ✅ solid |
 | Kill log entry | per boss | persistent milestone | ✅ done (Phase 1) |
-| **XP / level / title** | per boss | accrues, crosses thresholds | ⏳ Phase 2 |
+| XP / level / title | per boss | accrues, crosses thresholds | ✅ done (Phase 2) |
 | **Badges (unlocks)** | on conditions | collection | ⏳ Phase 3 |
 | **Quests (weekly/streak)** | rolling | goal + completion | ⏳ Phase 4 |
 | **Random loot drops** | ~per tool call, rare | variable-ratio surprise | ⏳ Phase 5 |
@@ -105,10 +105,11 @@ the two highest-leverage gaps.
 - Appearance variety now lands (procedural slimes, seeded, decoupled).
 
 **Weak / rough edges**
-- **Meta progression is thin.** After a kill you get a milestone line — but no
-  level, no unlock, no "I'm growing." The reason-to-return is underbuilt.
+- **Meta progression, partly built.** XP/levels/titles now accrue per kill and
+  show on the statusline (Phase 2 ✅). Still missing: unlockable badges (Phase 3)
+  and quests (Phase 4) — the long-tail "gotta collect / weekly goal" hooks.
 - **No variable reward yet.** Every reward is deterministic; the dopamine spike of
-  a surprise drop is missing.
+  a surprise drop is missing (Phase 5).
 - **Low stakes.** The only failure state is token exhaustion (rest). There's no
   tension arc within a fight. (Intentional for a work companion — but a *soft*
   tension, e.g. a boss "enrage" on a long stall, could deepen the moment loop
@@ -118,10 +119,11 @@ the two highest-leverage gaps.
 
 ## 7. Polish roadmap (prioritized)
 
-1. **Levels & titles (Phase 2)** — visible meta-progress on *every* kill, surfaced
-   on the statusline + session-start. Biggest bang: turns each boss into growth.
+1. ~~**Levels & titles (Phase 2)**~~ — ✅ done: XP per kill, ✦Lv on the statusline,
+   level_up event. Each boss now feeds visible growth.
 2. **Random loot / variable reward (Phase 5)** — the missing dopamine half; small,
    rare, instant, seeded (replay-stable). Pairs with the instant-feedback pillar.
+   Next-highest leverage.
 3. **Badges (Phase 3)** — a collection wall; long-tail "gotta unlock them all."
 4. **Quests (Phase 4)** — weekly/streak goals; the explicit return-driver.
 5. **(Optional) soft tension** — a non-punishing enrage/streak beat for the moment

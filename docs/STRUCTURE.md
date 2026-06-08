@@ -54,8 +54,9 @@ $SLIME_ROOT/
 ```
 
 Event types in the `.jsonl` stream: `cast`, `resolve`, `encounter`, `turn_end`,
-`boss_down`, `choice_open`, `choice_made`, `plan_scroll`, `plan_approved`,
-`potion`, …
+`boss_down`, `boss_broken`, `ultimate`, `minion_down`, `summon_back`,
+`choice_open`, `choice_made`, `plan_scroll`, `plan_approved`, `potion`,
+`level_up`, … (Phase 3-5 will add `badge_unlocked`, `quest_done`, `loot_drop`).
 
 ## `hooks/` — the writers
 

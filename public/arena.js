@@ -151,7 +151,6 @@
     summons.length = 0;
   }
 
-  let bossHpTier = null; // 'hi' | 'mid' | 'lo'
   let lastBossPct = 100; // cached for tentacle tinting
   const bossTex = { hi: null, mid: null, lo: null };
   function bossTexFor(pct) {
@@ -483,7 +482,7 @@
       { at: 110, do: 'letterbox', on: false },
     ];
   }
-  const SCENE_VICTORY = (name) => [
+  const SCENE_VICTORY = () => [
     { at: 0,   do: 'hitstop', frames: 8 },
     { at: 8,   do: 'slowmo', factor: 0.3, frames: 30 },
     { at: 8,   do: 'bossburst' },
@@ -1021,7 +1020,7 @@
       }
       if (d.text) pushLog(d.text);
     }
-    if (d.kind === 'boss_down') { clearSummons(); setScene('battle'); engagedBoss = null; setBroken(false); packSprites.forEach((s) => { s.visible = false; }); tentacleGfx.clear(); playScene(SCENE_VICTORY(d.boss)); if (d.text) pushLog(d.text); }
+    if (d.kind === 'boss_down') { clearSummons(); setScene('battle'); engagedBoss = null; setBroken(false); packSprites.forEach((s) => { s.visible = false; }); tentacleGfx.clear(); playScene(SCENE_VICTORY()); if (d.text) pushLog(d.text); }
     if (d.kind === 'potion') { playScene(SCENE_POTION); if (d.text) pushLog(d.text); }
     if (d.kind === 'boss_broken') { setBroken(true); PRIM.shake({ amp: 2, frames: 8 }); if (d.text) pushLog(d.text); }
     if (d.kind === 'ultimate') {

@@ -29,7 +29,7 @@ try {
       b.turns = snap.turn || 0;
       if (b.broken) {
         // all todos done and still broken at stop → confirmed kill, no typing needed
-        const total = boss.recordDefeat(p.cwd, b);
+        const total = boss.recordDefeat(p.cwd, b, { dmg: agg.dmg, kills: agg.kills, maxCombo: agg.maxCombo });
         state.appendEvent(id, { t: Date.now(), kind: 'boss_down', boss: b.name,
           text: locale.fmt(locale.t('boss.autoDown', lang), { name: b.name, count: total }) });
         delete snap.boss;

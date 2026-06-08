@@ -5,7 +5,12 @@ try {
   const lines = ['🏛️  MILESTONE WALL', ''];
   if (!prof.milestones.length) lines.push('No bosses defeated yet. The wall awaits.');
   for (const m of prof.milestones) {
-    lines.push(`${m.date}  💀 ${m.boss}  (${m.turns} turns)  — ${m.project}`);
+    const extra = [];
+    if (m.dmg) extra.push(`${m.dmg} dmg`);
+    if (m.kills) extra.push(`${m.kills} kills`);
+    if (m.maxCombo) extra.push(`🔥×${m.maxCombo}`);
+    const tail = extra.length ? `  [${extra.join(', ')}]` : '';
+    lines.push(`${m.date}  💀 ${m.boss}  (${m.turns} turns)${tail}  — ${m.project}`);
   }
   lines.push('', `Career: ${prof.totals.turns} turns, ${prof.totals.dmg} dmg, ${prof.totals.kills} kills`);
   console.log(lines.join('\n'));

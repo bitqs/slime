@@ -57,8 +57,31 @@ test('stop hook emits systemMessage card and resets inTurn', () => {
   const out = run('hook-stop.js', { session_id: 'h1', cwd: '/tmp/myapp' });
   const msg = JSON.parse(out);
   assert.match(msg.systemMessage, /TURN #/);
+  assert.doesNotMatch(msg.systemMessage, /Pixel Arena|Arena live/);
   const snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'h1.json'), 'utf8'));
   assert.equal(snap.inTurn, false);
+});
+
+test('codex stop hook appends arena hint when no live arena exists', () => {
+  const out = execFileSync('node', [S('hook-stop.js')], {
+    input: JSON.stringify({ session_id: 'codex1', cwd: '/tmp/codex-ui' }),
+    env: { ...ENV, SLIME_HARNESS: 'codex', SLIME_ARENA_MARKER: path.join(ROOT, 'missing-arena.json') },
+  }).toString();
+  const msg = JSON.parse(out);
+  assert.match(msg.systemMessage, /Pixel Arena/);
+  assert.match(msg.systemMessage, /\/slime:arena/);
+});
+
+test('codex stop hook appends live arena link when marker is alive', () => {
+  const marker = path.join(ROOT, 'live-arena.json');
+  fs.writeFileSync(marker, JSON.stringify({ port: 4555, pid: process.pid }));
+  const out = execFileSync('node', [S('hook-stop.js')], {
+    input: JSON.stringify({ session_id: 'codex2', cwd: '/tmp/codex-ui-live' }),
+    env: { ...ENV, SLIME_HARNESS: 'codex', SLIME_ARENA_MARKER: marker },
+  }).toString();
+  const msg = JSON.parse(out);
+  assert.match(msg.systemMessage, /Arena live/);
+  assert.match(msg.systemMessage, /http:\/\/127\.0\.0\.1:4555/);
 });
 
 test('hooks never crash on garbage stdin (observer principle)', () => {
@@ -200,32 +223,25 @@ test('stop hook leaves an unbroken boss alone', () => {
   assert.equal(fs.existsSync(bossLib.bossPath('/tmp/alive')), true);
 });
 
-test('TodoWrite: hp→0 sets broken and emits boss_broken exactly once; recovery clears it', () => {
+test('TodoWrite: hp→0 sets broken, emits boss_broken, then auto-downs immediately', () => {
+  // With auto-down-on-break: once the boss hits 0 hp and is broken, it is immediately
+  // defeated (boss_down event, snap.boss cleared, boss file gone).
   run('hook-posttool.js', {
     session_id: 'm3', cwd: '/tmp/brk', tool_name: 'TodoWrite',
     tool_input: { todos: [{ content: 'a', activeForm: 'a', status: 'completed' }] }, tool_response: {},
   });
-  let snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'm3.json'), 'utf8'));
-  assert.equal(snap.boss.broken, true);
-  run('hook-posttool.js', {
-    session_id: 'm3', cwd: '/tmp/brk', tool_name: 'TodoWrite',
-    tool_input: { todos: [{ content: 'a', activeForm: 'a', status: 'completed' }] }, tool_response: {},
-  });
-  let evs = fs.readFileSync(path.join(ROOT, 'sessions', 'm3.jsonl'), 'utf8')
+  const snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'm3.json'), 'utf8'));
+  // snap.boss is cleared by auto-down
+  assert.ok(!snap.boss, 'snap.boss should be absent after auto-down');
+  const evs = fs.readFileSync(path.join(ROOT, 'sessions', 'm3.jsonl'), 'utf8')
     .trim().split('\n').map((l) => JSON.parse(l));
-  assert.equal(evs.filter((e) => e.kind === 'boss_broken').length, 1);
-  run('hook-posttool.js', {
-    session_id: 'm3', cwd: '/tmp/brk', tool_name: 'TodoWrite',
-    tool_input: { todos: [
-      { content: 'a', activeForm: 'a', status: 'completed' },
-      { content: 'b', activeForm: 'b', status: 'pending' },
-    ] }, tool_response: {},
-  });
-  snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'm3.json'), 'utf8'));
-  assert.equal(snap.boss.broken, false);
-  evs = fs.readFileSync(path.join(ROOT, 'sessions', 'm3.jsonl'), 'utf8')
-    .trim().split('\n').map((l) => JSON.parse(l));
-  assert.equal(evs.filter((e) => e.kind === 'boss_broken').length, 1);
+  // boss_broken is emitted before the auto-down fires
+  assert.equal(evs.filter((e) => e.kind === 'boss_broken').length, 1, 'exactly one boss_broken event');
+  // boss_down is emitted by the auto-down block
+  assert.equal(evs.filter((e) => e.kind === 'boss_down').length, 1, 'exactly one boss_down event');
+  // boss file is gone
+  const bossLib = require('../core/boss');
+  assert.equal(fs.existsSync(bossLib.bossPath('/tmp/brk')), false, 'boss file should be cleared after auto-down');
 });
 
 test('edits drain boss hp from the code budget', () => {
@@ -250,7 +266,7 @@ test('edits drain boss hp from the code budget', () => {
   assert.ok(snap.boss.hp < hp1, `hp should decrease after second edit: ${snap.boss.hp} >= ${hp1}`);
 });
 
-test('all todos done with hp left → ultimate + broken', () => {
+test('all todos done with hp left → ultimate + broken + auto-downed immediately', () => {
   // Create boss via prompt (fresh, hp=100)
   run('hook-prompt.js', { session_id: 'ult1', prompt: 'add feature', cwd: '/tmp/ult' });
   // Send all-completed todos without draining hp first
@@ -261,11 +277,13 @@ test('all todos done with hp left → ultimate + broken', () => {
       { content: 'ship it', activeForm: 'shipping', status: 'completed' },
     ] }, tool_response: {},
   });
+  // With auto-down-on-break: snap.boss is cleared immediately after break
   const snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'ult1.json'), 'utf8'));
-  assert.equal(snap.boss.hp, 0, `boss hp should be 0, got ${snap.boss.hp}`);
-  assert.equal(snap.boss.broken, true, 'boss should be broken');
+  assert.ok(!snap.boss, 'snap.boss should be absent after auto-down');
   const evs = fs.readFileSync(path.join(ROOT, 'sessions', 'ult1.jsonl'), 'utf8')
     .trim().split('\n').map((l) => JSON.parse(l));
   assert.equal(evs.filter((e) => e.kind === 'ultimate').length, 1, 'should have exactly one ultimate event');
   assert.equal(evs.filter((e) => e.kind === 'boss_broken').length, 1, 'should have exactly one boss_broken event');
+  // auto-down fires immediately
+  assert.equal(evs.filter((e) => e.kind === 'boss_down').length, 1, 'should have exactly one boss_down event from auto-down');
 });

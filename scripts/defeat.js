@@ -3,6 +3,7 @@ const boss = require('../core/boss');
 const state = require('../core/state');
 const report = require('../core/report');
 const fs = require('node:fs');
+const defeatFlow = require('../core/defeat-flow');
 
 const cwd = process.argv[2] || process.cwd();
 try {
@@ -21,11 +22,7 @@ try {
     : null;
   if (sid) {
     state.appendEvent(sid, { t: Date.now(), kind: 'boss_down', boss: b.name, text: `⚡⚡⚡ ${b.name} — DEFEATED ⚡⚡⚡` });
-    if (levelUp) state.appendEvent(sid, { t: Date.now(), kind: 'level_up', text: levelUp });
-    for (const bid of r.newBadges) {
-      state.appendEvent(sid, { t: Date.now(), kind: 'badge_unlocked', badge: bid,
-        text: locale.fmt(locale.t('badge.unlocked', lang), { name: locale.t(require('../core/progression').nameKeyFor(bid) || bid, lang) }) });
-    }
+    defeatFlow.emitRewards(sid, r, lang);
   }
   const out = [
     `⚡⚡⚡ ${b.name} — DEFEATED ⚡⚡⚡`,

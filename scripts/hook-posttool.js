@@ -4,6 +4,8 @@ const state = require('../core/state');
 const mapper = require('../core/mapper');
 const locale = require('../core/locale');
 const boss = require('../core/boss');
+const report = require('../core/report');
+const defeatFlow = require('../core/defeat-flow');
 try {
   /** @type {HookPayload | null} */
   const p = /** @type {HookPayload | null} */ (state.readStdin());
@@ -78,6 +80,24 @@ try {
       }
       if (fresh.length) snap.lastText = locale.fmt(locale.t('minion.down', lang), { minion: fresh[fresh.length - 1].content });
       snap.todos = list;
+    }
+    // Auto-down: a finished boss (broken, HP 0) leaves the stage at once instead
+    // of lingering until Stop. Both break paths (dmg-exhaustion and all-todos-done)
+    // land here; the revive path above already un-broke any premature break, so a
+    // still-broken HP-0 boss is a genuine finish. recordDefeat clears the boss file,
+    // so the next tool call spawns a fresh boss.
+    if (p.cwd && snap.boss && snap.boss.broken && snap.boss.hp === 0) {
+      const fb = boss.loadOrCreate(p.cwd, '');
+      if (fb.broken && fb.hp === 0) {
+        const lang = locale.current();
+        const agg = report.aggregate(state.readEvents(id));
+        const r = boss.recordDefeat(p.cwd, fb, { dmg: agg.dmg, kills: agg.kills, maxCombo: agg.maxCombo });
+        state.appendEvent(id, { t: Date.now(), kind: 'boss_down', boss: fb.name,
+          text: locale.fmt(locale.t('boss.autoDown', lang), { name: fb.name, count: r.total }) });
+        defeatFlow.emitRewards(id, r, lang);
+        delete snap.boss;
+        delete snap.todos;
+      }
     }
     snap.updated = Date.now();
     state.writeSnapshot(id, snap);

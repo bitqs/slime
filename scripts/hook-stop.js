@@ -8,6 +8,7 @@ const boss = require('../core/boss');
 const usage = require('../core/usage');
 const sage = require('../core/sage');
 const locale = require('../core/locale');
+const defeatFlow = require('../core/defeat-flow');
 
 /** @param {string} lang @returns {string | null} */
 function codexUiFooter(lang) {
@@ -30,7 +31,8 @@ try {
     const snap = state.readSnapshot(id) || /** @type {Snapshot} */ ({ sessionId: id, turn: 1, combo: 0, kills: 0, dmg: 0, summons: 0 });
     const events = state.readEvents(id);
     const agg = report.aggregate(events);
-    const b = p.cwd ? boss.loadOrCreate(p.cwd, '') : null;
+    const fs = require('node:fs');
+    const b = p.cwd && fs.existsSync(boss.bossPath(p.cwd)) ? boss.loadOrCreate(p.cwd, '') : null;
     const u = usage.readCache();
     const lang = locale.current();
     const sageLine = sage.advise({ usage: u, bossHp: b ? b.hp : null, lang });
@@ -47,14 +49,7 @@ try {
         const r = boss.recordDefeat(p.cwd, b, { dmg: agg.dmg, kills: agg.kills, maxCombo: agg.maxCombo });
         state.appendEvent(id, { t: Date.now(), kind: 'boss_down', boss: b.name,
           text: locale.fmt(locale.t('boss.autoDown', lang), { name: b.name, count: r.total }) });
-        if (r.leveledUp) {
-          state.appendEvent(id, { t: Date.now(), kind: 'level_up',
-            text: locale.fmt(locale.t('boss.levelup', lang), { level: r.level, title: locale.t(r.titleKey, lang) }) });
-        }
-        for (const bid of r.newBadges) {
-          state.appendEvent(id, { t: Date.now(), kind: 'badge_unlocked', badge: bid,
-            text: locale.fmt(locale.t('badge.unlocked', lang), { name: locale.t(require('../core/progression').nameKeyFor(bid) || bid, lang) }) });
-        }
+        defeatFlow.emitRewards(id, r, lang);
         delete snap.boss;
         delete snap.todos;
       } else {

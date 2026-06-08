@@ -4,13 +4,13 @@
 
 **Already addicted? Get more addicted.**
 
-Your work goals are the bosses. Your plugins are your gear. Watch Claude fight.
+Your goals are the bosses. Your plugins are your gear. Watch Claude fight — over your real work, with zero impact on it.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet)](https://docs.anthropic.com/claude-code)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](package.json)
 
-<sub>Zero npm dependencies at runtime — the browser arena vendors PixiJS as a static file.</sub>
+**English** · [中文](README.zh-CN.md)
 
 **[▶️ Live arena demo](https://slime-arena-demo.shuangqu.workers.dev)** — watch a full battle before you install ([flash-free](https://slime-arena-demo.shuangqu.workers.dev/?calm=1))
 
@@ -18,28 +18,23 @@ Your work goals are the bosses. Your plugins are your gear. Watch Claude fight.
 
 ---
 
-## How to read the battle · 怎么看懂这场仗
-
-| On screen | Meaning · 含义 |
-|---|---|
-| 🗡️ Boss | Your current quest — forged from your prompt, sized by estimated token cost · 当前任务,体型=预估 token 量 |
-| ❤️ Boss HP | Falls as todos complete; at 0 the boss kneels, and dies automatically at session stop · todo 全勾=濒死,停机自动击杀 |
-| 🟢 Minions | The todo list — each completed todo slays a slime · 小怪=todo |
-| ⚡ Token | Your resource (5h rate window) · 你的资源,休息回复 |
-| 🔥 Combo | Consecutive successful tool strikes · 连击 |
-| 🍖 Feeding | Planning + Q&A feed the boss; it grows · 计划/问答喂怪 |
-| 🐺 Summons | Subagent dispatches fight beside you · 召唤兽=subagent |
-
----
-
-<!-- demo.gif: terminal battle feed + turn report. TODO before launch -->
-
-Claude Code is already a turn-based game: you cast a prompt, Claude takes its turn, you wait.
-Slime makes the game visible — a full RPG layer over your real work, with **zero impact on it**.
+Claude Code is already a turn-based game: you cast a prompt, Claude takes its turn, you wait. Slime makes the game **visible** — a full RPG layer rendered from your real session, with **zero impact on it**.
 
 ```
 🗡️ The Auth Bugbear ████░░░░░░ 38% | 🔥combo×7 | 🐺×2 | 💀3 ⚔️842 | ⚔️ Carves with [Edit] → auth.ts…
 ```
+
+## How to read the battle
+
+| On screen | Meaning |
+|---|---|
+| 🗡️ Boss | Your current quest — forged from your prompt, sized by estimated token cost |
+| ❤️ Boss HP | Falls as todos complete; at 0 the boss kneels and dies automatically when the session stops |
+| 🟢 Minions | Your todo list — each completed todo slays a slime |
+| ⚡ Token | Your real resource — the five-hour usage window; rest to recover |
+| 🔥 Combo | Consecutive successful tool strikes |
+| 🍖 Feeding | Planning and Q&A feed the boss; it grows |
+| 🐺 Summons | Subagent dispatches fight beside you |
 
 ## Quick Start
 
@@ -48,26 +43,9 @@ Slime makes the game visible — a full RPG layer over your real work, with **ze
 /plugin install slime@slime
 ```
 
-Then run `/slime:setup` once to enable the HUD, and turn on auto-update so every
-improvement reaches you (`/plugin` → Marketplaces → slime → Enable auto-update —
-third-party marketplaces ship with it off).
+Then run `/slime:setup` once to enable the HUD, and turn on auto-update so every improvement reaches you (`/plugin` → Marketplaces → slime → Enable auto-update — third-party marketplaces ship with it off).
 
 That's it — just work. The game plays itself.
-
-### Codex adapter preview
-
-This repo also includes an early Codex plugin surface:
-
-- `.codex-plugin/plugin.json` exposes Slime as a Codex plugin.
-- `hooks.json` wires Codex-compatible hook events through `scripts/dispatch.js`.
-- `adapters/codex/` normalizes Codex hook/status payloads before dispatch reuses the existing observer scripts.
-- Codex state defaults to `~/.codex/slime` when hooks run with `SLIME_HARNESS=codex`.
-
-Codex does not expose a stable command-backed statusline equivalent yet, so the
-full Claude Code HUD is not mirrored in the TUI footer. Instead, Codex gets a
-light HUD: each turn report includes the Slime battle card plus an Arena link or
-`/slime:arena` hint. The arena, battlelog, milestones, and wrapped
-scripts read the shared Slime state with `SLIME_HARNESS=codex`.
 
 ## What You Get
 
@@ -75,7 +53,7 @@ scripts read the shared Slime state with `SLIME_HARNESS=codex`.
 |---|---|
 | ⚡ **Live battle feed** | Every tool call announced JRPG-style: `🔮 Scries with [WebSearch]…` — real tool names, real-time audit |
 | ⚡ **Token = your real usage** | Your five-hour window is your Token reserve — at zero, the Sage tells you exactly when you're restored |
-| 🧙 **The Sage** | One line of real advice per turn: rest at low Token, potion (/compact) when context runs heavy, pacing warnings |
+| 🧙 **The Sage** | One line of real advice per turn: rest at low Token, potion (`/compact`) when context runs heavy, pacing warnings |
 | 🗡️ **Bosses = your goals** | Your prompt names the monster; your todo list is its HP bar |
 | 💀 **Kills confirm themselves** | Clear every todo and the boss falls on its own when the session ends — milestone recorded, no extra typing |
 | 🏆 **Turn reports** | Rank S/A/B/C when Claude stops: damage (lines changed), kills (tests passed), max combo |
@@ -86,15 +64,13 @@ scripts read the shared Slime state with `SLIME_HARNESS=codex`.
 
 ## The Observer Principle
 
-Slime **never** affects real usage. No blocking, no context injection, no LLM calls by default, no auto-execution.
-Claude's behavior with Slime installed is byte-identical to without. Pure visuals, data, feedback.
+Slime **never** affects real usage. No blocking, no context injection, no LLM calls by default, no auto-execution. Claude's behavior with Slime installed is byte-identical to without. Pure visuals, data, feedback.
 
 The optional Haiku boss-namer is **off by default** and costs one tiny model call per new boss (`"haikuNaming": true` in `~/.claude/slime/config.json`).
 
 ## Speaks Your Language
 
-Slime watches which language you prompt in and answers in kind — English and 中文 ship today.
-Force one with `"lang": "zh"` in `~/.claude/slime/config.json`.
+Slime watches which language you prompt in and answers in kind — English and 中文 ship today. Force one with `"lang": "zh"` in `~/.claude/slime/config.json`.
 
 ## Commands
 
@@ -105,6 +81,7 @@ Force one with `"lang": "zh"` in `~/.claude/slime/config.json`.
 | `/slime:milestones` | Show the Milestone Wall |
 | `/slime:battlelog` | Replay this session's turn reports |
 | `/slime:wrapped` | Your week in battle — shareable card |
+| `/slime:arena` | Open the Pixel Arena in your browser |
 
 ### Top-of-terminal battle pane (tmux)
 
@@ -131,14 +108,27 @@ A local pixel-art battle stage — your knight strikes in real time as Claude wo
  all todos done ─► boss falls at Stop ─► 🏛️ milestone wall
 ```
 
-Hooks translate real events into game state under `~/.claude/slime/`; the statusline renders it.
-Zero npm dependencies. Everything works offline.
+Hooks translate real events into game state under `~/.claude/slime/`; the statusline, tmux pane, and browser arena render it. Zero npm dependencies. Everything works offline.
+
+## Codex adapter (preview)
+
+This repo also includes an early Codex plugin surface:
+
+- `.codex-plugin/plugin.json` exposes Slime as a Codex plugin.
+- `hooks.json` wires Codex-compatible hook events through `scripts/dispatch.js`.
+- `adapters/codex/` normalizes Codex hook/status payloads before dispatch reuses the existing observer scripts.
+- Codex state defaults to `~/.codex/slime` when hooks run with `SLIME_HARNESS=codex`.
+
+Codex has no stable command-backed statusline yet, so the full HUD is not mirrored in the TUI footer. Instead each turn report carries the Slime battle card plus an Arena link or `/slime:arena` hint. Arena, battlelog, milestones, and wrapped all read the shared state with `SLIME_HARNESS=codex`.
 
 ## Develop
 
 ```bash
-node --test test/
+node --test test/        # full suite
+npm run typecheck        # tsc --checkJs strict (run `npm install` once for devDeps)
 ```
+
+No build step, no `.ts` source — TypeScript is JSDoc-only, checked with `tsc`.
 
 ## Requirements
 
@@ -155,8 +145,7 @@ node --test test/
 Hooks are removed automatically. Two optional leftovers:
 
 - Game data: `rm -rf ~/.claude/slime`
-- Statusline: if `/slime:setup` wired the HUD, remove (or restore) the
-  `statusLine` entry in `~/.claude/settings.json`
+- Statusline: if `/slime:setup` wired the HUD, remove (or restore) the `statusLine` entry in `~/.claude/settings.json`
 
 ## License
 

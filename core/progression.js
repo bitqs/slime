@@ -52,6 +52,16 @@ function xpForDefeat(m) {
 /** Declarative badge criteria — the add-a-badge seam (data/badges.json). */
 const BADGES = /** @type {BadgeDef[]} */ (require('../data/badges.json'));
 
+/** @typedef {import('./types').Quest} Quest */
+
+/** Auto-quest templates — one active instance per kind. Targets are starting
+ *  values; `streak_days` escalates by its base on each completion (see
+ *  evaluateQuests), `weekly_kills` keeps a constant target and resets its window. */
+const QUEST_DEFS = [
+  { kind: /** @type {'weekly_kills'} */ ('weekly_kills'), target: 5, nameKey: 'quest.weeklyKills' },
+  { kind: /** @type {'streak_days'} */ ('streak_days'),  target: 7, nameKey: 'quest.streakDays' },
+];
+
 /** Build the flat stat object every badge predicate checks. Pure; tolerates
  *  old profiles missing any field.
  *  @param {Profile} profile
@@ -99,4 +109,4 @@ function nameKeyFor(id) {
   return d ? d.nameKey : undefined;
 }
 
-module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS, BADGES, deriveStats, evaluateBadges, nameKeyFor };
+module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS, BADGES, deriveStats, evaluateBadges, nameKeyFor, QUEST_DEFS };

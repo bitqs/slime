@@ -53,5 +53,10 @@
   "ach.title": "🏅  ACHIEVEMENTS",
   "ach.level": "Lv{level} {title}  ({into}/{span} XP)",
   "ach.badgesHeader": "Badges ({owned}/{total})",
-  "ach.locked": "locked"
+  "ach.locked": "locked",
+  "ach.questsHeader": "Quests",
+  "ach.questLine": "  🎯 {name}  {progress}/{target}",
+  "quest.weeklyKills": "Weekly Hunter",
+  "quest.streakDays": "Daily Grind",
+  "quest.done": "🎯 Quest complete — {name}"
 }

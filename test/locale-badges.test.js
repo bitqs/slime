@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const badges = require('../data/badges.json');
+const progression = require('../core/progression');
 const read = (lang) => JSON.parse(fs.readFileSync(
   path.join(__dirname, '..', 'data', 'locales', `${lang}.json`), 'utf8'));
 
@@ -29,6 +30,27 @@ test('badge.unlocked + ach.* keys exist in both catalogs', () => {
   const en = read('en');
   const zh = read('zh');
   for (const k of ['badge.unlocked', 'ach.title', 'ach.level', 'ach.badgesHeader', 'ach.locked']) {
+    assert.ok(en[k], `en missing ${k}`);
+    assert.ok(zh[k], `zh missing ${k}`);
+  }
+});
+
+test('QUEST_DEFS: kinds unique, nameKey resolves in en and zh', () => {
+  const kinds = progression.QUEST_DEFS.map((q) => q.kind);
+  assert.equal(new Set(kinds).size, kinds.length, 'duplicate quest kind');
+  const en = read('en');
+  const zh = read('zh');
+  for (const d of progression.QUEST_DEFS) {
+    assert.equal(typeof d.target, 'number');
+    assert.ok(en[d.nameKey], `en missing ${d.nameKey}`);
+    assert.ok(zh[d.nameKey], `zh missing ${d.nameKey}`);
+  }
+});
+
+test('quest.done + ach.quest* keys exist in both catalogs', () => {
+  const en = read('en');
+  const zh = read('zh');
+  for (const k of ['quest.done', 'ach.questsHeader', 'ach.questLine']) {
     assert.ok(en[k], `en missing ${k}`);
     assert.ok(zh[k], `zh missing ${k}`);
   }

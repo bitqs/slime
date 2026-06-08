@@ -92,5 +92,10 @@
   "ach.title": "🏅  成就",
   "ach.level": "Lv{level} {title}  ({into}/{span} 经验)",
   "ach.badgesHeader": "徽章 ({owned}/{total})",
-  "ach.locked": "未解锁"
+  "ach.locked": "未解锁",
+  "ach.questsHeader": "任务",
+  "ach.questLine": "  🎯 {name}  {progress}/{target}",
+  "quest.weeklyKills": "每周猎手",
+  "quest.streakDays": "每日修行",
+  "quest.done": "🎯 任务完成 — {name}"
 }

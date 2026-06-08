@@ -57,6 +57,15 @@ export interface Milestone {
   maxCombo?: number;  // peak combo in the fight
 }
 
+export interface Quest {
+  id: string;                            // == kind for the active instance
+  kind: 'weekly_kills' | 'streak_days';
+  target: number;
+  progress: number;
+  startedAt: number;                     // epoch ms
+  doneAt?: number;                       // epoch ms when completed
+}
+
 export interface Profile {
   milestones: Milestone[];
   totals: { turns: number; dmg: number; kills: number };
@@ -67,7 +76,7 @@ export interface Profile {
   xp?: number;
   level?: number;
   badges?: Array<{ id: string; unlockedAt: number }>;
-  quests?: Array<{ id: string; kind: string; target: number; progress: number; startedAt: number; doneAt?: number }>;
+  quests?: Quest[];
   streak?: { days: number; lastActiveDay: string };
 }
 

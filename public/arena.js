@@ -179,8 +179,15 @@
       boss.texture = texFromMatrix(d.mat, SlimeDesigns.PALETTES[d.pal]);
     }
   }
-  // map the seed onto the threat-tier range so size/form/tier vary by identity, not tokens
-  function bossAppearanceEst() { return bossSeed % 320000; }
+  // map the seed onto the threat-tier range so size/form/tier vary by identity,
+  // not tokens. Weighted so most bosses are normal, some elite, raids stay rare
+  // (≈50/35/15) — a towering raid should feel special, not be every boss.
+  function bossAppearanceEst() {
+    const r = bossSeed % 100;
+    if (r < 50) return bossSeed % 45000;             // normal
+    if (r < 85) return 45000 + (bossSeed % 75000);   // ELITE  (45k–120k)
+    return 120000 + (bossSeed % 180000);             // RAID BOSS (≥120k)
+  }
 
   // ── on-stage HP bars (boss + every live mob) + a player HUD above the knight ──
   const hpBars = new PIXI.Graphics();

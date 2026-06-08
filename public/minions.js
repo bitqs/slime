@@ -110,7 +110,8 @@
     const level = ((s >>> 7) % 5) + 1;                // 1..5 — higher wears more
     const scale = SIZES[(s >>> 10) % SIZES.length];
     let mat = mirror(shape);
-    const featCount = level >= 5 ? 2 : level >= 3 ? 1 : 0;
+    // only the lowliest (level 1, ~20%) go bare; most slimes wear 1-2 decorations
+    const featCount = level >= 4 ? 2 : level >= 2 ? 1 : 0;
     for (let k = 0; k < featCount; k++) {
       mat = withFeature(mat, FEATS[(s >>> (12 + k * 3)) % FEATS.length]);
     }

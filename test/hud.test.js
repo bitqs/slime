@@ -107,3 +107,27 @@ test('between turns leads with 🟢 + the [HUD] link and shows the result', () =
   assert.match(line, /\[HUD\]/);
   assert.match(line, /Rank S/);
 });
+
+test('quest badge renders after the Lv badge in-turn', () => {
+  const now = Date.now();
+  const line = hud.render(
+    { inTurn: true, combo: 2, kills: 1, dmg: 10, summons: 0,
+      boss: { name: 'B', hp: 50 }, lastText: 'x', updated: now },
+    {}, TIPS, now, null, 'en', null, 4, '3/5'
+  );
+  assert.match(line, /✦Lv4 🎯3\/5/);
+});
+
+test('quest badge renders between turns', () => {
+  const now = Date.now();
+  const snap = { inTurn: false, updated: now - 60000, lastText: '🏆 done' };
+  const line = hud.render(snap, {}, TIPS, now, null, 'en', null, 4, '3/5');
+  assert.match(line, /✦Lv4 🎯3\/5/);
+});
+
+test('no quest badge when the quest arg is omitted', () => {
+  const now = Date.now();
+  const snap = { inTurn: false, updated: now - 60000, lastText: '🏆 done' };
+  const line = hud.render(snap, {}, TIPS, now, null, 'en', null, 4);
+  assert.doesNotMatch(line, /🎯/);
+});

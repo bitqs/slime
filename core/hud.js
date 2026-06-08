@@ -40,14 +40,16 @@ function sanitize(s, max = 60) {
  * @param {string} [lang]
  * @param {{ port: number } | null} [live] live arena info → renders clickable [HUD] link
  * @param {number} [level] player level → shown as a ✦Lv badge
+ * @param {string} [quest] nearest quest "progress/target" → shown as a 🎯 badge
  * @returns {string}
  */
-function render(snap, stdinJson, tips, now, usageCache, lang, live, level) {
+function render(snap, stdinJson, tips, now, usageCache, lang, live, level, quest) {
   const locale = require('./locale');
   const l = lang || locale.current();
   /** @param {string} key @param {Record<string, unknown>} [vars] @returns {string} */
   const T = (key, vars) => locale.fmt(locale.t(key, l), vars);
   const lv = level ? ` ✦Lv${level}` : '';
+  const q = quest ? ` 🎯${sanitize(quest, 12)}` : '';
   const hpVal = usage.hp(usageCache);
   const wtkVal = usage.week(usageCache);
   // DTK (daily, 5h window) + WTK (weekly, 7-day window) meters, labelled.
@@ -67,12 +69,12 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live, level) {
   // Between turns: still lead with the badge + live arena link, then the result.
   if (!snap.inTurn) {
     const body = sanitize(snap.lastText, 120) || T('hud.yourTurn');
-    return `🟢${uiLink(live)}${lv}${mSuffix} ${body}`;
+    return `🟢${uiLink(live)}${lv}${q}${mSuffix} ${body}`;
   }
 
   const parts = [];
   // plugin badge + arena link lead the line, then DTK/WTK meters; boss is a slime icon + hp
-  parts.push(`🟢${uiLink(live)}${lv}${mSuffix}`);
+  parts.push(`🟢${uiLink(live)}${lv}${q}${mSuffix}`);
   const todos = Array.isArray(snap.todos) ? snap.todos : [];
   const doneCnt = todos.filter((t) => t.status === 'completed').length;
   const cnt = todos.length ? ` ⚔${doneCnt}/${todos.length}` : '';

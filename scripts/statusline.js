@@ -27,8 +27,10 @@ try {
     tips = readJson(fallbackTips, []);
   }
   if (!Array.isArray(tips)) tips = [];
-  const level = state.readProfile().level;
-  process.stdout.write(hud.render(snap, stdin, tips, Date.now(), usage.readCache(), lang, arenaStatus.readLive(), level));
+  const prof = state.readProfile();
+  const nq = require('../core/progression').nearestQuest(prof);
+  const quest = nq ? `${nq.progress}/${nq.target}` : undefined;
+  process.stdout.write(hud.render(snap, stdin, tips, Date.now(), usage.readCache(), lang, arenaStatus.readLive(), prof.level, quest));
 } catch {
   process.stdout.write('🟢 Slime');
 }

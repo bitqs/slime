@@ -79,3 +79,18 @@ test('todo counter and next-step hint render from snap.todos', () => {
   assert.match(line, /⚔1\/2/);
   assert.match(line, /fixing b/);
 });
+
+test('live arena renders a clickable 【UI】 link carrying the live port', () => {
+  const now = Date.now();
+  const snap = { inTurn: true, combo: 0, kills: 0, dmg: 0, summons: 0, updated: now };
+  const line = hud.render(snap, {}, TIPS, now, null, 'en', { port: 4118 });
+  assert.match(line, /【UI】/);
+  assert.match(line, /127\.0\.0\.1:4118/); // URL tracks the live port, not a hardcoded one
+});
+
+test('no live arena → no 【UI】 link (never a dead link)', () => {
+  const now = Date.now();
+  const snap = { inTurn: true, combo: 0, kills: 0, dmg: 0, summons: 0, updated: now };
+  const line = hud.render(snap, {}, TIPS, now, null, 'en', null);
+  assert.doesNotMatch(line, /【UI】/);
+});

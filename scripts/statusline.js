@@ -4,6 +4,7 @@ const state = require('./lib/state');
 const hud = require('./lib/hud');
 const usage = require('./lib/usage');
 const locale = require('./lib/locale');
+const arenaStatus = require('./lib/arena-status');
 try {
   const stdin = state.readStdin() || {};
   usage.cacheFromStatusline(stdin);          // relay official fields to hooks
@@ -21,7 +22,7 @@ try {
     tips = readJson(fallbackTips, []);
   }
   if (!Array.isArray(tips)) tips = [];
-  process.stdout.write(hud.render(snap, stdin, tips, Date.now(), usage.readCache(), lang));
+  process.stdout.write(hud.render(snap, stdin, tips, Date.now(), usage.readCache(), lang, arenaStatus.readLive()));
 } catch {
   process.stdout.write('🟢 Slime');
 }

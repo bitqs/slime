@@ -6,8 +6,14 @@ const { bar } = require('./report');
 const usage = require('./usage');
 
 // OSC 8 hyperlink: terminals that support it make 【UI】 clickable → local arena.
-// Composed from constants only — never from state files (sanitize strips ESC).
-const UI_LINK = '\u001b]8;;http://127.0.0.1:4117\u0007【UI】\u001b]8;;\u0007';
+// Built only when the arena is actually live, and from a numeric port + constants
+// only — never from state files (sanitize strips ESC). No live arena → no link,
+// so the HUD never shows a dead 【UI】.
+/** @param {{ port: number } | null | undefined} live @returns {string} */
+function uiLink(live) {
+  if (!live || !Number.isInteger(live.port)) return '';
+  return `]8;;http://127.0.0.1:${live.port}【UI】]8;;`;
+}
 
 // Strip C0/C1 controls (incl. ESC → kills ANSI/OSC); preserve emoji/CJK;
 // truncate by code point. Statusline runs on every keystroke — a planted
@@ -32,9 +38,10 @@ function sanitize(s, max = 60) {
  * @param {number} now
  * @param {UsageCache | null | undefined} usageCache
  * @param {string} [lang]
+ * @param {{ port: number } | null} [live] live arena info → renders clickable 【UI】 link
  * @returns {string}
  */
-function render(snap, stdinJson, tips, now, usageCache, lang) {
+function render(snap, stdinJson, tips, now, usageCache, lang, live) {
   const locale = require('./locale');
   const l = lang || locale.current();
   /** @param {string} key @param {Record<string, unknown>} [vars] @returns {string} */
@@ -55,7 +62,7 @@ function render(snap, stdinJson, tips, now, usageCache, lang) {
 
   const parts = [];
   // plugin badge leads the line; boss shows as a slime icon + hp, never a name
-  parts.push(hpVal != null ? `🟢${UI_LINK} ⚡${hpVal}%` : `🟢${UI_LINK}`);
+  parts.push(hpVal != null ? `🟢${uiLink(live)} ⚡${hpVal}%` : `🟢${uiLink(live)}`);
   const todos = Array.isArray(snap.todos) ? snap.todos : [];
   const doneCnt = todos.filter((t) => t.status === 'completed').length;
   const cnt = todos.length ? ` ⚔${doneCnt}/${todos.length}` : '';

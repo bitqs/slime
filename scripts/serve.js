@@ -14,6 +14,7 @@ const path = require('node:path');
 const { readSnapshot, eventsPath, newestSessionId } = require('./lib/state');
 const { readCache } = require('./lib/usage');
 const locale = require('./lib/locale');
+const arenaStatus = require('./lib/arena-status');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const PORT = Number(process.env.SLIME_PORT) || 4117;
@@ -172,7 +173,27 @@ module.exports = { createServer };
 
 if (require.main === module) {
   const srv = createServer();
+
+  srv.on('error', (/** @type {NodeJS.ErrnoException} */ err) => {
+    // Port busy: if a live arena already owns it, point at it and leave quietly
+    // instead of crashing with a raw stack trace.
+    if (err.code === 'EADDRINUSE') {
+      const live = arenaStatus.readLive();
+      const port = live ? live.port : PORT;
+      console.log(`Slime Arena already running: http://127.0.0.1:${port}`);
+      process.exit(0);
+    }
+    console.error(err.message);
+    process.exit(1);
+  });
+
   srv.listen(PORT, '127.0.0.1', () => {
+    arenaStatus.writeMarker(PORT);
     console.log(`Slime Arena: http://127.0.0.1:${PORT}`);
   });
+
+  const shutdown = () => { arenaStatus.clearMarker(); process.exit(0); };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+  process.on('exit', () => arenaStatus.clearMarker());
 }

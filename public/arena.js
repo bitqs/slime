@@ -164,6 +164,32 @@
   boss.visible = false;
   world.addChild(boss);
 
+  // ── on-stage HP bars (boss + every live mob) + a player HUD above the knight ──
+  const hpBars = new PIXI.Graphics();
+  const playerHud = new PIXI.Text({ text: '', style: {
+    fontFamily: 'monospace', fontSize: 6, fill: 0xf0b541,
+    stroke: { color: 0x000000, width: 2 }, align: 'center',
+  } });
+  playerHud.anchor.set(0.5, 1);
+  world.addChild(hpBars, playerHud);
+  /** tiny HP pip above a sprite: bg track + colored fill */
+  function drawBar(g, cx, topY, pct) {
+    const w = 14, h = 2, x = cx - w / 2;
+    const p = Math.max(0, Math.min(100, pct));
+    g.rect(x, topY, w, h).fill(0x1a1d24);
+    const col = p > 50 ? 0x6abe30 : p > 20 ? 0xf0b541 : 0xc83737;
+    if (p > 0) g.rect(x, topY, (w * p) / 100, h).fill(col);
+  }
+  function drawHud() {
+    hpBars.clear();
+    if (boss.visible && !bossDead) drawBar(hpBars, boss.x + boss.width / 2, boss.y - 3, lastBossPct);
+    packSprites.forEach((s) => { if (s.visible) drawBar(hpBars, s.x + s.width / 2, s.y - 3, s._pct != null ? s._pct : 100); });
+    // re-add keeps the bars/text above pack sprites that get addChild'd later
+    world.addChild(hpBars, playerHud);
+    playerHud.x = knight.x + knight.width / 2;
+    playerHud.y = knight.y - 3;
+  }
+
   // slime textures shared with the rail (minions.js defines window.SlimeDesigns)
   const slimeTex = {};
   function slimeTexFor(form) {
@@ -243,6 +269,7 @@
         // motley pack: size varies per mob, derived from design+slot so it stays
         // deterministic (replay-stable) yet reads as a random rabble, not clones.
         s.scale.set(1.15 + ((f + i) % 5) * 0.16); // 1.15 … 1.79
+        s._pct = list[i].status === 'in_progress' ? 55 : 100; // pending full, active half-felled
         ground(s);
       }
     });
@@ -464,6 +491,7 @@
   // ── render loop ───────────────────────────────────────────────────────────────
   app.ticker.add(() => {
     frame++;
+    drawHud();
 
     // hitstop: freeze world, count down
     if (fx.hitstop > 0) { fx.hitstop--; return; }
@@ -808,6 +836,14 @@
       if (u.model) setText('weapon', modelBadge(u.model));
       if (u.lines) setText('atk', `+${u.lines.added || 0} / −${u.lines.removed || 0}`);
       if (typeof u.durationMs === 'number') setText('timer', fmtDuration(u.durationMs));
+
+      // player HUD above the knight: today's token (5h) · week · context size
+      {
+        const tk = token != null ? `⚡${token}%` : '';
+        const wk = (u.sevenDay && typeof u.sevenDay.used === 'number') ? ` 🗓${Math.max(0, Math.round(100 - u.sevenDay.used))}%` : '';
+        const cx = typeof u.contextPct === 'number' ? ` ▣${Math.round(u.contextPct)}%` : '';
+        playerHud.text = `${tk}${wk}${cx}`.trim();
+      }
 
       // grayscale when out of tokens + a one-shot Zzz on the zero transition
       if (token === 0) {

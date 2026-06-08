@@ -10,7 +10,10 @@ body{background:#1a1d24;color:#e8e0d0;font-family:monospace;overflow:hidden;heig
 #title{color:#f0b541;font-size:13px;font-weight:bold;white-space:nowrap;flex-shrink:0}
 #boss-name{position:absolute;top:5px;left:50%;transform:translateX(-50%);z-index:5;color:#f0b541;font-size:12px;font-weight:bold;text-shadow:1px 1px 2px #000,0 0 3px #000;max-width:85%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;pointer-events:none}
 #stage-wrap{position:relative;width:100%;max-width:640px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
-#canvas-wrap{position:relative;width:100%}
+#canvas-wrap{position:relative;width:100%;border:2px solid #4a4126;box-shadow:inset 0 0 0 1px #6b5a2e,inset 0 0 30px rgba(0,0,0,.55)}
+#canvas-wrap::before,#canvas-wrap::after{content:"";position:absolute;width:15px;height:15px;border:2px solid #f0b541;z-index:4;pointer-events:none}
+#canvas-wrap::before{top:-2px;left:-2px;border-right:0;border-bottom:0}
+#canvas-wrap::after{bottom:-2px;right:-2px;border-left:0;border-top:0}
 canvas{display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 #crt{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 1px,rgba(0,0,0,0.15) 1px,rgba(0,0,0,0.15) 2px);z-index:2}
 #overlay{position:absolute;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;background:rgba(26,29,36,0.82);z-index:10;font-size:14px;text-align:center;color:#e8e0d0;display:none}

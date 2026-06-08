@@ -109,8 +109,177 @@
   const bgNear = starLayer(28, 0.6);
   world.addChild(bgFar, bgNear);
 
-  const floorBar = new PIXI.Graphics().rect(0, FLOOR_Y, W, 3).fill(P.floor);
+  // ── sky decor: sci-fi / AI things that drift across the starfield ──────────────
+  // Pixel sprites + text ribbons + the odd meteor. Pure ambience: lives behind the
+  // floor and all combat sprites, never touches game state. Gentle, slow, sparse.
+  const skyLayer = new PIXI.Container();
+  world.addChild(skyLayer);
+  const SKY = {
+    rocket: { colors: ['', P.steel, P.red, '#4aa3c0', P.red, P.gold], mat: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,5,0,1,1,1,1,1,1,2,0,0],
+      [0,5,5,1,1,1,3,1,1,1,2,2,0],
+      [5,5,5,1,1,1,3,1,1,1,2,2,2],
+      [0,5,5,1,1,1,3,1,1,1,2,2,0],
+      [0,0,5,0,1,1,1,1,1,4,2,0,0],
+      [0,0,0,0,0,0,0,0,4,4,0,0,0]] },
+    dino: { colors: ['', P.green, '#1a1d24'], mat: [
+      [0,0,0,0,0,0,0,1,1,1,0],
+      [0,0,0,0,0,0,0,1,1,1,1],
+      [0,0,0,0,0,0,0,1,2,1,1],
+      [0,0,0,0,0,0,0,1,1,1,1],
+      [1,0,0,0,0,0,1,1,1,1,0],
+      [1,1,0,0,1,1,1,1,1,0,0],
+      [1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,0,0],
+      [0,0,1,1,1,1,1,1,0,0,0],
+      [0,0,1,1,0,1,1,0,0,0,0],
+      [0,0,1,0,0,0,1,0,0,0,0]] },
+    duck: { colors: ['', P.gold, P.ember, '#1a1d24'], mat: [
+      [0,0,0,1,1,0,0,0,0],
+      [0,0,1,1,1,1,0,0,0],
+      [0,0,1,3,1,1,2,2,0],
+      [0,0,1,1,1,1,0,0,0],
+      [0,1,1,1,1,1,0,0,0],
+      [1,1,1,1,1,1,1,0,0],
+      [1,1,1,1,1,1,1,1,0],
+      [0,1,1,1,1,1,1,0,0]] },
+    coin: { colors: ['', P.gold, '#b8860b', '#1a1d24'], mat: [
+      [0,0,1,1,1,0,0],
+      [0,1,1,3,1,1,0],
+      [1,1,3,3,3,1,1],
+      [1,1,3,1,3,1,1],
+      [1,1,3,3,3,1,1],
+      [1,1,3,1,3,1,1],
+      [1,1,3,3,3,1,1],
+      [0,1,1,1,1,1,0],
+      [0,0,1,1,1,0,0]] },
+    invader: { colors: ['', '#7fd97f'], mat: [
+      [0,0,1,0,0,0,0,0,1,0,0],
+      [0,0,0,1,0,0,0,1,0,0,0],
+      [0,0,1,1,1,1,1,1,1,0,0],
+      [0,1,1,0,1,1,1,0,1,1,0],
+      [1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,1,1,1,1,1,1,1,0,1],
+      [1,0,1,0,0,0,0,0,1,0,1],
+      [0,0,0,1,1,0,1,1,0,0,0]] },
+    coffee: { colors: ['', '#d8d0c0', '#7a4a2a', '#9aa0ac'], mat: [
+      [0,0,3,0,3,0,0,0,0],
+      [0,0,0,3,0,3,0,0,0],
+      [0,1,1,1,1,1,1,0,0],
+      [0,1,2,2,2,2,1,1,0],
+      [0,1,2,2,2,2,1,0,1],
+      [0,1,1,1,1,1,1,0,1],
+      [0,0,1,1,1,1,1,1,0],
+      [0,0,0,1,1,1,0,0,0]] },
+    gpu: { colors: ['', '#3a8f4a', '#2e3547', P.steel, '#b8c0cc', '', P.gold], mat: [
+      [4,1,1,1,1,1,1,1,1,1,1,1,0],
+      [4,1,2,2,2,1,1,2,2,2,1,1,0],
+      [4,1,2,3,2,1,1,2,3,2,1,1,0],
+      [4,1,2,2,2,1,1,2,2,2,1,1,0],
+      [4,1,1,1,1,1,1,1,1,1,1,1,0],
+      [0,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,6,6,0,0,6,6,0,0,0,0,0]] },
+    tesla: { colors: ['', '#c2c8d2', '', '#11141b', '#2e3547'], mat: [
+      [0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+      [0,0,1,1,1,3,3,3,3,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,1,1,1,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [0,0,4,4,0,0,0,0,0,0,4,4,0,0],
+      [0,0,4,4,0,0,0,0,0,0,4,4,0,0]] },
+    chip: { colors: ['', '#3a4254', P.gold, P.green], mat: [
+      [0,0,2,0,2,0,2,0,0],
+      [0,0,0,0,0,0,0,0,0],
+      [2,0,1,1,1,1,1,0,2],
+      [0,0,1,3,3,3,1,0,0],
+      [2,0,1,3,1,3,1,0,2],
+      [0,0,1,3,3,3,1,0,0],
+      [2,0,1,1,1,1,1,0,2],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,2,0,2,0,2,0,0]] },
+  };
+  const skyTexCache = {};
+  function skyTexFor(key) {
+    if (!skyTexCache[key]) skyTexCache[key] = texFromMatrix(SKY[key].mat, SKY[key].colors);
+    return skyTexCache[key];
+  }
+  const RIBBONS = ['AGI 2027?', 'GPT-∞', 'ship it 🚀', 'to the moon', 'H100 go brrr',
+    'attention is all you need', 'localhost:4117', '42', 'more layers', 'train loss → 0',
+    '🤖 beep boop', 'quantum when?', 'vibe coding', '∂L/∂w', 'it compiles!', 'token go brrr',
+    'hello, world', 'rm -rf doubt', 'GPU poor', 'just one more epoch'];
+  const SPRITE_KEYS = ['rocket', 'tesla', 'gpu', 'chip', 'dino', 'duck', 'coin', 'invader', 'coffee'];
+  const DIRECTIONAL = { rocket: 1, tesla: 1, dino: 1, duck: 1 }; // these have a facing → fly right
+  const drifters = [];
+  let nextDrift = 360, nextMeteor = 500;
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function pick(arr) { return arr[(Math.random() * arr.length) | 0]; }
+
+  function spawnSprite() {
+    const key = pick(SPRITE_KEYS);
+    const sp = new PIXI.Sprite(skyTexFor(key));
+    const sc = key === 'planet' ? rnd(1.6, 2.6) : rnd(1, 1.9);
+    sp.scale.set(sc);
+    const w = sp.texture.width * sc;
+    const dir = DIRECTIONAL[key] || (Math.random() < 0.5 ? 1 : -1);
+    const y = rnd(8, FLOOR_Y - 36);
+    sp.x = dir > 0 ? -w - 4 : W + 4;
+    sp.y = y;
+    sp.alpha = rnd(0.4, 0.78);
+    skyLayer.addChild(sp);
+    drifters.push({ node: sp, vx: dir * rnd(0.12, 0.45), baseY: y, amp: rnd(1, 4), phase: rnd(0, 100), w });
+  }
+  function spawnRibbon() {
+    const t = new PIXI.Text({ text: pick(RIBBONS), style: { fontFamily: 'monospace',
+      fontSize: rnd(7, 10) | 0, fontWeight: 'bold', fill: colorNum(pick([P.gold, P.steel, P.green, P.bone])) } });
+    t.resolution = 2;
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    const y = rnd(8, FLOOR_Y - 30);
+    t.x = dir > 0 ? -t.width - 4 : W + 4;
+    t.y = y;
+    t.alpha = rnd(0.3, 0.6);
+    skyLayer.addChild(t);
+    drifters.push({ node: t, vx: dir * rnd(0.18, 0.5), baseY: y, amp: rnd(1, 3), phase: rnd(0, 100), w: t.width });
+  }
+  function spawnMeteor() {
+    const g = new PIXI.Graphics();
+    const len = rnd(9, 18) | 0;
+    for (let i = 0; i < len; i++) g.rect(i, -i * 0.6, 1, 1).fill({ color: 0xffffff, alpha: 1 - i / len });
+    g.rect(0, 0, 2, 2).fill(0xfff2c0);
+    g.x = rnd(W * 0.3, W); g.y = rnd(4, FLOOR_Y * 0.45);
+    g.alpha = 0.9;
+    skyLayer.addChild(g);
+    drifters.push({ node: g, vx: -rnd(3, 5), vy: rnd(1.4, 2.4), meteor: true, life: rnd(40, 75), age: 0 });
+  }
+  function updateSky() {
+    if (--nextDrift <= 0) {
+      nextDrift = rnd(800, 1700) | 0; // occasional — one drifts by every ~13–28s
+      if (drifters.filter((d) => !d.meteor).length < 2) (Math.random() < 0.4 ? spawnRibbon : spawnSprite)();
+    }
+    if (--nextMeteor <= 0) { nextMeteor = rnd(700, 1500) | 0; spawnMeteor(); }
+    for (let i = drifters.length - 1; i >= 0; i--) {
+      const d = drifters[i], n = d.node;
+      if (d.meteor) {
+        n.x += d.vx; n.y += d.vy; d.age++;
+        n.alpha = Math.max(0, 0.9 * (1 - d.age / d.life));
+        if (d.age >= d.life || n.x < -20 || n.y > FLOOR_Y) { skyLayer.removeChild(n); n.destroy(); drifters.splice(i, 1); }
+        continue;
+      }
+      n.x += d.vx;
+      n.y = d.baseY + (CALM ? 0 : Math.sin((frame + d.phase) / 45) * d.amp);
+      if ((d.vx > 0 && n.x > W + 6) || (d.vx < 0 && n.x < -d.w - 6)) { skyLayer.removeChild(n); n.destroy(); drifters.splice(i, 1); }
+    }
+  }
+
+  const floorBar = new PIXI.Graphics();
+  floorBar.rect(0, FLOOR_Y + 3, W, 3).fill(0x141821);                 // recess shadow below lip
+  floorBar.rect(0, FLOOR_Y, W, 3).fill(P.floor);                       // floor body
+  floorBar.rect(0, FLOOR_Y, W, 1).fill({ color: 0x4a5570, alpha: 0.9 }); // lit top edge
+  for (let tx = 0; tx < W; tx += 8) floorBar.rect(tx, FLOOR_Y + 1, 1, 2).fill({ color: 0x12151d, alpha: 0.6 }); // tile seams
   world.addChild(floorBar);
+
+  // ground shadows + boss target ring (drawn each frame, behind the units)
+  const groundFx = new PIXI.Graphics();
+  world.addChild(groundFx);
 
   const torches = [];
   for (const tx of [20, 280]) {
@@ -122,6 +291,9 @@
   function drawTorch(g, hot) {
     const tx = g._tx;
     g.clear();
+    // soft glow halo around the flame
+    g.circle(tx + 1, FLOOR_Y - 22, 11).fill({ color: hot ? 0xf0b541 : 0xe8842c, alpha: 0.06 });
+    g.circle(tx + 1, FLOOR_Y - 22, 6).fill({ color: 0xf0b541, alpha: 0.1 });
     g.rect(tx, FLOOR_Y - 18, 3, 18).fill(0x5a3010);
     g.rect(tx - 1, FLOOR_Y - 22, 5, 4).fill(hot ? P.gold : P.ember);
     g.rect(tx, FLOOR_Y - 25, 3, 3).fill(P.gold);
@@ -196,17 +368,42 @@
   // no overhead text above the knight — it was illegible against the sprites.
   const hpBars = new PIXI.Graphics();
   world.addChild(hpBars);
-  /** tiny HP pip above a sprite: bg track + colored fill */
-  function drawBar(g, cx, topY, pct) {
-    const w = 14, h = 2, x = cx - w / 2;
+  /** LoL-style HP bar above a sprite: shadow + dark track + gradient fill +
+   *  top highlight + segment ticks + bronze frame. `big` = the boss bar. */
+  function drawBar(g, cx, topY, pct, big) {
+    const w = big ? 26 : 15, h = big ? 4 : 3, x = Math.round(cx - w / 2), y = Math.round(topY);
     const p = Math.max(0, Math.min(100, pct));
-    g.rect(x, topY, w, h).fill(0x1a1d24);
+    g.rect(x - 1, y - 1, w + 2, h + 2).fill({ color: 0x000000, alpha: 0.5 });   // drop shadow
+    g.rect(x, y, w, h).fill(0x0b0d12);                                            // track
     const col = p > 50 ? 0x6abe30 : p > 20 ? 0xf0b541 : 0xc83737;
-    if (p > 0) g.rect(x, topY, (w * p) / 100, h).fill(col);
+    const fw = Math.round((w * p) / 100);
+    if (fw > 0) {
+      g.rect(x, y, fw, h).fill(col);                                             // fill
+      g.rect(x, y, fw, 1).fill({ color: 0xffffff, alpha: 0.45 });                // top highlight
+      g.rect(x, y + h - 1, fw, 1).fill({ color: 0x000000, alpha: 0.3 });         // bottom shade
+    }
+    for (let sx = x + (big ? 6 : 5); sx < x + w - 1; sx += big ? 6 : 5) {
+      g.rect(sx, y, 1, h).fill({ color: 0x000000, alpha: 0.45 });                // segment ticks
+    }
+    g.rect(x - 1, y - 1, w + 2, 1).fill(0x6b5a2e);                                // bronze frame
+    g.rect(x - 1, y + h, w + 2, 1).fill(0x6b5a2e);
+    g.rect(x - 1, y - 1, 1, h + 2).fill(0x6b5a2e);
+    g.rect(x + w, y - 1, 1, h + 2).fill(0x6b5a2e);
   }
   function drawHud() {
     hpBars.clear();
-    if (boss.visible && !bossDead) drawBar(hpBars, boss.x + boss.width / 2, boss.y - 3, lastBossPct);
+    groundFx.clear();
+    const shadow = (cx, w, a) => groundFx.ellipse(Math.round(cx), FLOOR_Y + 1, Math.max(4, w / 2), 2).fill({ color: 0x000000, alpha: a });
+    shadow(knight.x + knight.width / 2, knight.width * 0.85, 0.35);
+    summons.forEach((su) => shadow(su.sprite.x + su.sprite.width / 2, su.sprite.width * 0.7, 0.25));
+    packSprites.forEach((s) => { if (s.visible) shadow(s.x + s.width / 2, s.width * 0.7, 0.3); });
+    if (boss.visible && !bossDead) {
+      const cx = boss.x + boss.width / 2;
+      shadow(cx, boss.width * 0.85, 0.42);
+      const pulse = CALM ? 1 : 1 + Math.sin(frame / 20) * 0.12; // glowing target ring at the boss's feet
+      groundFx.ellipse(Math.round(cx), FLOOR_Y + 1, boss.width * 0.5 * pulse, 3.2 * pulse).stroke({ color: 0xf0b541, width: 1, alpha: 0.5 });
+    }
+    if (boss.visible && !bossDead) drawBar(hpBars, boss.x + boss.width / 2, boss.y - 4, lastBossPct, true);
     packSprites.forEach((s) => { if (s.visible) drawBar(hpBars, s.x + s.width / 2, s.y - 3, s._pct != null ? s._pct : 100); });
     // re-add keeps the bars above pack sprites that get addChild'd later
     world.addChild(hpBars);
@@ -582,10 +779,9 @@
       drawTentacles(lastTodos.filter((t) => t.status !== 'completed').length);
     }
 
-    // bob every 30 (alternate knight/boss)
+    // knight bob every 30 (boss stays planted — grounded every frame below)
     if (frame % 30 === 0) {
       knight.y = FLOOR_Y - 14 - (knight.y < FLOOR_Y - 14 ? 0 : 1);
-      if (!fx.bossFalling) { const baseY = FLOOR_Y - boss.height + (bossBroken ? 3 : 0); boss.y = baseY - (boss.y < baseY ? 0 : 1); }
     }
 
     // boss falling
@@ -613,9 +809,11 @@
       if (Math.abs(s - bossScaleTarget) < 0.01) { boss.scale.set(bossScaleTarget); bossScaleTarget = null; }
     }
 
-    // slime squash-stretch: feet stay planted, body breathes (CALM: off)
-    if (!CALM && boss.visible && !fx.bossFalling) {
-      boss.scale.y = boss.scale.x * (1 + Math.sin(frame / 9) * 0.05);
+    // slime squash-stretch: feet stay planted, body breathes (CALM: no breathe).
+    // Grounded EVERY frame in every state (except the intro fall) so the slime is
+    // always standing on the floor.
+    if (boss.visible && !fx.bossFalling) {
+      boss.scale.y = CALM ? boss.scale.x : boss.scale.x * (1 + Math.sin(frame / 9) * 0.05);
       ground(boss, bossBroken ? 3 : 0);
     }
     if (!CALM) {
@@ -630,6 +828,9 @@
     // parallax
     bgNear.x = (bgNear.x - 0.05) % W;
     bgFar.x = (bgFar.x - 0.02) % W;
+
+    // sci-fi / AI things drifting across the sky
+    updateSky();
 
     // typewriter
     if (fx.type) {

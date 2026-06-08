@@ -245,3 +245,33 @@ test('defeat-flow: questText resolves zh name', () => {
     { leveledUp: false, newBadges: [], newQuests: ['streak_days'] }, 'zh');
   assert.match(lines[0], /每日修行/);
 });
+
+test('nearestQuest: picks the active quest closest to completion (highest ratio)', () => {
+  const p = { quests: [
+    { id: 'weekly_kills', kind: 'weekly_kills', target: 5, progress: 4, startedAt: 1 }, // 0.8
+    { id: 'streak_days',  kind: 'streak_days',  target: 7, progress: 1, startedAt: 1 }, // 0.14
+  ] };
+  assert.equal(prog.nearestQuest(p).kind, 'weekly_kills');
+});
+
+test('nearestQuest: prefers the closer ratio even when absolute progress is lower', () => {
+  const p = { quests: [
+    { id: 'streak_days',  kind: 'streak_days',  target: 14, progress: 6, startedAt: 1 }, // 0.43
+    { id: 'weekly_kills', kind: 'weekly_kills', target: 5,  progress: 4, startedAt: 1 }, // 0.8
+  ] };
+  assert.equal(prog.nearestQuest(p).kind, 'weekly_kills');
+});
+
+test('nearestQuest: ignores completed (doneAt) quests', () => {
+  const p = { quests: [
+    { id: 'weekly_kills', kind: 'weekly_kills', target: 5, progress: 5, startedAt: 1, doneAt: 9 },
+    { id: 'streak_days',  kind: 'streak_days',  target: 7, progress: 2, startedAt: 1 },
+  ] };
+  assert.equal(prog.nearestQuest(p).kind, 'streak_days');
+});
+
+test('nearestQuest: null when no active quests / missing / empty', () => {
+  assert.equal(prog.nearestQuest({ quests: [{ kind: 'x', target: 1, progress: 1, startedAt: 1, doneAt: 2 }] }), null);
+  assert.equal(prog.nearestQuest({ quests: [] }), null);
+  assert.equal(prog.nearestQuest({}), null);
+});

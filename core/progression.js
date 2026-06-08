@@ -179,4 +179,18 @@ function evaluateQuests(profile, now) {
   return { quests, completed };
 }
 
-module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS, BADGES, deriveStats, evaluateBadges, nameKeyFor, QUEST_DEFS, dayStr, bumpActivity, evaluateQuests };
+/** The active (not-yet-done) quest closest to completion, by progress/target
+ *  ratio. Ties resolve to array order. Null if no active quest. Pure.
+ *  @param {Profile} profile @returns {Quest | null} */
+function nearestQuest(profile) {
+  const active = ((profile && profile.quests) || []).filter((q) => !q.doneAt);
+  let best = null;
+  let bestRatio = -1;
+  for (const q of active) {
+    const ratio = q.target > 0 ? q.progress / q.target : 0;
+    if (ratio > bestRatio) { bestRatio = ratio; best = q; }
+  }
+  return best;
+}
+
+module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS, BADGES, deriveStats, evaluateBadges, nameKeyFor, QUEST_DEFS, dayStr, bumpActivity, evaluateQuests, nearestQuest };

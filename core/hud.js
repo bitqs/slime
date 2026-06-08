@@ -5,14 +5,14 @@
 const { bar } = require('./report');
 const usage = require('./usage');
 
-// OSC 8 hyperlink: terminals that support it make 【UI】 clickable → local arena.
+// OSC 8 hyperlink: terminals that support it make [HUD] clickable → local arena.
 // Built only when the arena is actually live, and from a numeric port + constants
 // only — never from state files (sanitize strips ESC). No live arena → no link,
-// so the HUD never shows a dead 【UI】.
+// so the HUD never shows a dead [HUD].
 /** @param {{ port: number } | null | undefined} live @returns {string} */
 function uiLink(live) {
   if (!live || !Number.isInteger(live.port)) return '';
-  return `]8;;http://127.0.0.1:${live.port}【UI】]8;;`;
+  return `]8;;http://127.0.0.1:${live.port}[HUD]]8;;`;
 }
 
 // Strip C0/C1 controls (incl. ESC → kills ANSI/OSC); preserve emoji/CJK;
@@ -38,7 +38,7 @@ function sanitize(s, max = 60) {
  * @param {number} now
  * @param {UsageCache | null | undefined} usageCache
  * @param {string} [lang]
- * @param {{ port: number } | null} [live] live arena info → renders clickable 【UI】 link
+ * @param {{ port: number } | null} [live] live arena info → renders clickable [HUD] link
  * @param {number} [level] player level → shown as a ✦Lv badge
  * @returns {string}
  */

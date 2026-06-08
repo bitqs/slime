@@ -39,7 +39,7 @@ function writeMarker(port) {
 /**
  * Remove the marker — but only if THIS process owns it. A second serve.js that
  * hits EADDRINUSE and exits must not wipe the live server's marker (that killed
- * the statusline 【UI】 link on every re-launch). Best-effort; never throws.
+ * the statusline [HUD] link on every re-launch). Best-effort; never throws.
  * @returns {void}
  */
 function clearMarker() {

@@ -16,7 +16,6 @@ const FILES = [
   'commands/achievements.md',
   'commands/arena.md',
   'commands/battlelog.md',
-  'commands/defeat.md',
   'commands/milestones.md',
   'commands/setup.md',
   'commands/update.md',

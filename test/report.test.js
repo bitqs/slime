@@ -39,7 +39,7 @@ test('render contains boss bar, rank and kill prompt at low HP', () => {
   assert.match(txt, /TURN #3/);
   assert.match(txt, /Rank: S/);
   assert.match(txt, /The Web Hydra/);
-  assert.match(txt, /\/slime:defeat/); // kill confirmation offered
+  assert.match(txt, /staggers/); // auto-kill stagger line shown at low HP
 });
 
 test('render omits kill prompt at high HP', () => {
@@ -48,7 +48,7 @@ test('render omits kill prompt at high HP', () => {
     { name: 'The Web Hydra', hp: 80 },
     { turn: 1 }
   );
-  assert.doesNotMatch(txt, /\/slime:defeat/);
+  assert.doesNotMatch(txt, /staggers/);
 });
 
 test('render shows stamina line and sage line via extras', () => {

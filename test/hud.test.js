@@ -65,7 +65,7 @@ test('broken boss renders the finish hint instead of the hp bar', () => {
     inTurn: true, updated: Date.now(), boss: { name: 'The Rabid Web Bugbear', hp: 0, broken: true } },
     null, [], Date.now(), null, 'en');
   assert.match(line, /☠/);
-  assert.match(line, /\/defeat/);
+  assert.match(line, /falls when you stop/);
 });
 
 test('todo counter and next-step hint render from snap.todos', () => {
@@ -80,26 +80,26 @@ test('todo counter and next-step hint render from snap.todos', () => {
   assert.match(line, /fixing b/);
 });
 
-test('live arena renders a clickable 【UI】 link carrying the live port', () => {
+test('live arena renders a clickable [HUD] link carrying the live port', () => {
   const now = Date.now();
   const snap = { inTurn: true, combo: 0, kills: 0, dmg: 0, summons: 0, updated: now };
   const line = hud.render(snap, {}, TIPS, now, null, 'en', { port: 4118 });
-  assert.match(line, /【UI】/);
+  assert.match(line, /\[HUD\]/);
   assert.match(line, /127\.0\.0\.1:4118/); // URL tracks the live port, not a hardcoded one
 });
 
-test('no live arena → no 【UI】 link (never a dead link)', () => {
+test('no live arena → no [HUD] link (never a dead link)', () => {
   const now = Date.now();
   const snap = { inTurn: true, combo: 0, kills: 0, dmg: 0, summons: 0, updated: now };
   const line = hud.render(snap, {}, TIPS, now, null, 'en', null);
-  assert.doesNotMatch(line, /【UI】/);
+  assert.doesNotMatch(line, /\[HUD\]/);
 });
 
-test('between turns also leads with 🟢 + live 【UI】 link', () => {
+test('between turns also leads with 🟢 + live [HUD] link', () => {
   const now = Date.now();
   const snap = { inTurn: false, updated: now - 60000, lastText: '🏆 Turn 3 complete — Rank S' };
   const line = hud.render(snap, {}, TIPS, now, null, 'en', { port: 4117 });
   assert.match(line, /🟢/);
-  assert.match(line, /【UI】/);
+  assert.match(line, /\[HUD\]/);
   assert.match(line, /Rank S/); // result still shown after the badge
 });

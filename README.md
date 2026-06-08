@@ -66,7 +66,7 @@ This repo also includes an early Codex plugin surface:
 Codex does not expose a stable command-backed statusline equivalent yet, so the
 full Claude Code HUD is not mirrored in the TUI footer. Instead, Codex gets a
 light HUD: each turn report includes the Slime battle card plus an Arena link or
-`/slime:arena` hint. The arena, battlelog, milestones, wrapped, and defeat
+`/slime:arena` hint. The arena, battlelog, milestones, and wrapped
 scripts read the shared Slime state with `SLIME_HARNESS=codex`.
 
 ## What You Get
@@ -77,7 +77,7 @@ scripts read the shared Slime state with `SLIME_HARNESS=codex`.
 | ⚡ **Token = your real usage** | Your five-hour window is your Token reserve — at zero, the Sage tells you exactly when you're restored |
 | 🧙 **The Sage** | One line of real advice per turn: rest at low Token, potion (/compact) when context runs heavy, pacing warnings |
 | 🗡️ **Bosses = your goals** | Your prompt names the monster; your todo list is its HP bar |
-| 💀 **You confirm the kill** | AI saying "done" isn't done — `/slime:defeat` is your acceptance gate |
+| 💀 **Kills confirm themselves** | Clear every todo and the boss falls on its own when the session ends — milestone recorded, no extra typing |
 | 🏆 **Turn reports** | Rank S/A/B/C when Claude stops: damage (lines changed), kills (tests passed), max combo |
 | 🏛️ **Milestone Wall** | Every defeated boss, dated — your project chronicle |
 | 💡 **Loading-screen tips** | Long waits teach you real Claude Code technique |
@@ -100,7 +100,6 @@ Force one with `"lang": "zh"` in `~/.claude/slime/config.json`.
 | Command | Effect |
 |---|---|
 | `/slime:setup` | Enable the statusline HUD |
-| `/slime:defeat` | Confirm the boss kill → milestone recorded |
 | `/slime:milestones` | Show the Milestone Wall |
 | `/slime:battlelog` | Replay this session's turn reports |
 | `/slime:wrapped` | Your week in battle — shareable card |
@@ -127,7 +126,7 @@ A local pixel-art battle stage — your knight strikes in real time as Claude wo
  your prompt ──► UserPromptSubmit ──► ⚡ boss appears
  Claude works ─► Pre/PostToolUse ───► ⚔️ battle feed (statusline)
  Claude stops ─► Stop ─────────────► 🏆 turn report card
- you approve ──► /slime:defeat ─► 🏛️ milestone wall
+ all todos done ─► boss falls at Stop ─► 🏛️ milestone wall
 ```
 
 Hooks translate real events into game state under `~/.claude/slime/`; the statusline renders it.

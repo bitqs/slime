@@ -9,9 +9,6 @@ body{background:#1a1d24;color:#e8e0d0;font-family:monospace;overflow:hidden;heig
 #top-bar{width:100%;max-width:640px;display:flex;align-items:center;gap:8px;padding:6px 10px;background:#232733;border-bottom:2px solid #f0b541}
 #title{color:#f0b541;font-size:13px;font-weight:bold;white-space:nowrap;flex-shrink:0}
 #boss-name{position:absolute;top:5px;left:50%;transform:translateX(-50%);z-index:5;color:#f0b541;font-size:12px;font-weight:bold;text-shadow:1px 1px 2px #000,0 0 3px #000;max-width:85%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;pointer-events:none}
-#hp-bar{display:flex;gap:2px;flex-shrink:0}
-.hp-seg{width:10px;height:10px;background:#232733;border:1px solid #f0b541;transition:background 0.2s}
-.hp-seg.on{background:#f0b541}
 #stage-wrap{position:relative;width:100%;max-width:640px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
 #canvas-wrap{position:relative;width:100%}
 canvas{display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-edges}
@@ -20,8 +17,10 @@ canvas{display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-
 #log{width:100%;max-width:640px;min-height:80px;padding:6px 10px;background:#232733;border-top:1px solid #333a4a;overflow:hidden}
 .log-line{font-size:11px;color:#e8e0d0;opacity:0;animation:fadein 0.4s forwards;line-height:1.4em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-#stats{width:100%;max-width:640px;display:flex;gap:14px;padding:3px 10px;background:#232733;font-size:10px;color:#7fa8c0;border-top:1px solid #333a4a}
+#stats{display:flex;flex-direction:column;gap:3px;font-size:10px;color:#7fa8c0;flex-shrink:0}
 #stats b{color:#e8e0d0;font-weight:normal}
+#progress{display:flex;flex-direction:column;gap:3px;font-size:10px;color:#7fa8c0;flex-shrink:0;margin-left:auto}
+#progress b{color:#e8e0d0;font-weight:normal}
 .gold-tick{animation:goldpop .5s}
 @keyframes goldpop{30%{color:#f0b541;transform:scale(1.25)}}
 #choice-overlay,#plan-overlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-end;z-index:20;padding-bottom:8px}
@@ -44,12 +43,10 @@ body.calm .minion-hp-fill{transition:none}
 .minion-name{font-size:8px;color:#7fa8c0;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .minion-grave{position:absolute;top:0;font-size:12px}
 #feed-counter{position:absolute;right:8px;bottom:26px;font-size:10px;color:#f0b541;text-shadow:1px 1px #000;display:none;z-index:3}
-#user-status{width:100%;max-width:640px;display:flex;align-items:stretch;gap:8px;padding:5px 10px;background:#1f2530;border-bottom:1px solid #333a4a;font-size:10px}
-#user-status .us-badge{align-self:center;color:#1a1d24;background:#7fa8c0;font-weight:bold;padding:2px 5px;flex-shrink:0}
-#user-status .us-action{flex:1;align-self:center;color:#f0b541;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-#user-status .us-meters{display:flex;flex-direction:column;gap:3px;flex-shrink:0;min-width:132px}
+#user-status{width:100%;max-width:640px;display:flex;flex-direction:row;align-items:flex-start;gap:16px;padding:5px 10px;background:#1f2530;border-bottom:1px solid #333a4a;font-size:10px}
+#user-status .us-meters{display:flex;flex-direction:column;gap:3px;flex-shrink:0;min-width:150px}
 #user-status .us-meter{display:flex;align-items:center;gap:5px}
-#user-status .us-label{color:#7fa8c0;width:54px;flex-shrink:0}
+#user-status .us-label{color:#7fa8c0;width:62px;flex-shrink:0}
 #user-status .us-track{flex:1;height:5px;background:#1a1d24;border:1px solid #333a4a;overflow:hidden}
 #user-status .us-fill{display:block;height:100%;width:0;background:#6abe30;transition:width .3s}
 body.calm #user-status .us-fill{transition:none}
@@ -67,17 +64,30 @@ body.calm #user-status .us-fill{transition:none}
 <div id="top-bar">
   <span id="title">🟢 SLIME</span>
   <span style="flex:1"></span>
-  <div id="hp-bar"></div>
   <button id="lang-btn" title="language / 语言">🌐</button>
   <button id="calm-btn" title="flash / calm toggle">✨</button>
   <button id="help-btn" title="game guide (h)">?</button>
 </div>
 <div id="user-status">
-  <span id="us-badge" class="us-badge">PLAYER</span>
-  <span id="us-action" class="us-action">awaiting action</span>
   <div class="us-meters">
-    <div class="us-meter"><span class="us-label">⚡ Token</span><span class="us-track"><span id="us-token-fill" class="us-fill"></span></span><span id="us-token" class="us-val">—</span></div>
+    <div class="us-meter"><span class="us-label">⚡ Dtk</span><span class="us-track"><span id="us-dtk-fill" class="us-fill"></span></span><span id="us-dtk" class="us-val">—</span></div>
+    <div class="us-meter"><span class="us-label">⏱ Dtk CD</span><span class="us-track"><span id="us-dtkcd-fill" class="us-fill"></span></span><span id="us-dtkcd" class="us-val">—</span></div>
+    <div class="us-meter"><span class="us-label">🏕️ Wtk</span><span class="us-track"><span id="us-wtk-fill" class="us-fill"></span></span><span id="us-wtk" class="us-val">—</span></div>
+    <div class="us-meter"><span class="us-label">⏱ Wtk CD</span><span class="us-track"><span id="us-wtkcd-fill" class="us-fill"></span></span><span id="us-wtkcd" class="us-val">—</span></div>
     <div class="us-meter"><span class="us-label">🧠 Ctx</span><span class="us-track"><span id="us-ctx-fill" class="us-fill"></span></span><span id="us-ctx" class="us-val">—</span></div>
+  </div>
+  <div id="stats">
+    <span>💰 <b id="gold">—</b></span>
+    <span>⚔️ <b id="weapon">—</b></span>
+    <span>🗡️ <b id="atk">—</b></span>
+    <span>⏳ <b id="timer">—</b></span>
+  </div>
+  <div id="progress">
+    <span>🔄 <b id="pg-turn">—</b></span>
+    <span>🔥 <b id="pg-combo">—</b></span>
+    <span>💀 <b id="pg-kills">—</b></span>
+    <span>💥 <b id="pg-dmg">—</b></span>
+    <span>🐺 <b id="pg-summons">—</b></span>
   </div>
 </div>
 <div id="stage-wrap">
@@ -106,13 +116,6 @@ body.calm #user-status .us-fill{transition:none}
   </div>
 </div>
 <div id="minion-rail"></div>
-<div id="stats">
-  <span>💰 <b id="gold">—</b></span>
-  <span>⚔️ <b id="weapon">—</b></span>
-  <span>🗡️ <b id="atk">—</b></span>
-  <span>⏳ <b id="timer">—</b></span>
-  <span>🏕️ <b id="stamina">—</b></span>
-</div>
 <div id="log"></div>
 <script src="/vendor/pixi.min.js"></script>
 <script src="/sequencer.js"></script>

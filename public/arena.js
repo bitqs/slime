@@ -51,6 +51,9 @@
   }
 
   const W = 320, H = 180, FLOOR_Y = 145;
+  // Boss slime renders at least this many times the knight's size. KNIGHT and
+  // BOSS matrices share a 14px height, so scale maps 1:1 to "× the knight".
+  const SLIME_MIN_SCALE = 2;
 
   function showOverlay(msg) {
     const ov = document.getElementById('overlay');
@@ -357,7 +360,7 @@
   let wasZero = false;       // tracks token===0 transitions for the Zzz floater
   const fx = { shake: 0, shakeAmp: 4, knightLunge: 0, speed: 1, hitstop: 0, particles: [],
     floaters: [], chromaFrames: 0, edgeFlame: 0, slowmoLeft: null, zoom: 1, zoomLeft: null,
-    bossFalling: false, type: null, charge: null };
+    bossFalling: false, type: null };
   const governor = SlimeSeq.createGovernor(3, 60);
   let activeScenes = [];
   let frame = 0;
@@ -439,7 +442,6 @@
       }
     },
     dim({ on } = {}) { world.alpha = on ? 0.3 : 1; },
-    chargebar() { fx.charge = { pct: 0 }; }, // render loop advances ~2%/frame → updateBossHpBar
     forgeparticles() { // particles converge on the boss anchor
       for (let i = 0; i < 24; i++) {
         const a = (i / 24) * Math.PI * 2;
@@ -454,10 +456,10 @@
 
   // ── token threat helpers ───────────────────────────────────────────────────────
   function bossTierFor(est) {
-    if (est == null) return { scale: 1, color: '#e8e0d0', label: '' };
-    if (est < 45000) return { scale: 1, color: '#e8e0d0', label: 'normal' };
-    if (est < 120000) return { scale: 1.25, color: '#f0b541', label: 'ELITE' };
-    return { scale: 1.5, color: '#c83737', label: 'RAID BOSS' };
+    if (est == null) return { scale: SLIME_MIN_SCALE, color: '#e8e0d0', label: '' };
+    if (est < 45000) return { scale: SLIME_MIN_SCALE, color: '#e8e0d0', label: 'normal' };
+    if (est < 120000) return { scale: 2.5, color: '#f0b541', label: 'ELITE' };
+    return { scale: 3, color: '#c83737', label: 'RAID BOSS' };
   }
   // mirror of scripts/lib/estimate.js fmtTokens (browser has no require)
   function fmtTokensJs(n) { return `≈${Math.round(n / 10000) * 10}k`; }
@@ -501,7 +503,6 @@
       { at: 40, do: 'flash', strength: 0.4 },
       { at: 40, do: 'bigtext', text: `${fmtTokensJs(est)} tokens · ${tier.label || 'boss'}`, y: 50 },
       { at: 44, do: 'bossdrop' },
-      { at: 44, do: 'chargebar' },
       { at: 100, do: 'hidetext' },
       { at: 100, do: 'dim', on: false },
     ];
@@ -638,12 +639,6 @@
       }
     }
 
-    // forge hp charge 0→100%
-    if (fx.charge) {
-      fx.charge.pct = Math.min(100, fx.charge.pct + 2);
-      updateBossHpBar(Math.round(fx.charge.pct));
-      if (fx.charge.pct >= 100) fx.charge = null;
-    }
 
     // particles
     particleGfx.clear();
@@ -691,24 +686,9 @@
     }
   });
 
-  // ── DOM: hp bar / log ─────────────────────────────────────────────────────────
-  const hpBar = document.getElementById('hp-bar');
-  (function buildHpBar() {
-    hpBar.innerHTML = '';
-    for (let i = 0; i < 10; i++) {
-      const seg = document.createElement('div');
-      seg.className = 'hp-seg';
-      seg.id = `seg${i}`;
-      hpBar.appendChild(seg);
-    }
-  })();
-  function updateBossHpBar(pct) {
-    const filled = Math.round((pct / 100) * 10);
-    for (let i = 0; i < 10; i++) {
-      const s = document.getElementById(`seg${i}`);
-      if (s) s.classList.toggle('on', i < filled);
-    }
-  }
+  // ── DOM: log ─────────────────────────────────────────────────────────
+  // Boss HP lives only on the canvas (the pip bar over the boss sprite) and the
+  // Boss Nameplate — the old title-bar pip strip was removed.
 
   function escHtml(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -741,39 +721,54 @@
     return `${m}:${String(s % 60).padStart(2, '0')}`;
   }
   function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
-  function compactAction(text) {
-    return String(text || 'awaiting action')
-      .replace(/\s+/g, ' ')
-      .replace(/^[-–—\s]+/, '')
-      .slice(0, 72);
+  /** one meter row: value text + a 0–100% fill bar (color optional). */
+  function setMeter(id, pct, valText, color) {
+    setText(id, valText);
+    const f = document.getElementById(id + '-fill');
+    if (f) {
+      f.style.width = (pct != null ? Math.max(0, Math.min(100, pct)) : 0) + '%';
+      if (color) f.style.background = color;
+    }
   }
-  // top status window: who's acting + their resource meters (Token over Context).
+  // top status window: numeric meters + categorical state (the actor badge).
+  // Narrative action text lives in the battle log, not here.
+  //   Dtk  = daily token (5h rate window) left %    · Dtk CD = minutes to reset (window 300m)
+  //   Wtk  = weekly token (7-day window) left %      · Wtk CD = hours to reset (window 168h)
+  //   Ctx  = context window used %
   function setUserStatus(data) {
-    const snap = data && data.snapshot;
     const usage = data && data.usage;
-    const isCodex = String((data && data.harness) || '').toLowerCase() === 'codex';
-    const label = isCodex ? 'CODEX' : 'PLAYER';
-    setText('us-badge', label);
 
-    const action = snap && snap.lastText ? compactAction(snap.lastText)
-      : (isCodex ? 'awaiting Codex action' : 'awaiting player action');
-    setText('us-action', action);
+    const now = Date.now();
+    const left = (used) => typeof used === 'number' ? Math.max(0, Math.round(100 - used)) : null;
+    const fh = usage && usage.fiveHour, wk = usage && usage.sevenDay;
 
-    // Token = 5h rate window left (low is bad); Context = window used (high is bad).
-    const token = stats.token;
-    setText('us-token', token != null ? token + '%' : '—');
-    const tf = document.getElementById('us-token-fill');
-    if (tf) {
-      tf.style.width = (token != null ? Math.max(0, Math.min(100, token)) : 0) + '%';
-      tf.style.background = (token != null && token < 30) ? '#e8842c' : '#6abe30';
-    }
+    // Dtk — daily (5h) token left; low is bad.
+    const dtk = left(fh && fh.used);
+    setMeter('us-dtk', dtk, dtk != null ? dtk + '%' : '—', dtk != null && dtk < 30 ? '#e8842c' : '#6abe30');
+    // Dtk CD — minutes until the 5h window resets (bar = fraction of 300m left).
+    let dtkMin = null;
+    if (fh && fh.resetsAt) { const m = (fh.resetsAt * 1000 - now) / 60000; if (m > 0) dtkMin = Math.round(m); }
+    setMeter('us-dtkcd', dtkMin != null ? (dtkMin / 300) * 100 : null, dtkMin != null ? dtkMin + 'm' : '—', '#7fa8c0');
+
+    // Wtk — weekly (7-day) token left; low is bad.
+    const wtk = left(wk && wk.used);
+    setMeter('us-wtk', wtk, wtk != null ? wtk + '%' : '—', wtk != null && wtk < 30 ? '#e8842c' : '#6abe30');
+    // Wtk CD — hours until the weekly window resets (bar = fraction of 168h left).
+    let wtkHr = null;
+    if (wk && wk.resetsAt) { const h = (wk.resetsAt * 1000 - now) / 3600000; if (h > 0) wtkHr = Math.round(h); }
+    setMeter('us-wtkcd', wtkHr != null ? (wtkHr / 168) * 100 : null, wtkHr != null ? wtkHr + 'h' : '—', '#7fa8c0');
+
+    // Ctx — context window used; high is bad.
     const ctx = usage && typeof usage.contextPct === 'number' ? Math.round(usage.contextPct) : null;
-    setText('us-ctx', ctx != null ? ctx + '%' : '—');
-    const cf = document.getElementById('us-ctx-fill');
-    if (cf) {
-      cf.style.width = (ctx != null ? Math.max(0, Math.min(100, ctx)) : 0) + '%';
-      cf.style.background = (ctx != null && ctx > 80) ? '#e8842c' : '#7fa8c0';
-    }
+    setMeter('us-ctx', ctx, ctx != null ? ctx + '%' : '—', ctx != null && ctx > 80 ? '#e8842c' : '#7fa8c0');
+
+    // 游戏进程 — live RPG counters from the snapshot (boss HP shows on canvas).
+    const s = data && data.snapshot;
+    setText('pg-turn', s ? String(s.turn || 0) : '—');
+    setText('pg-combo', s ? '×' + (s.combo || 0) : '—');
+    setText('pg-kills', s ? String(s.kills || 0) : '—');
+    setText('pg-dmg', s ? String(s.dmg || 0) : '—');
+    setText('pg-summons', s ? '×' + (s.summons || 0) : '—');
   }
 
   // hover titles for every chrome icon — single language, picked from /state lang
@@ -800,9 +795,9 @@
       const el = document.getElementById(id);
       if (el) (onParent ? el.parentElement : el).title = t;
     };
-    set('title', T.title); set('boss-name', T.boss); set('hp-bar', T.hp);
+    set('title', T.title); set('boss-name', T.boss);
     set('gold', T.gold, true); set('weapon', T.weapon, true); set('atk', T.atk, true);
-    set('timer', T.timer, true); set('stamina', T.stamina, true);
+    set('timer', T.timer, true);
     set('minion-rail', T.rail); set('calm-btn', T.calm); set('help-btn', T.help);
   }
 
@@ -832,7 +827,6 @@
       else if (snap.boss && typeof snap.boss.hp === 'number') pct = snap.boss.hp;
       if (pct != null) {
         lastBossPct = pct;
-        updateBossHpBar(pct);
         // boss keeps its species look; HP shows on the bars, not by recoloring.
         // hp still drives body size: full-HP looms huge, a battered one shrivels.
         if (scene === 'battle' && encForm !== 'pack' && encForm !== 'mini') {
@@ -845,7 +839,6 @@
       showOverlay('waiting for a session…');
       boss.visible = false;
       setText('boss-name', '—');
-      updateBossHpBar(0);
     }
 
     // usage → stats panel
@@ -856,25 +849,8 @@
         token = Math.max(0, Math.round(100 - u.fiveHour.used));
       }
       stats.token = token;
-      // resetsAt rides along (epoch seconds) → show time left in the window
-      // reset-time used to sit in a duplicate top-bar token readout; now it's a
-      // hover tooltip on the single us-token meter so the % isn't shown twice.
-      let tokenLeft = '';
-      if (u.fiveHour && u.fiveHour.resetsAt) {
-        const h = (u.fiveHour.resetsAt * 1000 - Date.now()) / 3600000;
-        if (h > 0) tokenLeft = h < 1 ? `${Math.max(1, Math.round(h * 60))}m` : `${(Math.round(h * 10) / 10)}h`;
-      }
-      const tokEl = document.getElementById('us-token');
-      if (tokEl) tokEl.title = tokenLeft ? `resets in ${tokenLeft}` : '';
-
-      if (u.sevenDay && typeof u.sevenDay.used === 'number') {
-        let weekLeft = '';
-        if (u.sevenDay.resetsAt) {
-          const d = (u.sevenDay.resetsAt * 1000 - Date.now()) / 86400000;
-          if (d > 0) weekLeft = d < 1 ? ` · ${Math.max(1, Math.round(d * 24))}h` : ` · ${Math.ceil(d)}d`;
-        }
-        setText('stamina', `${Math.max(0, Math.round(100 - u.sevenDay.used))}%${weekLeft}`);
-      }
+      // Dtk/Wtk meters (daily+weekly token, each with a CD row) + Ctx are all
+      // rendered from data.usage in setUserStatus().
 
       if (typeof u.cost === 'number') {
         const goldEl = document.getElementById('gold');
@@ -977,8 +953,8 @@
   function battleScaleFor(est, pct) {
     const tier = bossTierFor(est);
     const hp = pct == null ? 100 : Math.max(0, Math.min(100, pct));
-    const growth = tier.label === 'RAID BOSS' ? 6.5 : tier.label === 'ELITE' ? 1.8 : 0.9;
-    return Math.max(0.4, tier.scale * (0.6 + (hp / 100) * growth));
+    const growth = tier.label === 'RAID BOSS' ? 3.2 : tier.label === 'ELITE' ? 0.9 : 0.45;
+    return Math.max(SLIME_MIN_SCALE, tier.scale * (0.6 + (hp / 100) * growth));
   }
   function setScene(next) {
     if (scene === next) return;

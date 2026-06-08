@@ -287,3 +287,45 @@ test('all todos done with hp left → ultimate + broken + auto-downed immediatel
   // auto-down fires immediately
   assert.equal(evs.filter((e) => e.kind === 'boss_down').length, 1, 'should have exactly one boss_down event from auto-down');
 });
+
+// A live arena marker makes ensureArena() a no-op, so these exercise the
+// statusline auto-install without spawning a real server.
+function liveMarker() {
+  const m = path.join(ROOT, `auto-marker-${Math.random().toString(36).slice(2)}.json`);
+  fs.writeFileSync(m, JSON.stringify({ port: 4117, pid: process.pid }));
+  return m;
+}
+
+test('auto-HUD installs the statusline + emits the [HUD] open hint', () => {
+  const cfgDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-cfg-'));
+  const out = execFileSync('node', [S('hook-sessionstart.js')], {
+    input: JSON.stringify({ session_id: 'auto1' }),
+    env: { ...ENV, CLAUDE_CONFIG_DIR: cfgDir, SLIME_ARENA_MARKER: liveMarker() },
+  }).toString();
+  const settings = JSON.parse(fs.readFileSync(path.join(cfgDir, 'settings.json'), 'utf8'));
+  assert.match(settings.statusLine.command, /statusline\.js/);
+  assert.match(JSON.parse(out).systemMessage, /Cmd\+Click.*\[HUD\]/);
+});
+
+test('auto-HUD never clobbers an existing statusLine', () => {
+  const cfgDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-cfg-'));
+  fs.writeFileSync(path.join(cfgDir, 'settings.json'),
+    JSON.stringify({ statusLine: { type: 'command', command: 'mine' } }));
+  execFileSync('node', [S('hook-sessionstart.js')], {
+    input: JSON.stringify({ session_id: 'auto2' }),
+    env: { ...ENV, CLAUDE_CONFIG_DIR: cfgDir, SLIME_ARENA_MARKER: liveMarker() },
+  });
+  const settings = JSON.parse(fs.readFileSync(path.join(cfgDir, 'settings.json'), 'utf8'));
+  assert.equal(settings.statusLine.command, 'mine');
+});
+
+test('auto-HUD respects "autoHud": false', () => {
+  const cfgDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-cfg-'));
+  const offRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-off-'));
+  fs.writeFileSync(path.join(offRoot, 'config.json'), JSON.stringify({ autoHud: false }));
+  execFileSync('node', [S('hook-sessionstart.js')], {
+    input: JSON.stringify({ session_id: 'auto3' }),
+    env: { ...ENV, SLIME_ROOT: offRoot, CLAUDE_CONFIG_DIR: cfgDir, SLIME_ARENA_MARKER: liveMarker() },
+  });
+  assert.equal(fs.existsSync(path.join(cfgDir, 'settings.json')), false);
+});

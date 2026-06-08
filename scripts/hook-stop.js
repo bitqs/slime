@@ -9,6 +9,7 @@ const usage = require('../core/usage');
 const sage = require('../core/sage');
 const locale = require('../core/locale');
 const defeatFlow = require('../core/defeat-flow');
+const progression = require('../core/progression');
 
 try {
   /** @type {HookPayload | null} */
@@ -28,11 +29,14 @@ try {
     const { sanitize } = require('../core/hud');
     const card = report.render(agg, b && { name: sanitize(b.name), hp: b.hp }, snap, { usage: u, sageLine: sageLine ?? undefined, lang });
 
+    /** @type {string[]} */
+    let defeatQuests = [];
     if (b && p.cwd) {
       b.turns = snap.turn || 0;
       if (b.broken) {
         // all todos done and still broken at stop → confirmed kill, no typing needed
         const r = boss.recordDefeat(p.cwd, b, { dmg: agg.dmg, kills: agg.kills, maxCombo: agg.maxCombo });
+        defeatQuests = r.newQuests || [];
         state.appendEvent(id, { t: Date.now(), kind: 'boss_down', boss: b.name,
           text: locale.fmt(locale.t('boss.autoDown', lang), { name: b.name, count: r.total }) });
         defeatFlow.emitRewards(id, r, lang);
@@ -57,7 +61,12 @@ try {
     prof.totals.turns += 1;
     prof.totals.dmg += agg.dmg;
     prof.totals.kills += agg.kills;
+    // per-turn activity tick: advance the daily streak, refresh quest progress
+    const tickNow = Date.now();
+    progression.bumpActivity(prof, tickNow);
+    const { completed: doneQuests } = progression.evaluateQuests(prof, tickNow);
     state.writeProfile(prof);
+    defeatFlow.emitQuests(id, doneQuests.filter((q) => !defeatQuests.includes(q)), lang);
 
     // the only user-visible hook output: the turn report (display only)
     process.stdout.write(JSON.stringify({ systemMessage: card }));

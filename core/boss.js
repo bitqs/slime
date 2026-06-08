@@ -105,7 +105,7 @@ function minionLabel(cwd, idx, lang) {
  *  and clear the boss file.
  *  @param {string} cwd @param {BossState} b
  *  @param {{ dmg?: number; kills?: number; maxCombo?: number }} [stats]
- *  @returns {{ total: number, level: number, leveledUp: boolean, titleKey: string, newBadges: string[] }} */
+ *  @returns {{ total: number, level: number, leveledUp: boolean, titleKey: string, newBadges: string[], newQuests: string[] }} */
 function recordDefeat(cwd, b, stats = {}) {
   const prof = state.readProfile();
   const m = {
@@ -127,9 +127,11 @@ function recordDefeat(cwd, b, stats = {}) {
   const newBadges = prog.evaluateBadges(prof);
   const now = Date.now();
   for (const id of newBadges) prof.badges.push({ id, unlockedAt: now });
+  // quests: a fresh kill can complete weekly_kills (idempotent; streak handled per-turn)
+  const { completed: newQuests } = prog.evaluateQuests(prof, now);
   state.writeProfile(prof);
   clear(cwd);
-  return { total: prof.milestones.length, level: lv.level, leveledUp: lv.level > fromLevel, titleKey: lv.titleKey, newBadges };
+  return { total: prof.milestones.length, level: lv.level, leveledUp: lv.level > fromLevel, titleKey: lv.titleKey, newBadges, newQuests };
 }
 
 module.exports = { nameBoss, loadOrCreate, save, clear, bossPath, compressName, minionLabel, recordDefeat };

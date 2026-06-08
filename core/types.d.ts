@@ -108,6 +108,7 @@ export interface SlimeEvent {
   minion?: string;
   count?: number;
   badge?: string;
+  quest?: string;
 }
 
 /** Shape of JSON piped from the Claude Code statusline to our scripts. */

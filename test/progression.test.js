@@ -1,3 +1,6 @@
+const os = require('node:os');
+const path = require('node:path');
+process.env.SLIME_ROOT = path.join(os.tmpdir(), 'slime-prog-test');
 const { test } = require('node:test');
 const assert = require('node:assert');
 const prog = require('../core/progression');
@@ -225,4 +228,20 @@ test('bumpActivity: increments across a year boundary', () => {
   const p = { streak: { days: 9, lastActiveDay: '2025-12-31' } };
   prog.bumpActivity(p, new Date(2026, 0, 1, 9).getTime()); // local Jan 1 2026
   assert.deepEqual(p.streak, { days: 10, lastActiveDay: '2026-01-01' });
+});
+
+test('defeat-flow: rewardLines includes a quest line for newQuests', () => {
+  const flow = require('../core/defeat-flow');
+  const lines = flow.rewardLines(
+    { leveledUp: false, newBadges: [], newQuests: ['weekly_kills'] }, 'en');
+  assert.equal(lines.length, 1);
+  assert.match(lines[0], /Quest complete/);
+  assert.match(lines[0], /Weekly Hunter/);
+});
+
+test('defeat-flow: questText resolves zh name', () => {
+  const flow = require('../core/defeat-flow');
+  const lines = flow.rewardLines(
+    { leveledUp: false, newBadges: [], newQuests: ['streak_days'] }, 'zh');
+  assert.match(lines[0], /每日修行/);
 });

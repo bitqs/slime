@@ -4,8 +4,8 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-process.env.CCQ_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-'));
-after(() => fs.rmSync(process.env.CCQ_ROOT, { recursive: true, force: true }));
+process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
+after(() => fs.rmSync(process.env.SLIME_ROOT, { recursive: true, force: true }));
 const usage = require('../scripts/lib/usage');
 
 test('cacheFromStatusline stores official rate limits', () => {
@@ -37,7 +37,7 @@ test('hp converts used% to remaining HP', () => {
 });
 
 test('readCache on empty root returns nulls', () => {
-  const root2 = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq2-'));
+  const root2 = fs.mkdtempSync(path.join(os.tmpdir(), 'slime2-'));
   const u = usage.readCache(root2);
   assert.equal(u.fiveHour, null);
   fs.rmSync(root2, { recursive: true, force: true });
@@ -54,7 +54,7 @@ test('identical data skips rewrite (dirty check)', () => {
 });
 
 test('cacheFromStatusline persists cost, model, lines, duration', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-usage-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-usage-'));
   usage.cacheFromStatusline({
     rate_limits: { five_hour: { used_percentage: 10, resets_at: 1 } },
     cost: { total_cost_usd: 1.23, total_lines_added: 10, total_lines_removed: 2, total_duration_ms: 5000 },

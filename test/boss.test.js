@@ -4,13 +4,13 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-process.env.CCQ_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-'));
+process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
 const boss = require('../scripts/lib/boss');
 
 test('nameBoss: epithet + compressed base + type, deterministic per prompt', () => {
-  const a = boss.nameBoss('fix the login crash', '/p/questline');
-  assert.match(a, /^The [A-Za-z-]+ Questline Bugbear$/);
-  assert.equal(boss.nameBoss('fix the login crash', '/p/questline'), a); // deterministic
+  const a = boss.nameBoss('fix the login crash', '/p/slime');
+  assert.match(a, /^The [A-Za-z-]+ Slime Bugbear$/);
+  assert.equal(boss.nameBoss('fix the login crash', '/p/slime'), a); // deterministic
   assert.match(boss.nameBoss('refactor auth', '/p/my-survivor-game'), /^The [A-Za-z-]+ MSG Colossus$/);
   assert.match(boss.nameBoss('whatever else', '/p/web'), /^The [A-Za-z-]+ Web Golem$/);
 });
@@ -38,13 +38,13 @@ test('nameBoss: different prompts of same type can draw different epithets', () 
 test('compressName: multi-word → initials with digits; single word kept or truncated', () => {
   assert.equal(boss.compressName('/p/my-survivor-game'), 'MSG');
   assert.equal(boss.compressName('/p/2d-three-kindom'), '2TK');
-  assert.equal(boss.compressName('/p/questline'), 'Questline');
+  assert.equal(boss.compressName('/p/slime'), 'Slime');
   assert.equal(boss.compressName('/p/supercalifragilistic'), 'Supercal');
   assert.equal(boss.compressName(''), 'Unknown');
 });
 
 test('loadOrCreate with no lang arg defaults to locale.current()', () => {
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-locale-'));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-locale-'));
   // Set locale to 'zh' via config.json
   fs.mkdirSync(path.join(tmpRoot, 'bosses'), { recursive: true });
   fs.writeFileSync(path.join(tmpRoot, 'config.json'), JSON.stringify({ lang: 'zh' }));

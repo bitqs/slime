@@ -32,11 +32,11 @@ function checkUpdate(cfgDirOverride) {
       || process.env.CLAUDE_CONFIG_DIR
       || path.join(os.homedir(), '.claude');
     const installed = /** @type {InstalledPlugins | null} */ (readJson(path.join(cfgDir, 'plugins', 'installed_plugins.json'), null));
-    const entry = installed && installed.plugins && installed.plugins['questline@questline'];
+    const entry = installed && installed.plugins && installed.plugins['slime@slime'];
     const sha = entry && entry[0] && entry[0].gitCommitSha;
     if (!sha) return null;
     const settings = /** @type {ClaudeSettings | null} */ (readJson(path.join(cfgDir, 'settings.json'), null));
-    const mp = settings && settings.extraKnownMarketplaces && settings.extraKnownMarketplaces.questline;
+    const mp = settings && settings.extraKnownMarketplaces && settings.extraKnownMarketplaces.slime;
     if (!mp || !mp.source || mp.source.source !== 'directory' || !mp.source.path) return null;
     const head = git(mp.source.path, ['rev-parse', 'HEAD']);
     if (!head || head === sha) return null;

@@ -1,8 +1,8 @@
 'use strict';
-// safe-io — the single gateway for Questline state IO.
-// Threat model: predictable user-owned paths under ~/.claude/ccq; a local
+// safe-io — the single gateway for Slime state IO.
+// Threat model: predictable user-owned paths under ~/.claude/slime; a local
 // attacker (or buggy tool) may swap a path for a symlink so our write clobbers
-// an arbitrary user-writable file. Every function silent-fails: Questline is a
+// an arbitrary user-writable file. Every function silent-fails: Slime is a
 // game layer — if the game breaks, work continues untouched.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -53,7 +53,7 @@ function readJson(p, fallback) {
 /** @param {string} p @returns {boolean} */
 function safeMkdir(p) {
   try {
-    // Parent-symlink NOT refused here: symlinking the whole ccq root to another
+    // Parent-symlink NOT refused here: symlinking the whole slime root to another
     // disk is legitimate; file-level clobber is prevented by safeWrite/safeAppend.
     if (isSymlink(p)) return false;
     fs.mkdirSync(p, { recursive: true });

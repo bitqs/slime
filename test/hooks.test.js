@@ -5,9 +5,9 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-'));
-process.env.CCQ_ROOT = ROOT;
-const ENV = { ...process.env, CCQ_ROOT: ROOT };
+const ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
+process.env.SLIME_ROOT = ROOT;
+const ENV = { ...process.env, SLIME_ROOT: ROOT };
 const S = (f) => path.join(__dirname, '..', 'scripts', f);
 
 function run(script, payload) {

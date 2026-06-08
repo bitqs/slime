@@ -5,10 +5,10 @@ const os = require('node:os');
 const path = require('node:path');
 
 // point state at a temp root BEFORE requiring the module
-process.env.CCQ_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-'));
+process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
 const state = require('../scripts/lib/state');
 
-after(() => fs.rmSync(process.env.CCQ_ROOT, { recursive: true, force: true }));
+after(() => fs.rmSync(process.env.SLIME_ROOT, { recursive: true, force: true }));
 
 test('appendEvent then readEvents round-trips', () => {
   state.appendEvent('s1', { t: 1, kind: 'cast', text: 'hi' });
@@ -38,7 +38,7 @@ test('profile defaults then persists', () => {
 
 test('newestSessionId returns the most recently touched session', () => {
   state.ensureDirs();
-  const dir = path.join(process.env.CCQ_ROOT, 'sessions');
+  const dir = path.join(process.env.SLIME_ROOT, 'sessions');
   fs.writeFileSync(path.join(dir, 'old.json'), '{}');
   fs.utimesSync(path.join(dir, 'old.json'), new Date(Date.now() - 60000), new Date(Date.now() - 60000));
   fs.writeFileSync(path.join(dir, 'new.json'), '{}');

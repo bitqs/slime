@@ -1,9 +1,9 @@
 {
-  "name": "questline",
+  "name": "slime",
   "owner": { "name": "qs" },
   "plugins": [
     {
-      "name": "questline",
+      "name": "slime",
       "source": "./",
       "description": "Your work goals are the bosses. Your plugins are your gear. Watch Claude fight — a zero-impact RPG layer over Claude Code."
     }

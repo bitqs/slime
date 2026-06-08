@@ -16,7 +16,7 @@ const { readCache } = require('./lib/usage');
 const locale = require('./lib/locale');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
-const PORT = Number(process.env.QL_PORT) || 4117;
+const PORT = Number(process.env.SLIME_PORT) || 4117;
 
 // ── route handlers ────────────────────────────────────────────────────────────
 
@@ -173,6 +173,6 @@ module.exports = { createServer };
 if (require.main === module) {
   const srv = createServer();
   srv.listen(PORT, '127.0.0.1', () => {
-    console.log(`Questline Arena: http://127.0.0.1:${PORT}`);
+    console.log(`Slime Arena: http://127.0.0.1:${PORT}`);
   });
 }

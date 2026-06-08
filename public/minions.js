@@ -1,7 +1,7 @@
 'use strict';
 /* Minion rail: renders snap.todos as mini slimes. Pure DOM consumer.
    Style pick comes from t.form (node-side hash) — deterministic.
-   Slime designs live here as window.QLSlimes — the arena reuses them so
+   Slime designs live here as window.SlimeDesigns — the arena reuses them so
    on-stage mobs match the rail (half-mask + mirror technique, à la
    zfedoran/pixel-sprite-generator, but with curated masks). */
 (function () {
@@ -92,7 +92,7 @@
   }
 
   // shared with the arena (loaded before arena.js) — stage mobs match the rail
-  window.QLSlimes = { designFor, PALETTES, DESIGNS, drawSlime };
+  window.SlimeDesigns = { designFor, PALETTES, DESIGNS, drawSlime };
 
   const railEl = () => document.getElementById('minion-rail');
   let lastKey = '';
@@ -158,5 +158,5 @@
     if (calm) after(); else setTimeout(after, 450);
   }
 
-  window.QLMinions = { render, kill };
+  window.SlimeMinions = { render, kill };
 })();

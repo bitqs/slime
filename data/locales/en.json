@@ -11,7 +11,7 @@
   "report.stats": "⚔️ DMG {dmg} (lines changed) | 💀 Kills {kills} | 💥 Hits {hits} | 🔥 Max combo ×{maxCombo}",
   "report.stamina": "⚡ Token {bar} {hp}% (5h window){weekly}",
   "report.weekly": " | Weekly {bar} {pct}%",
-  "report.stagger": "⚡ {name} staggers — confirm the kill with /questline:defeat",
+  "report.stagger": "⚡ {name} staggers — confirm the kill with /slime:defeat",
   "turn.complete": "🏆 Turn {turn} complete — Rank {rank}",
   "sage.rest": "💡 Sage: 🛌 your Token is nearly spent — rest, the window restores it.",
   "sage.potion": "💡 Sage: mana runs low — a potion (/compact) or strike camp (/clear).",

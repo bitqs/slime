@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-process.env.CCQ_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-'));
+process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
 const report = require('../scripts/lib/report');
 
 test('rank: S no hits + kills, A few hits, C many hits', () => {
@@ -39,7 +39,7 @@ test('render contains boss bar, rank and kill prompt at low HP', () => {
   assert.match(txt, /TURN #3/);
   assert.match(txt, /Rank: S/);
   assert.match(txt, /The Web Hydra/);
-  assert.match(txt, /\/questline:defeat/); // kill confirmation offered
+  assert.match(txt, /\/slime:defeat/); // kill confirmation offered
 });
 
 test('render omits kill prompt at high HP', () => {
@@ -48,7 +48,7 @@ test('render omits kill prompt at high HP', () => {
     { name: 'The Web Hydra', hp: 80 },
     { turn: 1 }
   );
-  assert.doesNotMatch(txt, /\/questline:defeat/);
+  assert.doesNotMatch(txt, /\/slime:defeat/);
 });
 
 test('render shows stamina line and sage line via extras', () => {

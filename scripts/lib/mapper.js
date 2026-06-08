@@ -1,4 +1,4 @@
-/** @typedef {import('./types').QLEvent} QLEvent */
+/** @typedef {import('./types').SlimeEvent} SlimeEvent */
 
 const path = require('node:path');
 const locale = require('./locale');
@@ -81,7 +81,7 @@ function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
  * @param {HookPayload | null | undefined} payload
  * @param {number | string} count
  * @param {string} [lang]
- * @returns {QLEvent}
+ * @returns {SlimeEvent}
  */
 function cast(payload, count, lang) {
   payload = payload || {};
@@ -114,7 +114,7 @@ function lineCount(s) { return s ? String(s).split('\n').length : 0; }
  * @param {HookPayload | null | undefined} payload
  * @param {{ combo?: number; [key: string]: unknown }} [snap]
  * @param {string} [lang]
- * @returns {QLEvent}
+ * @returns {SlimeEvent}
  */
 function resolve(payload, snap = {}, lang) {
   payload = payload || {};
@@ -123,7 +123,7 @@ function resolve(payload, snap = {}, lang) {
   const input = /** @type {ToolInput} */ (payload.tool_input || {});
   const isError = Boolean(payload.tool_response && payload.tool_response.is_error);
   let combo = snap.combo || 0;
-  /** @type {QLEvent} */
+  /** @type {SlimeEvent} */
   const ev = { t: Date.now(), kind: 'resolve', tool };
 
   if (isError) {

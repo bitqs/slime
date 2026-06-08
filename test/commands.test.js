@@ -5,13 +5,13 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-'));
-const ENV = { ...process.env, CCQ_ROOT: ROOT };
+const ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
+const ENV = { ...process.env, SLIME_ROOT: ROOT };
 const S = (f) => path.join(__dirname, '..', 'scripts', f);
 
 test('defeat records milestone and clears boss', () => {
   // seed a boss for cwd
-  process.env.CCQ_ROOT = ROOT;
+  process.env.SLIME_ROOT = ROOT;
   const boss = require('../scripts/lib/boss');
   const b = boss.loadOrCreate('/tmp/myapp', 'fix bug');
   b.hp = 10; b.turns = 4;
@@ -43,7 +43,7 @@ test('namer renames boss file using injected command', () => {
   const b = boss.loadOrCreate('/tmp/namerapp', 'add feature x');
   boss.save('/tmp/namerapp', b);
   execFileSync('node', [S('namer.js'), '/tmp/namerapp', 'add feature x'], {
-    env: { ...ENV, QL_NAMER_CMD: JSON.stringify(['node', '-e', "console.log('The Crimson Hydra of Namerapp')"]) },
+    env: { ...ENV, SLIME_NAMER_CMD: JSON.stringify(['node', '-e', "console.log('The Crimson Hydra of Namerapp')"]) },
   });
   assert.equal(boss.loadOrCreate('/tmp/namerapp', '').name, 'The Crimson Hydra of Namerapp');
 });

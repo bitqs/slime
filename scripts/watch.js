@@ -7,7 +7,7 @@
 
 /** @typedef {import('./lib/types').Snapshot} Snapshot */
 /** @typedef {import('./lib/types').UsageCache} UsageCache */
-/** @typedef {import('./lib/types').QLEvent} QLEvent */
+/** @typedef {import('./lib/types').SlimeEvent} SlimeEvent */
 
 const { ROOT, readSnapshot, readEvents, newestSessionId } = require('./lib/state');
 const { readCache, hp, restTime } = require('./lib/usage');
@@ -19,7 +19,7 @@ const locale = require('./lib/locale');
 /**
  * @param {Snapshot | null} snap
  * @param {UsageCache | null} usageCache
- * @param {QLEvent[]} events
+ * @param {SlimeEvent[]} events
  * @param {string} [lang]
  * @param {number} [cols]
  * @returns {string}
@@ -40,7 +40,7 @@ function renderFrame(snap, usageCache, events, lang, cols) {
 
   // ── no session yet ────────────────────────────────────────────────────────
   if (!snap) {
-    return '⚔️ QUESTLINE — waiting for a session…';
+    return '⚔️ SLIME — waiting for a session…';
   }
 
   const lines = [];
@@ -50,7 +50,7 @@ function renderFrame(snap, usageCache, events, lang, cols) {
   const bossHp   = snap.boss ? snap.boss.hp   : 100;
   const bossBar  = bar(bossHp);
   const bossHpPct = `${bossHp}%`;
-  const leftSide = `⚔️ QUESTLINE ── ${bossName} ${bossBar} ${bossHpPct} HP`;
+  const leftSide = `⚔️ SLIME ── ${bossName} ${bossBar} ${bossHpPct} HP`;
 
   const rightParts = [];
   if (hpVal != null) rightParts.push(`⚡Token ${hpVal}%`);

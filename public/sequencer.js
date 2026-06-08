@@ -7,7 +7,7 @@
 // @ts-ignore — UMD wrapper: `self` is a valid browser global; tsc doesn't know it without DOM lib
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
-  else /** @type {any} */ (root).QLSeq = factory();
+  else /** @type {any} */ (root).SlimeSeq = factory();
 // @ts-ignore
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';

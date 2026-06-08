@@ -19,7 +19,7 @@ try {
     state.writeSnapshot(p.session_id, {
       sessionId: p.session_id, turn: 0, combo: 0, kills: 0, dmg: 0,
       summons: 0, gear, inTurn: false, updated: Date.now(),
-      lastText: '⚔️ Questline — awaiting first encounter',
+      lastText: '⚔️ Slime — awaiting first encounter',
     });
     // Update notice — display-only systemMessage; Observer Principle intact.
     const upd = require('./lib/update-check').checkUpdate();
@@ -27,7 +27,7 @@ try {
       const { sanitize } = require('./lib/hud');
       const lines = upd.subjects.map((s) => ` · ${sanitize(s, 80)}`).join('\n');
       process.stdout.write(JSON.stringify({
-        systemMessage: `⬆️ Questline update available (${upd.count} commit${upd.count > 1 ? 's' : ''}):\n${lines}\nSay "更新questline" or run /questline:update.`,
+        systemMessage: `⬆️ Slime update available (${upd.count} commit${upd.count > 1 ? 's' : ''}):\n${lines}\nSay "更新slime" or run /slime:update.`,
       }));
     }
   }

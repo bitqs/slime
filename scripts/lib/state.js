@@ -1,6 +1,6 @@
 /** @typedef {import('./types').Snapshot} Snapshot */
 /** @typedef {import('./types').Profile} Profile */
-/** @typedef {import('./types').QLEvent} QLEvent */
+/** @typedef {import('./types').SlimeEvent} SlimeEvent */
 /** @typedef {import('./types').StatuslineStdin} StatuslineStdin */
 const fs = require('node:fs');
 const os = require('node:os');
@@ -9,9 +9,9 @@ const { safeWrite, safeAppend, readJson, safeMkdir } = require('./safe-io');
 
 // Resolution order mirrors caveman's contract: explicit override, then
 // Claude Code's config-dir override, then the default.
-const ROOT = process.env.CCQ_ROOT
-  || (process.env.CLAUDE_CONFIG_DIR && path.join(process.env.CLAUDE_CONFIG_DIR, 'ccq'))
-  || path.join(os.homedir(), '.claude', 'ccq');
+const ROOT = process.env.SLIME_ROOT
+  || (process.env.CLAUDE_CONFIG_DIR && path.join(process.env.CLAUDE_CONFIG_DIR, 'slime'))
+  || path.join(os.homedir(), '.claude', 'slime');
 
 function ensureDirs() {
   for (const d of ['sessions', 'bosses', 'reports']) {
@@ -27,13 +27,13 @@ const profilePath = () => path.join(ROOT, 'profile.json');
 /** @param {string} id @returns {string} */
 const reportPath = (id) => path.join(ROOT, 'reports', `${id}.txt`);
 
-/** @param {string} id @param {QLEvent} ev @returns {void} */
+/** @param {string} id @param {SlimeEvent} ev @returns {void} */
 function appendEvent(id, ev) {
   ensureDirs();
   safeAppend(eventsPath(id), JSON.stringify(ev) + '\n');
 }
 
-/** @param {string} id @returns {QLEvent[]} */
+/** @param {string} id @returns {SlimeEvent[]} */
 function readEvents(id) {
   try {
     const out = [];

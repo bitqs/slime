@@ -16,18 +16,18 @@ function git(dir, ...args) {
 const GIT_ENV = { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
 
 function setupFixture() {
-  const cfgDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-upd-cfg-'));
-  const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-upd-repo-'));
+  const cfgDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-upd-cfg-'));
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-upd-repo-'));
   execFileSync('git', ['-C', repo, 'init', '-q']);
   execFileSync('git', ['-C', repo, 'commit', '-q', '--allow-empty', '-m', 'feat: first'], { env: GIT_ENV });
   const sha = git(repo, 'rev-parse', 'HEAD');
   fs.mkdirSync(path.join(cfgDir, 'plugins'), { recursive: true });
   fs.writeFileSync(path.join(cfgDir, 'plugins', 'installed_plugins.json'), JSON.stringify({
     version: 2,
-    plugins: { 'questline@questline': [{ scope: 'user', gitCommitSha: sha }] },
+    plugins: { 'slime@slime': [{ scope: 'user', gitCommitSha: sha }] },
   }));
   fs.writeFileSync(path.join(cfgDir, 'settings.json'), JSON.stringify({
-    extraKnownMarketplaces: { questline: { source: { source: 'directory', path: repo } } },
+    extraKnownMarketplaces: { slime: { source: { source: 'directory', path: repo } } },
   }));
   return { cfgDir, repo };
 }
@@ -48,12 +48,12 @@ test('checkUpdate lists new commit subjects', () => {
 test('checkUpdate returns null for non-directory marketplace source', () => {
   const { cfgDir } = setupFixture();
   fs.writeFileSync(path.join(cfgDir, 'settings.json'), JSON.stringify({
-    extraKnownMarketplaces: { questline: { source: { source: 'github', repo: 'bitqs/questline' } } },
+    extraKnownMarketplaces: { slime: { source: { source: 'github', repo: 'bitqs/slime' } } },
   }));
   assert.strictEqual(checkUpdate(cfgDir), null);
 });
 
 test('checkUpdate silent-nulls on missing files', () => {
-  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-upd-empty-'));
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-upd-empty-'));
   assert.strictEqual(checkUpdate(empty), null);
 });

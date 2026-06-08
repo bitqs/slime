@@ -1,6 +1,6 @@
 /** @typedef {import('./types').BossState} BossState */
 /** @typedef {import('./types').UsageCache} UsageCache */
-/** @typedef {import('./types').QLEvent} QLEvent */
+/** @typedef {import('./types').SlimeEvent} SlimeEvent */
 
 /**
  * @typedef {{ dmg?: number; kills?: number; hits?: number }} RankInput
@@ -16,7 +16,7 @@ function rank({ hits = 0, kills = 0, dmg = 0 }) {
   return 'C';
 }
 
-/** @param {QLEvent[]} events @returns {{ dmg: number; kills: number; hits: number; casts: number; maxCombo: number }} */
+/** @param {SlimeEvent[]} events @returns {{ dmg: number; kills: number; hits: number; casts: number; maxCombo: number }} */
 function aggregate(events) {
   const lastEnd = events.map((e) => e.kind).lastIndexOf('turn_end');
   const turn = events.slice(lastEnd + 1);

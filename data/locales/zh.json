@@ -50,7 +50,7 @@
   "report.stats": "⚔️ 伤害 {dmg} (改动行数) | 💀 击杀 {kills} | 💥 受击 {hits} | 🔥 最大连击 ×{maxCombo}",
   "report.stamina": "⚡ Token {bar} {hp}% (5小时窗口){weekly}",
   "report.weekly": " | 周 {bar} {pct}%",
-  "report.stagger": "⚡ {name} 摇摇欲坠 — 用 /questline:defeat 确认击杀",
+  "report.stagger": "⚡ {name} 摇摇欲坠 — 用 /slime:defeat 确认击杀",
   "turn.complete": "🏆 回合 {turn} 结束 — 评级 {rank}",
   "sage.rest": "💡 贤者: 🛌 你的 Token 快耗尽了 — 休息,时间窗会恢复它。",
   "sage.potion": "💡 贤者: 蓝量告急 — 喝药 (/compact) 或扎营 (/clear)。",

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Detached boss namer. Hooks can't wait (2s cap) — this runs async and
 // rewrites the boss file when the name arrives. Template name stays if we fail.
-// No shell: argv-array exec only (QL_NAMER_CMD must be a JSON argv array).
+// No shell: argv-array exec only (SLIME_NAMER_CMD must be a JSON argv array).
 const { execFileSync } = require('node:child_process');
 const boss = require('./lib/boss');
 const locale = require('./lib/locale');
@@ -11,8 +11,8 @@ const prompt = process.argv[3] || '';
 try {
   if (!cwd) process.exit(0);
   let argv;
-  if (process.env.QL_NAMER_CMD) {
-    argv = JSON.parse(process.env.QL_NAMER_CMD); // e.g. ["node","-e","console.log('X')"]
+  if (process.env.SLIME_NAMER_CMD) {
+    argv = JSON.parse(process.env.SLIME_NAMER_CMD); // e.g. ["node","-e","console.log('X')"]
   } else {
     const lang = locale.current();
     const namerPrompt = lang === 'zh'

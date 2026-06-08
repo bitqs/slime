@@ -1,5 +1,5 @@
 'use strict';
-/* Questline Arena on PixiJS. Read-only viewer: SSE events + /state polling.
+/* Slime Arena on PixiJS. Read-only viewer: SSE events + /state polling.
    Cutscene steps are data; FX primitives interpret them (Task 9 adds scenes). */
 (async function () {
   const CALM = new URLSearchParams(location.search).has('calm')
@@ -164,13 +164,13 @@
   boss.visible = false;
   world.addChild(boss);
 
-  // slime textures shared with the rail (minions.js defines window.QLSlimes)
+  // slime textures shared with the rail (minions.js defines window.SlimeDesigns)
   const slimeTex = {};
   function slimeTexFor(form) {
     const f = ((form | 0) % 6 + 6) % 6;
-    if (!slimeTex[f] && window.QLSlimes) {
-      const d = QLSlimes.designFor(f);
-      slimeTex[f] = texFromMatrix(d.mat, QLSlimes.PALETTES[d.pal]);
+    if (!slimeTex[f] && window.SlimeDesigns) {
+      const d = SlimeDesigns.designFor(f);
+      slimeTex[f] = texFromMatrix(d.mat, SlimeDesigns.PALETTES[d.pal]);
     }
     return slimeTex[f] || bossTexFor(100).tex;
   }
@@ -306,7 +306,7 @@
   const fx = { shake: 0, shakeAmp: 4, knightLunge: 0, speed: 1, hitstop: 0, particles: [],
     floaters: [], chromaFrames: 0, edgeFlame: 0, slowmoLeft: null, zoom: 1, zoomLeft: null,
     bossFalling: false, type: null, charge: null };
-  const governor = QLSeq.createGovernor(3, 60);
+  const governor = SlimeSeq.createGovernor(3, 60);
   let activeScenes = [];
   let frame = 0;
   let slowmoAcc = 0;
@@ -398,7 +398,7 @@
     },
   };
 
-  function playScene(steps) { activeScenes.push(QLSeq.createTimeline(steps)); }
+  function playScene(steps) { activeScenes.push(SlimeSeq.createTimeline(steps)); }
 
   // ── token threat helpers ───────────────────────────────────────────────────────
   function bossTierFor(est) {
@@ -474,7 +474,7 @@
     // advance scenes → dispatch due steps
     if (activeScenes.length) {
       for (const tl of activeScenes) {
-        for (const step of QLSeq.advance(tl)) {
+        for (const step of SlimeSeq.advance(tl)) {
           const fn = step.do && PRIM[step.do];
           if (fn) { try { fn.call(PRIM, step.args || step); } catch {} }
         }
@@ -726,7 +726,7 @@
 
     // boss snapshot
     if (snap) {
-      if (window.QLMinions) QLMinions.render(snap.todos);
+      if (window.SlimeMinions) SlimeMinions.render(snap.todos);
       // est rides the snapshot so a page refresh can't lose the form decision
       applyForm(snap.todos, typeof snap.est === 'number' ? snap.est : null);
       hideOverlay();
@@ -753,7 +753,7 @@
       }
       if (snap.boss && typeof snap.boss.broken === 'boolean' && snap.boss.broken !== bossBroken) setBroken(snap.boss.broken);
     } else {
-      if (window.QLMinions) QLMinions.render([]);
+      if (window.SlimeMinions) SlimeMinions.render([]);
       showOverlay('waiting for a session…');
       boss.visible = false;
       setText('boss-name', '—');
@@ -826,7 +826,7 @@
 
   // ── SSE events ────────────────────────────────────────────────────────────────
   const EXTRA_HANDLERS = [];
-  window.QLArena = { playScene, PRIM, fx, pushLog, floater, stats, on: (fn) => EXTRA_HANDLERS.push(fn) };
+  window.SlimeArena = { playScene, PRIM, fx, pushLog, floater, stats, on: (fn) => EXTRA_HANDLERS.push(fn) };
 
   function onCombo(combo, dmg) {
     fx.edgeFlame = combo >= 5 ? 1 : 0;
@@ -927,7 +927,7 @@
   let engagedBoss = null;
   let minionStreak = 0;
   let lastMinionKill = 0;
-  QLArena.on((d) => {
+  SlimeArena.on((d) => {
     if (d.kind === 'encounter') {
       const isNew = d.bossName && d.bossName !== engagedBoss;
       if (isNew) {
@@ -966,7 +966,7 @@
       if (d.text) pushLog(d.text);
     }
     if (d.kind === 'minion_down') {
-      if (window.QLMinions) QLMinions.kill(d.minion, CALM);
+      if (window.SlimeMinions) SlimeMinions.kill(d.minion, CALM);
       {
         // 1:1 with the rail: pop the slime whose label matches the kill
         const idx = lastTodos.findIndex((t) => t.label === d.minion);
@@ -1048,7 +1048,7 @@
     choiceEl.style.display = 'none'; planEl.style.display = 'none';
     PRIM.dim({ on: false }); PRIM.letterbox({ on: false });
   }
-  QLArena.on((d) => {
+  SlimeArena.on((d) => {
     if (d.kind === 'choice_open') { setScene('feeding'); openChoices(d.questions || []); }
     if (d.kind === 'choice_made') {
       resolveChoices(d.chosen || []);

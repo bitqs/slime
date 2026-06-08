@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Questline — a Claude Code plugin that renders your real work as a turn-based RPG: hooks observe every tool call and write battle events; a statusline HUD, a tmux pane, and a PixiJS web arena visualize them. Published as marketplace `bitqs/questline`; users run it straight from the git clone — **no build step, no npm install, zero runtime dependencies** (devDependencies are fine; the browser arena uses a vendored `public/vendor/pixi.min.js`, never a CDN).
+Slime — a Claude Code plugin that renders your real work as a turn-based RPG: hooks observe every tool call and write battle events; a statusline HUD, a tmux pane, and a PixiJS web arena visualize them. Published as marketplace `bitqs/slime`; users run it straight from the git clone — **no build step, no npm install, zero runtime dependencies** (devDependencies are fine; the browser arena uses a vendored `public/vendor/pixi.min.js`, never a CDN).
 
 ## Commands
 
@@ -14,21 +14,21 @@ node --test test/hud.test.js      # one file
 npm run typecheck                  # tsc --checkJs strict (needs `npm install` once for devDeps)
 
 # Eyeball the arena without a real session:
-CCQ_ROOT=/tmp/ccq-demo node scripts/demo-feed.js &
-CCQ_ROOT=/tmp/ccq-demo QL_PORT=4118 node scripts/serve.js
+SLIME_ROOT=/tmp/slime-demo node scripts/demo-feed.js &
+SLIME_ROOT=/tmp/slime-demo SLIME_PORT=4118 node scripts/serve.js
 # open http://127.0.0.1:4118  (?calm=1 = flash-free)
 
 # Public demo worker (Cloudflare):
-cd demo && npx wrangler deploy    # → questline-arena-demo.shuangqu.workers.dev
+cd demo && npx wrangler deploy    # → slime-arena-demo.shuangqu.workers.dev
 ```
 
 ## Architecture
 
-Everything flows through one state directory, `CCQ_ROOT` (default `~/.claude/ccq`, overridable via env — tests rely on this):
+Everything flows through one state directory, `SLIME_ROOT` (default `~/.claude/slime`, overridable via env — tests rely on this):
 
 ```
 hooks (hooks/hooks.json → scripts/hook-*.js)          WRITERS, fire on every prompt/tool call
-  └→ sessions/<id>.jsonl   append-only QLEvent stream (cast/resolve/encounter/turn_end/
+  └→ sessions/<id>.jsonl   append-only SlimeEvent stream (cast/resolve/encounter/turn_end/
      sessions/<id>.json    live Snapshot               boss_down/choice_open/choice_made/
      profile.json, usage.json, boss state per-project  plan_scroll/plan_approved/potion…)
 
@@ -41,8 +41,8 @@ consumers                                              READERS, never write game
                            path-derived fs reads)
 ```
 
-- `scripts/lib/` is the shared layer; `scripts/lib/types.d.ts` holds the central JSDoc shapes (Snapshot, UsageCache, QLEvent…). All state IO goes through `scripts/lib/safe-io.js` (atomic writes, tolerant reads).
-- `public/arena.js` is the PixiJS arena: SSE events → FX primitives (`PRIM`); cutscenes are declarative `{at, do}` timelines played by `public/sequencer.js` (UMD — unit-tested in node, loaded as `QLSeq` in the browser). Extension point: `window.QLArena.on(handler)`.
+- `scripts/lib/` is the shared layer; `scripts/lib/types.d.ts` holds the central JSDoc shapes (Snapshot, UsageCache, SlimeEvent…). All state IO goes through `scripts/lib/safe-io.js` (atomic writes, tolerant reads).
+- `public/arena.js` is the PixiJS arena: SSE events → FX primitives (`PRIM`); cutscenes are declarative `{at, do}` timelines played by `public/sequencer.js` (UMD — unit-tested in node, loaded as `SlimeSeq` in the browser). Extension point: `window.SlimeArena.on(handler)`.
 - `demo/` is a self-contained Cloudflare Worker serving `../public` verbatim plus a synthetic `/state` + `/events` show. It is excluded from tsconfig.
 
 ## Hard rules
@@ -51,7 +51,7 @@ consumers                                              READERS, never write game
 - **Statusline safety**: anything rendered to the terminal goes through `hud.sanitize` (strips control chars/ANSI — state files are untrusted input replayed on every keystroke). Anything event-derived rendered in the arena DOM goes through `textContent`/`escHtml`, never `innerHTML`.
 - **Flash safety**: arena flashes are capped ≤3/sec by the sequencer governor; `?calm=1` and `prefers-reduced-motion` must keep degrading new effects (flash→fade, shake/chroma/hitstop off).
 - **i18n**: user-facing strings live in `data/locales/{en,zh}.json` (flat key→string, `locale.t` falls back to en). Player resource is named **Token** (boss HP keeps "HP"). When adding keys, add both languages.
-- **Test isolation**: every test file sets `process.env.CCQ_ROOT` to a tmpdir *before* requiring libs (ROOT is captured at require time) and cleans up in `after()`. Copy that pattern; hud/sage tests once leaked the user's real locale by skipping it.
+- **Test isolation**: every test file sets `process.env.SLIME_ROOT` to a tmpdir *before* requiring libs (ROOT is captured at require time) and cleans up in `after()`. Copy that pattern; hud/sage tests once leaked the user's real locale by skipping it.
 
 ## Conventions
 

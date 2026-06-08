@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Questline Arena — public demo worker.
+ * Slime Arena — public demo worker.
  * Serves the real arena assets (../public) and synthesizes the battle:
  *   /state  — fixed showcase snapshot + usage
  *   /events — SSE replay of the demo script, one full show per connection

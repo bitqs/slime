@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 'use strict';
-/* Feeds fake battle events into a throwaway CCQ_ROOT so the arena can be
+/* Feeds fake battle events into a throwaway SLIME_ROOT so the arena can be
    eyeballed without a real session:
-     CCQ_ROOT=/tmp/ccq-demo node scripts/demo-feed.js &
-     CCQ_ROOT=/tmp/ccq-demo QL_PORT=4118 node scripts/serve.js
+     SLIME_ROOT=/tmp/slime-demo node scripts/demo-feed.js &
+     SLIME_ROOT=/tmp/slime-demo SLIME_PORT=4118 node scripts/serve.js
 */
 const fs = require('node:fs');
 const path = require('node:path');
-const ROOT = process.env.CCQ_ROOT || '/tmp/ccq-demo';
+const ROOT = process.env.SLIME_ROOT || '/tmp/slime-demo';
 const dir = path.join(ROOT, 'sessions');
 fs.mkdirSync(dir, { recursive: true });
 const sid = 'demo';

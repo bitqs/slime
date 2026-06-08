@@ -1,4 +1,4 @@
-// Central shared type definitions for Questline scripts.
+// Central shared type definitions for Slime scripts.
 
 export interface BossState {
   name: string;
@@ -64,7 +64,7 @@ export interface Profile {
 /** Locale catalog: string keys → string values (loaded from JSON). */
 export type LocaleCatalog = Record<string, unknown>;
 
-export interface QLEvent {
+export interface SlimeEvent {
   t: number;
   kind: string;
   text?: string;

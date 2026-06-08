@@ -8,7 +8,7 @@ const path = require('node:path');
 const { safeWrite, safeAppend, readJson, safeMkdir } = require('../scripts/lib/safe-io');
 
 function tmpdir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-safeio-'));
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'slime-safeio-'));
 }
 
 test('safeWrite writes content atomically with 0600', () => {
@@ -103,7 +103,7 @@ test('sanitize handles null/undefined', () => {
 
 test('readEvents skips corrupt JSONL lines instead of throwing', () => {
   const d = tmpdir();
-  process.env.CCQ_ROOT = d;
+  process.env.SLIME_ROOT = d;
   delete require.cache[require.resolve('../scripts/lib/state')];
   try {
     const state = require('../scripts/lib/state');
@@ -114,14 +114,14 @@ test('readEvents skips corrupt JSONL lines instead of throwing', () => {
     assert.strictEqual(evs.length, 2);
     assert.strictEqual(evs[1].t, 2);
   } finally {
-    delete process.env.CCQ_ROOT;
+    delete process.env.SLIME_ROOT;
     delete require.cache[require.resolve('../scripts/lib/state')];
   }
 });
 
 test('literal-null JSON files do not crash locale/usage', () => {
   const d = tmpdir();
-  process.env.CCQ_ROOT = d;
+  process.env.SLIME_ROOT = d;
   for (const m of ['state', 'locale', 'usage', 'safe-io']) {
     delete require.cache[require.resolve(`../scripts/lib/${m}`)];
   }
@@ -135,7 +135,7 @@ test('literal-null JSON files do not crash locale/usage', () => {
     assert.ok(cache && typeof cache === 'object');
     assert.doesNotThrow(() => usage.cacheFromStatusline({ rate_limits: {} }));
   } finally {
-    delete process.env.CCQ_ROOT;
+    delete process.env.SLIME_ROOT;
     for (const m of ['state', 'locale', 'usage', 'safe-io']) {
       delete require.cache[require.resolve(`../scripts/lib/${m}`)];
     }

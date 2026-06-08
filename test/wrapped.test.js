@@ -4,8 +4,8 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-process.env.CCQ_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'ccq-'));
-after(() => fs.rmSync(process.env.CCQ_ROOT, { recursive: true, force: true }));
+process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
+after(() => fs.rmSync(process.env.SLIME_ROOT, { recursive: true, force: true }));
 const state = require('../scripts/lib/state');
 const wrapped = require('../scripts/wrapped');
 

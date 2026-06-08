@@ -1,9 +1,9 @@
 ---
-description: Install the Questline statusline HUD
+description: Install the Slime statusline HUD
 allowed-tools: Read, Edit, Bash
 ---
 
-Help the user enable the Questline HUD:
+Help the user enable the Slime HUD:
 
 1. Resolve the plugin root: the directory containing this command file, up one level.
 2. Read `~/.claude/settings.json`. If a `statusLine` key exists, show it and ask before replacing.

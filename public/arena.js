@@ -194,7 +194,7 @@
   // slime textures shared with the rail (minions.js defines window.SlimeDesigns)
   const slimeTex = {};
   function slimeTexFor(form) {
-    const f = ((form | 0) % 6 + 6) % 6;
+    const f = ((form | 0) >>> 0) || 1; // full seed — variety is intrinsic, not %6
     if (!slimeTex[f] && window.SlimeDesigns) {
       const d = SlimeDesigns.designFor(f);
       slimeTex[f] = texFromMatrix(d.mat, SlimeDesigns.PALETTES[d.pal]);
@@ -267,9 +267,9 @@
       if (live) {
         const f = list[i].form || 0;
         if (s._form !== f) { s._form = f; s.texture = slimeTexFor(f); }
-        // motley pack: size varies per mob, derived from design+slot so it stays
-        // deterministic (replay-stable) yet reads as a random rabble, not clones.
-        s.scale.set(1.15 + ((f + i) % 5) * 0.16); // 1.15 … 1.79
+        // size is a slime's own attribute (from its seed), not a project metric
+        const sc = (window.SlimeDesigns ? SlimeDesigns.designFor(f).scale : 1) || 1;
+        s.scale.set(sc * 1.4); // stage-sized
         s._pct = list[i].status === 'in_progress' ? 55 : 100; // pending full, active half-felled
         ground(s);
       }

@@ -39,6 +39,27 @@
       [1,1,1,1,1,1],
       [0,1,1,1,1,1],
     ],
+    blob: [           // compact bean, 8 wide × 6 tall
+      [0,0,1,4],
+      [0,1,1,1],
+      [1,1,3,1],
+      [1,2,1,1],
+      [1,1,1,1],
+      [0,1,1,1],
+    ],
+    spire: [          // tall spike, 6 wide × 11 tall
+      [0,0,1],
+      [0,1,1],
+      [0,1,4],
+      [0,1,1],
+      [1,3,1],
+      [1,1,1],
+      [1,1,1],
+      [1,2,1],
+      [1,1,1],
+      [1,1,1],
+      [0,1,1],
+    ],
   };
   /** mirror a half-mask into a full symmetric matrix */
   function mirror(half) {
@@ -48,10 +69,13 @@
   function withFeature(mat, feat) {
     const m = mat.map((r) => [...r]);
     const w = m[0].length;
+    const cx = Math.floor(w / 2), h = m.length;
     if (feat === 'horns') { m[0][1] = 1; m[1][2] = 1; m[0][w - 2] = 1; m[1][w - 3] = 1; }
-    if (feat === 'crown') { m[0][Math.floor(w / 2) - 2] = 2; m[0][Math.floor(w / 2)] = 2; m[0][Math.floor(w / 2) + 1] = 2; }
-    if (feat === 'drips') { const h = m.length; m[h - 1][2] = 1; m[h - 1][w - 3] = 1; }
+    if (feat === 'crown') { m[0][cx - 2] = 2; m[0][cx] = 2; m[0][cx + 1] = 2; }
+    if (feat === 'drips') { m[h - 1][2] = 1; m[h - 1][w - 3] = 1; }
     if (feat === 'spikes') { m[1][0] = 2; m[3][0] = 2; m[1][w - 1] = 2; m[3][w - 1] = 2; }
+    if (feat === 'antenna') { m[0][2] = 2; m[0][w - 3] = 2; }
+    if (feat === 'fangs') { const r = Math.max(0, h - 3); m[r][cx - 1] = 4; m[r][cx] = 4; }
     return m;
   }
   const PALETTES = [
@@ -61,19 +85,37 @@
     ['', '#c83737', '#8a2020', '#1a1d24', '#e88080'], // red
     ['', '#b070d0', '#7a40a0', '#1a1d24', '#d8b0e8'], // violet
     ['', '#e8e0d0', '#a8a090', '#1a1d24', '#ffffff'], // bone
+    ['', '#3fc8c0', '#208a86', '#1a1d24', '#90f0ec'], // cyan
+    ['', '#e8842c', '#a85510', '#1a1d24', '#f8b870'], // orange
+    ['', '#e070a8', '#a04070', '#1a1d24', '#f8b0d4'], // pink
+    ['', '#8890a0', '#565e6e', '#1a1d24', '#c0c8d8'], // slate
+    ['', '#b8d030', '#88a020', '#1a1d24', '#e8f880'], // lime
+    ['', '#9050b0', '#603080', '#1a1d24', '#c890e0'], // plum
   ];
-  // 6 curated designs — distinct shape × palette × feature per form index
-  const DESIGNS = [
-    { mat: withFeature(mirror(HALF.round), null),    pal: 0 }, // green classic
-    { mat: withFeature(mirror(HALF.tall),  'horns'), pal: 1 }, // steel horned
-    { mat: withFeature(mirror(HALF.wide),  'drips'), pal: 2 }, // gold dripper
-    { mat: withFeature(mirror(HALF.round), 'spikes'),pal: 3 }, // red spiky
-    { mat: withFeature(mirror(HALF.tall),  'crown'), pal: 4 }, // violet king
-    { mat: withFeature(mirror(HALF.wide),  null),    pal: 5 }, // bone puddle
-  ];
+  const SHAPES = [HALF.round, HALF.tall, HALF.wide, HALF.blob, HALF.spire];
+  const FEATS = ['horns', 'crown', 'drips', 'spikes', 'antenna', 'fangs'];
+  const SIZES = [0.8, 1.0, 1.0, 1.15, 1.3];
   const DEAD_COLOR = '#3a4050';
 
-  function designFor(form) { return DESIGNS[((form | 0) % DESIGNS.length + DESIGNS.length) % DESIGNS.length]; }
+  /** Procedurally decode a seed into a slime: shape × palette × decorations ×
+   *  size × level. Pure + deterministic — same seed → same creature, so a given
+   *  todo/boss is stable across polls, but distinct seeds look wildly different.
+   *  Decoupled from any project metric (est/tokens): variety is intrinsic. */
+  const _cache = {};
+  function designFor(seed) {
+    const s = ((seed | 0) >>> 0) || 1;
+    if (_cache[s]) return _cache[s];
+    const shape = SHAPES[s % SHAPES.length];
+    const pal = (s >> 3) % PALETTES.length;
+    const level = ((s >> 7) % 5) + 1;                 // 1..5 — higher wears more
+    const scale = SIZES[(s >> 10) % SIZES.length];
+    let mat = mirror(shape);
+    const featCount = level >= 5 ? 2 : level >= 3 ? 1 : 0;
+    for (let k = 0; k < featCount; k++) {
+      mat = withFeature(mat, FEATS[(s >> (12 + k * 3)) % FEATS.length]);
+    }
+    return (_cache[s] = { mat, pal, scale, level });
+  }
 
   function drawSlime(cv, form, dead) {
     const d = designFor(form);
@@ -92,7 +134,7 @@
   }
 
   // shared with the arena (loaded before arena.js) — stage mobs match the rail
-  window.SlimeDesigns = { designFor, PALETTES, DESIGNS, drawSlime };
+  window.SlimeDesigns = { designFor, PALETTES, drawSlime };
 
   const railEl = () => document.getElementById('minion-rail');
   let lastKey = '';

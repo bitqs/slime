@@ -61,7 +61,7 @@ try {
         status: String(todo.status || 'pending'),
         label: boss.minionLabel(cwd, i, lang),
         activeForm: hud.sanitize(todo.activeForm, 60),
-        form: hash(String(todo.content || '')) % 6,
+        form: hash(String(todo.content || '')), // full seed → intrinsic slime variety
       }));
       const prevDone = new Set((Array.isArray(snap.todos) ? snap.todos : [])
         .filter((t) => t.status === 'completed').map((t) => t.content));

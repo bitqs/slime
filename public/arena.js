@@ -2,7 +2,9 @@
 /* Slime Arena on PixiJS. Read-only viewer: SSE events + /state polling.
    Cutscene steps are data; FX primitives interpret them (Task 9 adds scenes). */
 (async function () {
+  const calmStored = (() => { try { return localStorage.getItem('slimeCalm'); } catch (e) { return null; } })();
   const CALM = new URLSearchParams(location.search).has('calm')
+    || calmStored === '1'
     || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   if (CALM) document.body.classList.add('calm');
   // Day (light) / night (dark) theme. The page sets body.day from localStorage
@@ -1501,26 +1503,33 @@
     if (!guideEl) return;
     const show = force != null ? force : guideEl.style.display !== 'flex';
     guideEl.style.display = show ? 'flex' : 'none';
+    const hb = document.getElementById('help-btn');
+    if (hb) hb.setAttribute('aria-expanded', show ? 'true' : 'false');
+    if (show) { const box = document.getElementById('guide-box'); if (box) { box.setAttribute('tabindex', '-1'); box.focus(); } }
   }
   const calmBtn = document.getElementById('calm-btn');
   if (calmBtn) {
     if (CALM) calmBtn.style.borderColor = '#f0b541';
+    calmBtn.setAttribute('aria-pressed', CALM ? 'true' : 'false');
+    calmBtn.title = CALM ? 'calm on — restore motion/flashes' : 'calm off — reduce motion/flashes';
+    // persist in localStorage (durable across links/bookmarks) and clear any ?calm= so storage is authoritative
     calmBtn.addEventListener('click', () => {
-      const sp = new URLSearchParams(location.search);
-      if (sp.has('calm')) sp.delete('calm'); else sp.set('calm', '1');
-      location.search = sp.toString();
+      try { localStorage.setItem('slimeCalm', CALM ? '0' : '1'); } catch (e) { /* private mode */ }
+      const sp = new URLSearchParams(location.search); sp.delete('calm');
+      const qs = sp.toString();
+      location.href = location.pathname + (qs ? '?' + qs : '') + location.hash;
     });
   }
   const A = window.SlimeAudio;
   const musicBtn = document.getElementById('music-btn');
   if (musicBtn && A) {
-    const sync = () => { musicBtn.style.opacity = A.isMusicOn() ? '1' : '0.5'; musicBtn.style.borderColor = A.isMusicOn() ? '#f0b541' : ''; musicBtn.title = A.isMusicOn() ? 'music on' : 'music off'; };
+    const sync = () => { const on = A.isMusicOn(); musicBtn.textContent = on ? '🎵' : '🔇'; musicBtn.style.opacity = on ? '1' : '0.5'; musicBtn.style.borderColor = on ? '#f0b541' : ''; musicBtn.title = on ? 'music on' : 'music off'; musicBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); };
     sync();
     musicBtn.addEventListener('click', async () => { A.unlock(); await A.setMusic(!A.isMusicOn()); sync(); });
   }
   const sfxBtn = document.getElementById('sfx-btn');
   if (sfxBtn && A) {
-    const sync = () => { sfxBtn.style.opacity = A.isSfxOn() ? '1' : '0.5'; sfxBtn.style.borderColor = A.isSfxOn() ? '#f0b541' : ''; sfxBtn.title = A.isSfxOn() ? 'sound effects on' : 'sound effects off'; };
+    const sync = () => { const on = A.isSfxOn(); sfxBtn.textContent = on ? '🔊' : '🔇'; sfxBtn.style.opacity = on ? '1' : '0.5'; sfxBtn.style.borderColor = on ? '#f0b541' : ''; sfxBtn.title = on ? 'sound effects on' : 'sound effects off'; sfxBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); };
     sync();
     sfxBtn.addEventListener('click', async () => { A.unlock(); await A.setSfx(!A.isSfxOn()); A.play('ui'); sync(); });
   }
@@ -1542,8 +1551,10 @@
   const helpBtn = document.getElementById('help-btn');
   if (helpBtn) helpBtn.addEventListener('click', () => toggleGuide());
   if (guideEl) guideEl.addEventListener('click', () => toggleGuide(false));
+  const guideBox = document.getElementById('guide-box');
+  if (guideBox) guideBox.addEventListener('click', (e) => e.stopPropagation()); // reading inside the box shouldn't close it
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'h') toggleGuide();
-    if (e.key === 'Escape') toggleGuide(false);
+    if (e.key === 'h' && !/^(INPUT|TEXTAREA)$/.test((e.target && e.target.tagName) || '')) toggleGuide();
+    if (e.key === 'Escape') { toggleGuide(false); closeOverlays(); }
   });
 })();

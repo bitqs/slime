@@ -109,9 +109,9 @@ body.calm #user-status .us-fill{transition:none}
   <button id="day-btn" title="day / night theme">🌙</button>
   <button id="lang-btn" title="language / 语言">🌐</button>
   <button id="calm-btn" title="flash / calm toggle">✨</button>
-  <button id="help-btn" title="game guide (h)">?</button>
-  <a id="gh-btn" href="https://github.com/bitqs/slime" target="_blank" rel="noopener noreferrer" title="Slime on GitHub">🐙</a>
-  <a id="issue-btn" href="https://github.com/bitqs/slime/issues/new" target="_blank" rel="noopener noreferrer" title="report an issue">🐛</a>
+  <button id="help-btn" title="game guide (h)" aria-expanded="false" aria-controls="guide-overlay">?</button>
+  <a id="gh-btn" href="https://github.com/bitqs/slime" target="_blank" rel="noopener noreferrer" title="Slime on GitHub" aria-label="Slime on GitHub">🐙</a>
+  <a id="issue-btn" href="https://github.com/bitqs/slime/issues/new" target="_blank" rel="noopener noreferrer" title="report an issue" aria-label="Report an issue">🐛</a>
 </div>
 <div id="user-status" class="uw"><span class="uw-rule"></span>
   <div class="us-meters">
@@ -144,7 +144,7 @@ body.calm #user-status .us-fill{transition:none}
     <div id="choice-overlay"></div>
     <div id="plan-overlay"></div>
     <div id="feed-counter"></div>
-    <div id="guide-overlay">
+    <div id="guide-overlay" role="dialog" aria-modal="true" aria-label="game guide">
       <div id="guide-box">
         <b>⚔️ How to read the battle · 怎么看懂这场仗</b>
         <p>🗡️ <b>Boss</b> — your current quest in this project. Forged from your prompt; its size/tier comes from the estimated token cost. <i>Boss=当前任务,体型=预估 token 量。</i></p>

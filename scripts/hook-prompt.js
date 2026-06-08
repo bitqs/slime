@@ -24,7 +24,7 @@ try {
       if (cfg.haikuNaming && b.hp === 100 && !b.named) {
         b.named = true; boss.save(p.cwd || '', b);
         const { spawn } = require('node:child_process');
-        spawn('node', [require('node:path').join(__dirname, 'namer.js'), p.cwd || '', p.prompt || ''],
+        spawn(process.execPath, [require('node:path').join(__dirname, 'namer.js'), p.cwd || '', p.prompt || ''],
           { detached: true, stdio: 'ignore' }).unref();
       }
     } catch {}

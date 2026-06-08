@@ -35,10 +35,13 @@ test('levelFor: tolerant of junk input', () => {
   assert.equal(prog.levelFor('nope').level, 1);
 });
 
-test('xpForDefeat: 50 base + dmg + kills·20 + maxCombo·5', () => {
+test('xpForDefeat: 50 base + sqrt-capped dmg + kills·20 + maxCombo·5', () => {
   assert.equal(prog.xpForDefeat({}), 50);
-  assert.equal(prog.xpForDefeat({ dmg: 42, kills: 3, maxCombo: 7 }), 50 + 42 + 60 + 35);
+  const dmgXp = Math.round(40 * Math.sqrt(42)); // sub-linear dmg term
+  assert.equal(prog.xpForDefeat({ dmg: 42, kills: 3, maxCombo: 7 }), 50 + dmgXp + 60 + 35);
   assert.equal(prog.xpForDefeat(), 50);
+  // dmg term is capped at 300 so a giant generated file can't dominate XP
+  assert.equal(prog.xpForDefeat({ dmg: 5000 }), 50 + 300);
 });
 
 test('deriveStats: aggregates profile into badge stats', () => {

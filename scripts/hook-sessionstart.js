@@ -26,8 +26,16 @@ function ensureStatusline() {
   const dir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
   const settingsPath = path.join(dir, 'settings.json');
   const io = require('../core/safe-io');
-  const obj = /** @type {Record<string, unknown>} */ (io.readJson(settingsPath, {}) || {});
-  if (obj.statusLine) return; // respect whatever is already there
+  // Parse directly so a corrupt/half-written file is distinguishable from absent:
+  // readJson would mask both as {} and we'd then clobber real settings. Only write
+  // when the file is absent or parses to a real object that has no statusLine.
+  let obj = {};
+  if (fs.existsSync(settingsPath)) {
+    try { obj = JSON.parse(fs.readFileSync(settingsPath, 'utf8')); }
+    catch { return; } // unreadable → never overwrite
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
+    if (obj.statusLine) return; // respect whatever is already there
+  }
   obj.statusLine = { type: 'command', command: `node "${path.join(PLUGIN_ROOT, 'scripts', 'statusline.js')}"` };
   io.safeWrite(settingsPath, JSON.stringify(obj, null, 2));
 }

@@ -33,7 +33,7 @@ hooks (hooks/hooks.json → scripts/hook-*.js)          WRITERS, fire on every p
      profile.json, usage.json, boss state per-project  plan_scroll/plan_approved/potion…)
 
 consumers                                              READERS, never write game state
-  ├ scripts/statusline.js  one-line HUD (scripts/lib/hud.js), runs on every keystroke
+  ├ scripts/statusline.js  one-line HUD (core/hud.js), runs on every keystroke
   ├ scripts/watch.js       tmux top-pane live monitor
   └ scripts/serve.js       local HTTP: / (public/index.html) + /state + /events (SSE tail
                            of the jsonl) + exact-match static whitelist (arena.js,
@@ -41,13 +41,13 @@ consumers                                              READERS, never write game
                            path-derived fs reads)
 ```
 
-- `scripts/lib/` is the shared layer; `scripts/lib/types.d.ts` holds the central JSDoc shapes (Snapshot, UsageCache, SlimeEvent…). All state IO goes through `scripts/lib/safe-io.js` (atomic writes, tolerant reads).
+- `core/` is the shared engine layer; `core/types.d.ts` holds the central JSDoc shapes (Snapshot, UsageCache, SlimeEvent…). All state IO goes through `core/safe-io.js` (atomic writes, tolerant reads).
 - `public/arena.js` is the PixiJS arena: SSE events → FX primitives (`PRIM`); cutscenes are declarative `{at, do}` timelines played by `public/sequencer.js` (UMD — unit-tested in node, loaded as `SlimeSeq` in the browser). Extension point: `window.SlimeArena.on(handler)`.
 - `demo/` is a self-contained Cloudflare Worker serving `../public` verbatim plus a synthetic `/state` + `/events` show. It is excluded from tsconfig.
 
 ## Hard rules
 
-- **Observer principle**: the plugin must never affect the real session. Hooks are fail-soft — whole body in try/catch, always `process.exit(0)`, never block, no LLM calls (the heuristic `scripts/lib/estimate.js` exists precisely to avoid one). Claude's behavior with the plugin installed must stay byte-identical to without.
+- **Observer principle**: the plugin must never affect the real session. Hooks are fail-soft — whole body in try/catch, always `process.exit(0)`, never block, no LLM calls (the heuristic `core/estimate.js` exists precisely to avoid one). Claude's behavior with the plugin installed must stay byte-identical to without.
 - **Statusline safety**: anything rendered to the terminal goes through `hud.sanitize` (strips control chars/ANSI — state files are untrusted input replayed on every keystroke). Anything event-derived rendered in the arena DOM goes through `textContent`/`escHtml`, never `innerHTML`.
 - **Flash safety**: arena flashes are capped ≤3/sec by the sequencer governor; `?calm=1` and `prefers-reduced-motion` must keep degrading new effects (flash→fade, shake/chroma/hitstop off).
 - **i18n**: user-facing strings live in `data/locales/{en,zh}.json` (flat key→string, `locale.t` falls back to en). Player resource is named **Token** (boss HP keeps "HP"). When adding keys, add both languages.

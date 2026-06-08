@@ -79,6 +79,7 @@ scripts read the shared Slime state with `SLIME_HARNESS=codex`.
 | 🗡️ **Bosses = your goals** | Your prompt names the monster; your todo list is its HP bar |
 | 💀 **Kills confirm themselves** | Clear every todo and the boss falls on its own when the session ends — milestone recorded, no extra typing |
 | 🏆 **Turn reports** | Rank S/A/B/C when Claude stops: damage (lines changed), kills (tests passed), max combo |
+| ✦ **Level up** | Confirmed kills grant XP → levels, titles, and unlockable badges (`/slime:achievements`) |
 | 🏛️ **Milestone Wall** | Every defeated boss, dated — your project chronicle |
 | 💡 **Loading-screen tips** | Long waits teach you real Claude Code technique |
 | 🎬 **Cinematic arena** | Boss intros, victory blowouts, combo escalation, gamified choices, boss forge with token-estimate tiers — PixiJS, vendored, still zero npm deps. Add `?calm=1` (or set OS reduced-motion) for a flash-free arena |
@@ -100,6 +101,7 @@ Force one with `"lang": "zh"` in `~/.claude/slime/config.json`.
 | Command | Effect |
 |---|---|
 | `/slime:setup` | Enable the statusline HUD |
+| `/slime:achievements` | Your level, title, and badge grid |
 | `/slime:milestones` | Show the Milestone Wall |
 | `/slime:battlelog` | Replay this session's turn reports |
 | `/slime:wrapped` | Your week in battle — shareable card |

@@ -307,6 +307,17 @@ test('auto-HUD installs the statusline + emits the [HUD] open hint', () => {
   assert.match(JSON.parse(out).systemMessage, /Cmd\+Click.*\[HUD\]/);
 });
 
+test('auto-HUD never overwrites a corrupt settings.json', () => {
+  const cfgDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-cfg-'));
+  const sp = path.join(cfgDir, 'settings.json');
+  fs.writeFileSync(sp, '{ "model": "opus", oops not json');
+  execFileSync('node', [S('hook-sessionstart.js')], {
+    input: JSON.stringify({ session_id: 'auto4' }),
+    env: { ...ENV, CLAUDE_CONFIG_DIR: cfgDir, SLIME_ARENA_MARKER: liveMarker() },
+  });
+  assert.equal(fs.readFileSync(sp, 'utf8'), '{ "model": "opus", oops not json'); // untouched
+});
+
 test('auto-HUD never clobbers an existing statusLine', () => {
   const cfgDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-cfg-'));
   fs.writeFileSync(path.join(cfgDir, 'settings.json'),

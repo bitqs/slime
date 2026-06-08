@@ -40,7 +40,10 @@ function levelFor(xp) {
  *  @param {{ dmg?: number, kills?: number, maxCombo?: number }} [m] @returns {number} */
 function xpForDefeat(m) {
   m = m || {};
-  return 50 + (m.dmg || 0) + (m.kills || 0) * 20 + (m.maxCombo || 0) * 5;
+  // dmg (changed lines) is sub-linear and capped so one huge generated file can't
+  // dwarf real effort: a 42-line fight ≈ 259, a 5000-line dump still caps at 300.
+  const dmgXp = Math.min(300, Math.round(40 * Math.sqrt(Math.max(0, m.dmg || 0))));
+  return 50 + dmgXp + (m.kills || 0) * 20 + (m.maxCombo || 0) * 5;
 }
 
 /** @typedef {import('./types').Profile} Profile */

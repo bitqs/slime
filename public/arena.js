@@ -255,7 +255,7 @@
       nextDrift = rnd(800, 1700) | 0; // occasional — one drifts by every ~13–28s
       if (drifters.filter((d) => !d.meteor).length < 2) (Math.random() < 0.4 ? spawnRibbon : spawnSprite)();
     }
-    if (--nextMeteor <= 0) { nextMeteor = rnd(700, 1500) | 0; spawnMeteor(); }
+    if (!CALM && --nextMeteor <= 0) { nextMeteor = rnd(700, 1500) | 0; spawnMeteor(); } // honor reduced-motion
     for (let i = drifters.length - 1; i >= 0; i--) {
       const d = drifters[i], n = d.node;
       if (d.meteor) {
@@ -1031,11 +1031,7 @@
       else if (snap.boss && typeof snap.boss.hp === 'number') pct = snap.boss.hp;
       if (pct != null) {
         lastBossPct = pct;
-        // boss keeps its species look; HP shows on the bars, not by recoloring.
-        // hp still drives body size: full-HP looms huge, a battered one shrivels.
-        if (scene === 'battle' && encForm !== 'pack' && encForm !== 'mini') {
-          bossScaleTarget = battleScaleFor(lastEncEst, pct);
-        }
+        // boss keeps its species look AND its size; HP only shows on the bar.
       }
       if (snap.boss && typeof snap.boss.broken === 'boolean' && snap.boss.broken !== bossBroken) setBroken(snap.boss.broken);
     } else {
@@ -1151,15 +1147,10 @@
 
   // ── scene system: 'battle' | 'feeding' | 'settle' ─────────────────────────────
   let scene = 'battle';
-  let bossScaleTarget = null; // feeding growth tween target
+  let bossScaleTarget = null; // feeding growth tween target (pre-engage baby slime only)
   let lastFedEst = null;
-  /** battle size: tier × hp, exaggerated — a full-HP RAID towers past the canvas top */
-  function battleScaleFor(est, pct) {
-    const tier = bossTierFor(est);
-    const hp = pct == null ? 100 : Math.max(0, Math.min(100, pct));
-    const growth = tier.label === 'RAID BOSS' ? 3.2 : tier.label === 'ELITE' ? 0.9 : 0.45;
-    return Math.max(SLIME_MIN_SCALE, tier.scale * (0.6 + (hp / 100) * growth));
-  }
+  // Boss battle size is fixed per tier (>= SLIME_MIN_SCALE = 2× the knight), set
+  // once on appear; HP no longer resizes it.
   function setScene(next) {
     if (scene === next) return;
     scene = next;
@@ -1210,7 +1201,7 @@
         regenBoss(d.bossName);                 // seed the look from the boss's name
         const est = bossAppearanceEst();        // size/form/tier from identity, not tokens
         const tier = bossTierFor(est);
-        bossScaleTarget = battleScaleFor(est, 100); // fresh boss arrives at full menace
+        boss.scale.set(tier.scale); ground(boss); bossScaleTarget = null; // appear at full size, then constant
         applyForm(lastTodos, est);
         lockedTierColor = tier.color;
         document.getElementById('boss-name').style.color = tier.color;

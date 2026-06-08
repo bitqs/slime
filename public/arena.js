@@ -721,13 +721,14 @@
     return `${m}:${String(s % 60).padStart(2, '0')}`;
   }
   function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
-  /** one meter row: value text + a 0–100% fill bar (color optional). */
+  /** one meter row: value text + a 0–100% fill bar. color drives the CSS
+   *  gradient + glow via the --c custom property (LoL-style energy bar). */
   function setMeter(id, pct, valText, color) {
     setText(id, valText);
     const f = document.getElementById(id + '-fill');
     if (f) {
       f.style.width = (pct != null ? Math.max(0, Math.min(100, pct)) : 0) + '%';
-      if (color) f.style.background = color;
+      if (color) f.style.setProperty('--c', color);
     }
   }
   // top status window: numeric meters + categorical state (the actor badge).
@@ -748,7 +749,7 @@
     // Dtk CD — minutes until the 5h window resets (bar = fraction of 300m left).
     let dtkMin = null;
     if (fh && fh.resetsAt) { const m = (fh.resetsAt * 1000 - now) / 60000; if (m > 0) dtkMin = Math.round(m); }
-    setMeter('us-dtkcd', dtkMin != null ? (dtkMin / 300) * 100 : null, dtkMin != null ? dtkMin + 'm' : '—', '#7fa8c0');
+    setMeter('us-dtkcd', dtkMin != null ? (dtkMin / 300) * 100 : null, dtkMin != null ? dtkMin + 'm' : '—', '#46b3c9');
 
     // Wtk — weekly (7-day) token left; low is bad.
     const wtk = left(wk && wk.used);
@@ -756,7 +757,7 @@
     // Wtk CD — hours until the weekly window resets (bar = fraction of 168h left).
     let wtkHr = null;
     if (wk && wk.resetsAt) { const h = (wk.resetsAt * 1000 - now) / 3600000; if (h > 0) wtkHr = Math.round(h); }
-    setMeter('us-wtkcd', wtkHr != null ? (wtkHr / 168) * 100 : null, wtkHr != null ? wtkHr + 'h' : '—', '#7fa8c0');
+    setMeter('us-wtkcd', wtkHr != null ? (wtkHr / 168) * 100 : null, wtkHr != null ? wtkHr + 'h' : '—', '#46b3c9');
 
     // Ctx — context window used; high is bad.
     const ctx = usage && typeof usage.contextPct === 'number' ? Math.round(usage.contextPct) : null;
@@ -765,6 +766,9 @@
     // 游戏进程 — live RPG counters from the snapshot (boss HP shows on canvas).
     const s = data && data.snapshot;
     setText('pg-turn', s ? String(s.turn || 0) : '—');
+    // Pace — average wall-clock time per turn (session duration ÷ turns).
+    const dur = usage && typeof usage.durationMs === 'number' ? usage.durationMs : null;
+    setText('ttime', (dur != null && s && s.turn > 0) ? fmtDuration(Math.round(dur / s.turn)) : '—');
     setText('pg-combo', s ? '×' + (s.combo || 0) : '—');
     setText('pg-kills', s ? String(s.kills || 0) : '—');
     setText('pg-dmg', s ? String(s.dmg || 0) : '—');
@@ -796,8 +800,7 @@
       if (el) (onParent ? el.parentElement : el).title = t;
     };
     set('title', T.title); set('boss-name', T.boss);
-    set('gold', T.gold, true); set('weapon', T.weapon, true); set('atk', T.atk, true);
-    set('timer', T.timer, true);
+    // stats/progress rows carry their own static title= tooltips (game name + meaning).
     set('minion-rail', T.rail); set('calm-btn', T.calm); set('help-btn', T.help);
   }
 

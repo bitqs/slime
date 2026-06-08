@@ -17,10 +17,8 @@ canvas{display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-
 #log{width:100%;max-width:640px;min-height:80px;padding:6px 10px;background:#232733;border-top:1px solid #333a4a;overflow:hidden}
 .log-line{font-size:11px;color:#e8e0d0;opacity:0;animation:fadein 0.4s forwards;line-height:1.4em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-#stats{display:flex;flex-direction:column;gap:3px;font-size:10px;color:#7fa8c0;flex-shrink:0}
-#stats b{color:#e8e0d0;font-weight:normal}
-#progress{display:flex;flex-direction:column;gap:3px;font-size:10px;color:#7fa8c0;flex-shrink:0;margin-left:auto}
-#progress b{color:#e8e0d0;font-weight:normal}
+#stats,#progress{display:flex;flex-direction:column;gap:4px;font-size:10px;flex-shrink:0}
+#stats b,#progress b{color:#f4ecd8;font-weight:bold}
 .gold-tick{animation:goldpop .5s}
 @keyframes goldpop{30%{color:#f0b541;transform:scale(1.25)}}
 #choice-overlay,#plan-overlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-end;z-index:20;padding-bottom:8px}
@@ -43,14 +41,21 @@ body.calm .minion-hp-fill{transition:none}
 .minion-name{font-size:8px;color:#7fa8c0;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .minion-grave{position:absolute;top:0;font-size:12px}
 #feed-counter{position:absolute;right:8px;bottom:26px;font-size:10px;color:#f0b541;text-shadow:1px 1px #000;display:none;z-index:3}
-#user-status{width:100%;max-width:640px;display:flex;flex-direction:row;align-items:flex-start;gap:16px;padding:5px 10px;background:#1f2530;border-bottom:1px solid #333a4a;font-size:10px}
-#user-status .us-meters{display:flex;flex-direction:column;gap:3px;flex-shrink:0;min-width:150px}
-#user-status .us-meter{display:flex;align-items:center;gap:5px}
-#user-status .us-label{color:#7fa8c0;width:62px;flex-shrink:0}
-#user-status .us-track{flex:1;height:5px;background:#1a1d24;border:1px solid #333a4a;overflow:hidden}
-#user-status .us-fill{display:block;height:100%;width:0;background:#6abe30;transition:width .3s}
+#user-status{width:100%;max-width:640px;display:flex;flex-direction:row;align-items:flex-start;justify-content:space-between;gap:16px;padding:6px 14px;background:#1f2530;border-bottom:1px solid #333a4a;font-size:10px}
+#user-status .us-meter,#stats .srow,#progress .srow{min-height:13px;position:relative}
+#user-status [data-tip]{cursor:help}
+#user-status [data-tip]:hover::after{content:attr(data-tip);position:absolute;left:6px;top:calc(100% + 3px);z-index:50;white-space:nowrap;background:#11141b;color:#e8e0d0;border:1px solid #f0b541;padding:3px 7px;font-size:9px;letter-spacing:.3px;box-shadow:0 2px 8px rgba(0,0,0,.7);pointer-events:none}
+#user-status .us-meters{display:flex;flex-direction:column;gap:4px;flex-shrink:0;min-width:188px}
+#user-status .us-meter{display:flex;align-items:center;gap:6px}
+#user-status .ico{width:15px;text-align:center;flex-shrink:0;font-size:10px}
+#user-status .us-meter .lbl{width:48px;text-align:left;color:#cfa54a;font-size:9px;letter-spacing:.6px;text-transform:uppercase;flex-shrink:0}
+#stats .srow,#progress .srow{display:flex;align-items:center;gap:6px}
+#stats .lbl,#progress .lbl{width:44px;text-align:left;color:#cfa54a;font-size:9px;letter-spacing:.6px;text-transform:uppercase;flex-shrink:0}
+#user-status .us-track{position:relative;flex:1;height:11px;background:linear-gradient(180deg,#0b0d12,#171b24);border:1px solid #4a4126;box-shadow:inset 0 1px 2px rgba(0,0,0,.6);overflow:hidden}
+#user-status .us-fill{display:block;height:100%;width:0;background:var(--c,#6abe30);background:linear-gradient(180deg,color-mix(in srgb,var(--c,#6abe30) 60%,#fff) 0%,var(--c,#6abe30) 55%,color-mix(in srgb,var(--c,#6abe30) 78%,#000) 100%);box-shadow:0 0 5px var(--c,#6abe30);transition:width .3s}
+#user-status .us-track::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 7px,rgba(0,0,0,.4) 7px 8px)}
 body.calm #user-status .us-fill{transition:none}
-#user-status .us-val{color:#e8e0d0;width:34px;text-align:right;flex-shrink:0}
+#user-status .us-val{position:absolute;right:3px;top:50%;transform:translateY(-50%);z-index:2;color:#fff;font-size:8px;font-weight:bold;text-shadow:1px 1px 0 #000,0 0 2px #000}
 #calm-btn{flex-shrink:0;background:#232733;color:#f0b541;border:1px solid #333a4a;font-family:monospace;font-size:11px;width:18px;height:18px;cursor:pointer;padding:0}
 #help-btn,#lang-btn{flex-shrink:0;background:#232733;color:#f0b541;border:1px solid #f0b541;font-family:monospace;font-size:11px;width:18px;height:18px;cursor:pointer;padding:0}
 #guide-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(26,29,36,.92);z-index:30}
@@ -70,24 +75,25 @@ body.calm #user-status .us-fill{transition:none}
 </div>
 <div id="user-status">
   <div class="us-meters">
-    <div class="us-meter"><span class="us-label">⚡ Dtk</span><span class="us-track"><span id="us-dtk-fill" class="us-fill"></span></span><span id="us-dtk" class="us-val">—</span></div>
-    <div class="us-meter"><span class="us-label">⏱ Dtk CD</span><span class="us-track"><span id="us-dtkcd-fill" class="us-fill"></span></span><span id="us-dtkcd" class="us-val">—</span></div>
-    <div class="us-meter"><span class="us-label">🏕️ Wtk</span><span class="us-track"><span id="us-wtk-fill" class="us-fill"></span></span><span id="us-wtk" class="us-val">—</span></div>
-    <div class="us-meter"><span class="us-label">⏱ Wtk CD</span><span class="us-track"><span id="us-wtkcd-fill" class="us-fill"></span></span><span id="us-wtkcd" class="us-val">—</span></div>
-    <div class="us-meter"><span class="us-label">🧠 Ctx</span><span class="us-track"><span id="us-ctx-fill" class="us-fill"></span></span><span id="us-ctx" class="us-val">—</span></div>
+    <div class="us-meter" data-tip="Dtk — daily token, 5h rate window left"><span class="ico">⚡</span><span class="lbl">Dtk</span><span class="us-track"><span id="us-dtk-fill" class="us-fill"></span><span id="us-dtk" class="us-val">—</span></span></div>
+    <div class="us-meter" data-tip="Dtk CD — minutes until the 5h window resets"><span class="ico">⏱</span><span class="lbl">Dtk&nbsp;CD</span><span class="us-track"><span id="us-dtkcd-fill" class="us-fill"></span><span id="us-dtkcd" class="us-val">—</span></span></div>
+    <div class="us-meter" data-tip="Wtk — weekly token, 7-day window left"><span class="ico">🏕️</span><span class="lbl">Wtk</span><span class="us-track"><span id="us-wtk-fill" class="us-fill"></span><span id="us-wtk" class="us-val">—</span></span></div>
+    <div class="us-meter" data-tip="Wtk CD — hours until the weekly window resets"><span class="ico">⏱</span><span class="lbl">Wtk&nbsp;CD</span><span class="us-track"><span id="us-wtkcd-fill" class="us-fill"></span><span id="us-wtkcd" class="us-val">—</span></span></div>
+    <div class="us-meter" data-tip="Ctx — context window used"><span class="ico">🧠</span><span class="lbl">Ctx</span><span class="us-track"><span id="us-ctx-fill" class="us-fill"></span><span id="us-ctx" class="us-val">—</span></span></div>
   </div>
   <div id="stats">
-    <span>💰 <b id="gold">—</b></span>
-    <span>⚔️ <b id="weapon">—</b></span>
-    <span>🗡️ <b id="atk">—</b></span>
-    <span>⏳ <b id="timer">—</b></span>
+    <div class="srow" data-tip="Spent — session cost (USD)"><span class="ico">💰</span><span class="lbl">Spent</span><b id="gold">—</b></div>
+    <div class="srow" data-tip="Weapon — active model"><span class="ico">⚔️</span><span class="lbl">Weapon</span><b id="weapon">—</b></div>
+    <div class="srow" data-tip="Time — session duration"><span class="ico">⏳</span><span class="lbl">Time</span><b id="timer">—</b></div>
+    <div class="srow" data-tip="Pace — average time per turn"><span class="ico">⏲</span><span class="lbl">Pace</span><b id="ttime">—</b></div>
+    <div class="srow" data-tip="Turn — prompts this session"><span class="ico">🔄</span><span class="lbl">Turn</span><b id="pg-turn">—</b></div>
   </div>
   <div id="progress">
-    <span>🔄 <b id="pg-turn">—</b></span>
-    <span>🔥 <b id="pg-combo">—</b></span>
-    <span>💀 <b id="pg-kills">—</b></span>
-    <span>💥 <b id="pg-dmg">—</b></span>
-    <span>🐺 <b id="pg-summons">—</b></span>
+    <div class="srow" data-tip="Atk — lines added / removed this turn"><span class="ico">🗡️</span><span class="lbl">Atk</span><b id="atk">—</b></div>
+    <div class="srow" data-tip="Dmg — total lines changed"><span class="ico">💥</span><span class="lbl">Dmg</span><b id="pg-dmg">—</b></div>
+    <div class="srow" data-tip="Combo — consecutive tool strikes"><span class="ico">🔥</span><span class="lbl">Combo</span><b id="pg-combo">—</b></div>
+    <div class="srow" data-tip="Kills — tests passed"><span class="ico">💀</span><span class="lbl">Kills</span><b id="pg-kills">—</b></div>
+    <div class="srow" data-tip="Summon — subagent dispatches"><span class="ico">🐺</span><span class="lbl">Summon</span><b id="pg-summons">—</b></div>
   </div>
 </div>
 <div id="stage-wrap">

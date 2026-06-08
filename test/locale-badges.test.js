@@ -55,3 +55,25 @@ test('quest.done + ach.quest* keys exist in both catalogs', () => {
     assert.ok(zh[k], `zh missing ${k}`);
   }
 });
+
+const loot = require('../data/loot.json');
+
+test('loot.json: ids unique, reward shape valid', () => {
+  const ids = loot.rewards.map((r) => r.id);
+  assert.equal(new Set(ids).size, ids.length, 'duplicate loot id');
+  assert.equal(typeof loot.chance, 'number');
+  for (const r of loot.rewards) {
+    assert.ok(r.id && r.nameKey && r.fx, `loot missing field: ${JSON.stringify(r)}`);
+    assert.equal(typeof r.weight, 'number');
+    assert.equal(typeof r.xp, 'number');
+  }
+});
+
+test('every loot nameKey + loot.drop resolve in en and zh', () => {
+  const en = read('en');
+  const zh = read('zh');
+  for (const k of ['loot.drop', ...loot.rewards.map((r) => r.nameKey)]) {
+    assert.ok(en[k], `en missing ${k}`);
+    assert.ok(zh[k], `zh missing ${k}`);
+  }
+});

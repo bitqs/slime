@@ -1,0 +1,8 @@
+{
+  "chance": 0.03,
+  "rewards": [
+    { "id": "xp_small",  "weight": 6, "xp": 5,  "nameKey": "loot.xpSmall",  "fx": "spark" },
+    { "id": "xp_medium", "weight": 3, "xp": 10, "nameKey": "loot.xpMedium", "fx": "spark" },
+    { "id": "xp_big",    "weight": 1, "xp": 15, "nameKey": "loot.xpBig",    "fx": "burst" }
+  ]
+}

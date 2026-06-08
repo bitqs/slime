@@ -58,5 +58,9 @@
   "ach.questLine": "  🎯 {name}  {progress}/{target}",
   "quest.weeklyKills": "Weekly Hunter",
   "quest.streakDays": "Daily Grind",
-  "quest.done": "🎯 Quest complete — {name}"
+  "quest.done": "🎯 Quest complete — {name}",
+  "loot.drop": "✨ Loot — +{xp} XP {name}",
+  "loot.xpSmall": "trinket",
+  "loot.xpMedium": "relic",
+  "loot.xpBig": "treasure"
 }

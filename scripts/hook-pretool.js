@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-/** @typedef {import('./lib/types').HookPayload} HookPayload */
-/** @typedef {import('./lib/types').Snapshot} Snapshot */
-const state = require('./lib/state');
-const mapper = require('./lib/mapper');
-const locale = require('./lib/locale');
+/** @typedef {import('../core/types').HookPayload} HookPayload */
+/** @typedef {import('../core/types').Snapshot} Snapshot */
+const state = require('../core/state');
+const mapper = require('../core/mapper');
+const locale = require('../core/locale');
 try {
   /** @type {HookPayload | null} */
   const p = /** @type {HookPayload | null} */ (state.readStdin());
@@ -36,7 +36,7 @@ try {
       state.appendEvent(id, { t: Date.now(), kind: 'choice_open', questions });
     }
     if (p.tool_name === 'ExitPlanMode' && p.tool_input && p.tool_input.plan) {
-      state.appendEvent(id, { t: Date.now(), kind: 'plan_scroll', plan: String(p.tool_input.plan).slice(0, 1500), est: require('./lib/estimate').estimateTokens(p.tool_input.plan) });
+      state.appendEvent(id, { t: Date.now(), kind: 'plan_scroll', plan: String(p.tool_input.plan).slice(0, 1500), est: require('../core/estimate').estimateTokens(p.tool_input.plan) });
     }
   }
 } catch {}

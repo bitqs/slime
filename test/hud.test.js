@@ -6,7 +6,7 @@ const path = require('node:path');
 
 process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
 after(() => fs.rmSync(process.env.SLIME_ROOT, { recursive: true, force: true }));
-const hud = require('../scripts/lib/hud');
+const hud = require('../core/hud');
 
 const TIPS = ['💡 tip one', '💡 tip two'];
 
@@ -93,4 +93,13 @@ test('no live arena → no 【UI】 link (never a dead link)', () => {
   const snap = { inTurn: true, combo: 0, kills: 0, dmg: 0, summons: 0, updated: now };
   const line = hud.render(snap, {}, TIPS, now, null, 'en', null);
   assert.doesNotMatch(line, /【UI】/);
+});
+
+test('between turns also leads with 🟢 + live 【UI】 link', () => {
+  const now = Date.now();
+  const snap = { inTurn: false, updated: now - 60000, lastText: '🏆 Turn 3 complete — Rank S' };
+  const line = hud.render(snap, {}, TIPS, now, null, 'en', { port: 4117 });
+  assert.match(line, /🟢/);
+  assert.match(line, /【UI】/);
+  assert.match(line, /Rank S/); // result still shown after the badge
 });

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const fs = require('node:fs');
 const path = require('node:path');
-const state = require('./lib/state');
+const state = require('../core/state');
 let id = process.argv[2];
 try {
   if (!id) {

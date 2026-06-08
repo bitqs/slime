@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 const path = require('node:path');
-const state = require('./lib/state');
-const hud = require('./lib/hud');
-const usage = require('./lib/usage');
-const locale = require('./lib/locale');
-const arenaStatus = require('./lib/arena-status');
+const state = require('../core/state');
+const hud = require('../core/hud');
+const usage = require('../core/usage');
+const locale = require('../core/locale');
+const arenaStatus = require('../core/arena-status');
 try {
   const stdin = state.readStdin() || {};
   usage.cacheFromStatusline(stdin);          // relay official fields to hooks
   const id = stdin.session_id;
   const snap = id ? state.readSnapshot(id) : null;
   const lang = locale.current();
-  const { readJson } = require('./lib/safe-io');
+  const { readJson } = require('../core/safe-io');
   /** @type {string[]} */
   let tips = [];
   const fallbackTips = path.join(__dirname, '..', 'data', 'tips.json');

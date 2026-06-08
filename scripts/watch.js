@@ -5,14 +5,14 @@
  * Pure observer — never writes any file.
  */
 
-/** @typedef {import('./lib/types').Snapshot} Snapshot */
-/** @typedef {import('./lib/types').UsageCache} UsageCache */
-/** @typedef {import('./lib/types').SlimeEvent} SlimeEvent */
+/** @typedef {import('../core/types').Snapshot} Snapshot */
+/** @typedef {import('../core/types').UsageCache} UsageCache */
+/** @typedef {import('../core/types').SlimeEvent} SlimeEvent */
 
-const { ROOT, readSnapshot, readEvents, newestSessionId } = require('./lib/state');
-const { readCache, hp, restTime } = require('./lib/usage');
-const { bar } = require('./lib/report');
-const locale = require('./lib/locale');
+const { ROOT, readSnapshot, readEvents, newestSessionId } = require('../core/state');
+const { readCache, hp, restTime } = require('../core/usage');
+const { bar } = require('../core/report');
+const locale = require('../core/locale');
 
 // ── pure render ───────────────────────────────────────────────────────────────
 

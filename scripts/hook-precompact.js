@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-/** @typedef {import('./lib/types').Snapshot} Snapshot */
-const state = require('./lib/state');
+/** @typedef {import('../core/types').Snapshot} Snapshot */
+const state = require('../core/state');
 try {
   const p = state.readStdin();
   if (p && p.session_id) {

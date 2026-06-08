@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { estimateTokens, fmtTokens } = require('../scripts/lib/estimate');
+const { estimateTokens, fmtTokens } = require('../core/estimate');
 
 test('base estimate for tiny text is the floor', () => {
   assert.equal(estimateTokens(''), 25000);

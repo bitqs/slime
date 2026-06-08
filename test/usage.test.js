@@ -6,7 +6,7 @@ const path = require('node:path');
 
 process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
 after(() => fs.rmSync(process.env.SLIME_ROOT, { recursive: true, force: true }));
-const usage = require('../scripts/lib/usage');
+const usage = require('../core/usage');
 
 test('cacheFromStatusline stores official rate limits', () => {
   usage.cacheFromStatusline({

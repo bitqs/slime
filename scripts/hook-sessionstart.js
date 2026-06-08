@@ -2,7 +2,7 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const state = require('./lib/state');
+const state = require('../core/state');
 try {
   const p = state.readStdin();
   if (p && p.session_id) {
@@ -22,9 +22,9 @@ try {
       lastText: '⚔️ Slime — awaiting first encounter',
     });
     // Update notice — display-only systemMessage; Observer Principle intact.
-    const upd = require('./lib/update-check').checkUpdate();
+    const upd = require('../core/update-check').checkUpdate();
     if (upd) {
-      const { sanitize } = require('./lib/hud');
+      const { sanitize } = require('../core/hud');
       const lines = upd.subjects.map((s) => ` · ${sanitize(s, 80)}`).join('\n');
       process.stdout.write(JSON.stringify({
         systemMessage: `⬆️ Slime update available (${upd.count} commit${upd.count > 1 ? 's' : ''}):\n${lines}\nSay "更新slime" or run /slime:update.`,

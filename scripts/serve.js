@@ -11,10 +11,10 @@
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
-const { readSnapshot, eventsPath, newestSessionId } = require('./lib/state');
-const { readCache } = require('./lib/usage');
-const locale = require('./lib/locale');
-const arenaStatus = require('./lib/arena-status');
+const { readSnapshot, eventsPath, newestSessionId } = require('../core/state');
+const { readCache } = require('../core/usage');
+const locale = require('../core/locale');
+const arenaStatus = require('../core/arena-status');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const PORT = Number(process.env.SLIME_PORT) || 4117;

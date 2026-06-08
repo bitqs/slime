@@ -6,7 +6,7 @@ const path = require('node:path');
 
 // point state at a temp root BEFORE requiring the module
 process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
-const state = require('../scripts/lib/state');
+const state = require('../core/state');
 
 after(() => fs.rmSync(process.env.SLIME_ROOT, { recursive: true, force: true }));
 

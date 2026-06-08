@@ -58,7 +58,11 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live) {
     return sanitize(tips[Math.floor(now / 20000) % tips.length], 120);
   }
 
-  if (!snap.inTurn) return sanitize(snap.lastText, 120) || T('hud.yourTurn');
+  // Between turns: still lead with the badge + live arena link, then the result.
+  if (!snap.inTurn) {
+    const body = sanitize(snap.lastText, 120) || T('hud.yourTurn');
+    return `🟢${uiLink(live)} ${body}`;
+  }
 
   const parts = [];
   // plugin badge leads the line; boss shows as a slime icon + hp, never a name

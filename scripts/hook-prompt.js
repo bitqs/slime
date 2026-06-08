@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-/** @typedef {import('./lib/types').HookPayload} HookPayload */
-/** @typedef {import('./lib/types').Snapshot} Snapshot */
-const state = require('./lib/state');
-const boss = require('./lib/boss');
-const locale = require('./lib/locale');
+/** @typedef {import('../core/types').HookPayload} HookPayload */
+/** @typedef {import('../core/types').Snapshot} Snapshot */
+const state = require('../core/state');
+const boss = require('../core/boss');
+const locale = require('../core/locale');
 try {
   /** @type {HookPayload | null} */
   const p = /** @type {HookPayload | null} */ (state.readStdin());
@@ -15,12 +15,12 @@ try {
     snap.inTurn = true;
     const lang = locale.current();
     const b = boss.loadOrCreate(p.cwd || '', p.prompt || '', lang);
-    const est = require('./lib/estimate').estimateTokens(p.prompt || '');
-    if (!b.estLines) b.estLines = require('./lib/estimate').estLines(est);
+    const est = require('../core/estimate').estimateTokens(p.prompt || '');
+    if (!b.estLines) b.estLines = require('../core/estimate').estLines(est);
     boss.save(p.cwd || '', b);
     try {
       const cfgPath = require('node:path').join(state.ROOT, 'config.json');
-      const cfg = /** @type {{ haikuNaming?: unknown }} */ (require('./lib/safe-io').readJson(cfgPath, {}) || {});
+      const cfg = /** @type {{ haikuNaming?: unknown }} */ (require('../core/safe-io').readJson(cfgPath, {}) || {});
       if (cfg.haikuNaming && b.hp === 100 && !b.named) {
         b.named = true; boss.save(p.cwd || '', b);
         const { spawn } = require('node:child_process');

@@ -5,7 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
-const boss = require('../scripts/lib/boss');
+const boss = require('../core/boss');
 
 test('nameBoss: epithet + compressed base + type, deterministic per prompt', () => {
   const a = boss.nameBoss('fix the login crash', '/p/slime');
@@ -49,7 +49,7 @@ test('loadOrCreate with no lang arg defaults to locale.current()', () => {
   fs.mkdirSync(path.join(tmpRoot, 'bosses'), { recursive: true });
   fs.writeFileSync(path.join(tmpRoot, 'config.json'), JSON.stringify({ lang: 'zh' }));
 
-  const stateModule = require('../scripts/lib/state');
+  const stateModule = require('../core/state');
   const origRoot = stateModule.ROOT;
 
   try {
@@ -57,17 +57,17 @@ test('loadOrCreate with no lang arg defaults to locale.current()', () => {
     Object.defineProperty(stateModule, 'ROOT', { value: tmpRoot, configurable: true });
 
     // Now load the boss module fresh with the new ROOT
-    delete require.cache[require.resolve('../scripts/lib/boss')];
-    delete require.cache[require.resolve('../scripts/lib/locale')];
-    const freshBoss = require('../scripts/lib/boss');
+    delete require.cache[require.resolve('../core/boss')];
+    delete require.cache[require.resolve('../core/locale')];
+    const freshBoss = require('../core/boss');
 
     const b = freshBoss.loadOrCreate('/p/freshzh', '修复崩溃');
     assert.match(b.name, /史莱姆$/, `Expected zh slime name, got: ${b.name}`);
   } finally {
     // Restore state.ROOT
     Object.defineProperty(stateModule, 'ROOT', { value: origRoot, configurable: true });
-    delete require.cache[require.resolve('../scripts/lib/boss')];
-    delete require.cache[require.resolve('../scripts/lib/locale')];
+    delete require.cache[require.resolve('../core/boss')];
+    delete require.cache[require.resolve('../core/locale')];
 
     // Cleanup
     fs.rmSync(tmpRoot, { recursive: true });
@@ -85,7 +85,7 @@ test('recordDefeat: milestone pushed, boss file cleared, count returned', () => 
   const n = boss.recordDefeat('/p/defeatme', b);
   assert.ok(n >= 1);
   assert.equal(fs.existsSync(boss.bossPath('/p/defeatme')), false);
-  const state = require('../scripts/lib/state');
+  const state = require('../core/state');
   const prof = state.readProfile();
   assert.equal(prof.milestones[prof.milestones.length - 1].boss, b.name);
 });

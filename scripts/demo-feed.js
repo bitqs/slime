@@ -36,7 +36,7 @@ const TODOS_ALL_DONE = [
   { content: 'loot the hoard',  status: 'completed',  label: 'QL mob 3', activeForm: '', form: 2 },
 ];
 
-/** @type {import('./lib/types').Snapshot} */
+/** @type {import('../core/types').Snapshot} */
 let snap = { sessionId: sid, turn: 1, combo: 0, kills: 0, dmg: 0, summons: 0, inTurn: true,
   boss: { name: BOSS, hp: 80 }, est: 180000, todos: TODOS_INITIAL, updated: Date.now() };
 fs.writeFileSync(snapPath, JSON.stringify(snap));

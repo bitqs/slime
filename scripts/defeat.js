@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-const boss = require('./lib/boss');
-const state = require('./lib/state');
+const boss = require('../core/boss');
+const state = require('../core/state');
 const fs = require('node:fs');
 
 const cwd = process.argv[2] || process.cwd();

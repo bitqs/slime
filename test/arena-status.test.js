@@ -9,7 +9,7 @@ const MARKER = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'slime-am-')), 'm
 process.env.SLIME_ARENA_MARKER = MARKER;
 after(() => fs.rmSync(path.dirname(MARKER), { recursive: true, force: true }));
 
-const arena = require('../scripts/lib/arena-status');
+const arena = require('../core/arena-status');
 
 test('no marker → readLive is null', () => {
   arena.clearMarker();

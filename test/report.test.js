@@ -5,7 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
-const report = require('../scripts/lib/report');
+const report = require('../core/report');
 
 test('rank: S no hits + kills, A few hits, C many hits', () => {
   assert.equal(report.rank({ hits: 0, kills: 2 }), 'S');

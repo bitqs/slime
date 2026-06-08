@@ -6,7 +6,7 @@ const path = require('node:path');
 
 process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
 after(() => fs.rmSync(process.env.SLIME_ROOT, { recursive: true, force: true }));
-const state = require('../scripts/lib/state');
+const state = require('../core/state');
 const wrapped = require('../scripts/wrapped');
 
 test('weekly aggregates last 7 days only', () => {

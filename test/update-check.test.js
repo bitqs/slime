@@ -6,7 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
-const { checkUpdate } = require('../scripts/lib/update-check');
+const { checkUpdate } = require('../core/update-check');
 
 function git(dir, ...args) {
   return execFileSync('git', ['-C', dir, ...args], { stdio: ['ignore', 'pipe', 'ignore'] })

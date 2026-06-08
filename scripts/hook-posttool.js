@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-/** @typedef {import('./lib/types').HookPayload} HookPayload */
-const state = require('./lib/state');
-const mapper = require('./lib/mapper');
-const locale = require('./lib/locale');
-const boss = require('./lib/boss');
+/** @typedef {import('../core/types').HookPayload} HookPayload */
+const state = require('../core/state');
+const mapper = require('../core/mapper');
+const locale = require('../core/locale');
+const boss = require('../core/boss');
 try {
   /** @type {HookPayload | null} */
   const p = /** @type {HookPayload | null} */ (state.readStdin());
@@ -19,7 +19,7 @@ try {
     if (ev.dmg && p.cwd) {
       const b = boss.loadOrCreate(p.cwd, '');
       b.dmgTaken = (b.dmgTaken || 0) + ev.dmg;
-      if (!b.estLines) b.estLines = require('./lib/estimate').estLines(null);
+      if (!b.estLines) b.estLines = require('../core/estimate').estLines(null);
       b.hp = Math.max(0, Math.round(100 * (1 - b.dmgTaken / b.estLines)));
       if (b.hp === 0 && !b.broken) {
         b.broken = true;
@@ -31,8 +31,8 @@ try {
     }
     if ((p.tool_name || '') === 'TodoWrite' && p.tool_input && p.tool_input.todos && p.cwd) {
       const lang = locale.current();
-      const hud = require('./lib/hud');
-      const { hash } = require('./lib/mapper');
+      const hud = require('../core/hud');
+      const { hash } = require('../core/mapper');
       const todos = p.tool_input.todos;
       const cwd = p.cwd;
       const b = boss.loadOrCreate(cwd, '');

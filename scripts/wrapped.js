@@ -2,8 +2,8 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const state = require('./lib/state');
-const locale = require('./lib/locale');
+const state = require('../core/state');
+const locale = require('../core/locale');
 
 const SEVEN_DAYS = 7 * 24 * 3600 * 1000;
 

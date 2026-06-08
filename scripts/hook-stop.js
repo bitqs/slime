@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-/** @typedef {import('./lib/types').HookPayload} HookPayload */
-/** @typedef {import('./lib/types').Snapshot} Snapshot */
-/** @typedef {import('./lib/types').UsageCache} UsageCache */
-const state = require('./lib/state');
-const report = require('./lib/report');
-const boss = require('./lib/boss');
-const usage = require('./lib/usage');
-const sage = require('./lib/sage');
-const locale = require('./lib/locale');
+/** @typedef {import('../core/types').HookPayload} HookPayload */
+/** @typedef {import('../core/types').Snapshot} Snapshot */
+/** @typedef {import('../core/types').UsageCache} UsageCache */
+const state = require('../core/state');
+const report = require('../core/report');
+const boss = require('../core/boss');
+const usage = require('../core/usage');
+const sage = require('../core/sage');
+const locale = require('../core/locale');
 try {
   /** @type {HookPayload | null} */
   const p = /** @type {HookPayload | null} */ (state.readStdin());
@@ -22,7 +22,7 @@ try {
     const lang = locale.current();
     const sageLine = sage.advise({ usage: u, bossHp: b ? b.hp : null, lang });
     // boss name is user-prompt- or LLM-derived — sanitize before terminal display
-    const { sanitize } = require('./lib/hud');
+    const { sanitize } = require('../core/hud');
     const card = report.render(agg, b && { name: sanitize(b.name), hp: b.hp }, snap, { usage: u, sageLine: sageLine ?? undefined, lang });
 
     if (b && p.cwd) {
@@ -41,7 +41,7 @@ try {
 
     state.appendEvent(id, { t: Date.now(), kind: 'turn_end', text: card });
     state.ensureDirs();
-    require('./lib/safe-io').safeAppend(state.reportPath(id), card + '\n\n');
+    require('../core/safe-io').safeAppend(state.reportPath(id), card + '\n\n');
 
     snap.inTurn = false;
     snap.combo = 0;

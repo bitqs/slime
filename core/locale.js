@@ -4,7 +4,7 @@ const path = require('node:path');
 const state = require('./state');
 const { readJson } = require('./safe-io');
 
-const CATALOG_DIR = path.join(__dirname, '..', '..', 'data', 'locales');
+const CATALOG_DIR = path.join(__dirname, '..', 'data', 'locales');
 /** @type {Record<string, LocaleCatalog>} */
 const cache = {};
 

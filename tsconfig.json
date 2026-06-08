@@ -11,6 +11,6 @@
     "types": ["node"],
     "skipLibCheck": true
   },
-  "include": ["scripts/**/*.js", "public/sequencer.js"],
+  "include": ["scripts/**/*.js", "core/**/*.js", "public/sequencer.js"],
   "exclude": ["public/arena.js", "public/vendor", "node_modules", "demo"]
 }

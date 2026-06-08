@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
-const mapper = require('../scripts/lib/mapper');
+const mapper = require('../core/mapper');
 
 test('cast announces real tool name in brackets', () => {
   const ev = mapper.cast({ tool_name: 'Grep', tool_input: { pattern: 'authMiddleware' } }, 0);

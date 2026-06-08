@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const state = require('./lib/state');
+const state = require('../core/state');
 try {
   const p = state.readStdin();
   if (p && p.session_id) {

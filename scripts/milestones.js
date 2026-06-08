@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const state = require('./lib/state');
+const state = require('../core/state');
 try {
   const prof = state.readProfile();
   const lines = ['🏛️  MILESTONE WALL', ''];

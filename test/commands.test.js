@@ -12,7 +12,7 @@ const S = (f) => path.join(__dirname, '..', 'scripts', f);
 test('defeat records milestone and clears boss', () => {
   // seed a boss for cwd
   process.env.SLIME_ROOT = ROOT;
-  const boss = require('../scripts/lib/boss');
+  const boss = require('../core/boss');
   const b = boss.loadOrCreate('/tmp/myapp', 'fix bug');
   b.hp = 10; b.turns = 4;
   boss.save('/tmp/myapp', b);
@@ -39,7 +39,7 @@ test('milestones renders the wall', () => {
 });
 
 test('namer renames boss file using injected command', () => {
-  const boss = require('../scripts/lib/boss');
+  const boss = require('../core/boss');
   const b = boss.loadOrCreate('/tmp/namerapp', 'add feature x');
   boss.save('/tmp/namerapp', b);
   execFileSync('node', [S('namer.js'), '/tmp/namerapp', 'add feature x'], {
@@ -53,7 +53,7 @@ test('defeat appends boss_down to the newest session', () => {
   fs.mkdirSync(path.join(ROOT, 'sessions'), { recursive: true });
   fs.writeFileSync(path.join(ROOT, 'sessions', `${sid}.json`), '{}');
 
-  const boss = require('../scripts/lib/boss');
+  const boss = require('../core/boss');
   const b = boss.loadOrCreate('/tmp/defeat-event-app', 'fix event');
   boss.save('/tmp/defeat-event-app', b);
 

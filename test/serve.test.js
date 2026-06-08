@@ -7,7 +7,7 @@ const path = require('node:path');
 process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
 after(() => fs.rmSync(process.env.SLIME_ROOT, { recursive: true, force: true }));
 const { createServer } = require('../scripts/serve');
-const state = require('../scripts/lib/state');
+const state = require('../core/state');
 
 test('serves whitelisted static assets with JS mime', async () => {
   const srv = createServer();

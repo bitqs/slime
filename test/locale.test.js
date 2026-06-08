@@ -6,8 +6,8 @@ const path = require('node:path');
 
 process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
 after(() => fs.rmSync(process.env.SLIME_ROOT, { recursive: true, force: true }));
-const locale = require('../scripts/lib/locale');
-const state = require('../scripts/lib/state');
+const locale = require('../core/locale');
+const state = require('../core/state');
 
 test('classify detects zh and en', () => {
   assert.equal(locale.classify('修复登录崩溃的bug'), 'zh');
@@ -40,7 +40,7 @@ test('fmt interpolates', () => {
 });
 
 test('zh report renders zh labels', () => {
-  const report = require('../scripts/lib/report');
+  const report = require('../core/report');
   const txt = report.render(
     { dmg: 5, kills: 1, hits: 0, maxCombo: 2 },
     { name: 'The Web Hydra', hp: 15 },

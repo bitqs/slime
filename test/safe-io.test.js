@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { safeWrite, safeAppend, readJson, safeMkdir } = require('../scripts/lib/safe-io');
+const { safeWrite, safeAppend, readJson, safeMkdir } = require('../core/safe-io');
 
 function tmpdir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'slime-safeio-'));
@@ -79,7 +79,7 @@ test('safeMkdir creates nested dirs, refuses symlinked target', () => {
   assert.strictEqual(safeMkdir(lnk), false);
 });
 
-const { sanitize } = require('../scripts/lib/hud');
+const { sanitize } = require('../core/hud');
 
 test('sanitize strips ESC/C0/C1 control chars', () => {
   assert.strictEqual(sanitize('a\x1b[31mred\x1b[0mb'), 'a[31mred[0mb');
@@ -104,9 +104,9 @@ test('sanitize handles null/undefined', () => {
 test('readEvents skips corrupt JSONL lines instead of throwing', () => {
   const d = tmpdir();
   process.env.SLIME_ROOT = d;
-  delete require.cache[require.resolve('../scripts/lib/state')];
+  delete require.cache[require.resolve('../core/state')];
   try {
-    const state = require('../scripts/lib/state');
+    const state = require('../core/state');
     fs.mkdirSync(path.join(d, 'sessions'), { recursive: true });
     fs.writeFileSync(path.join(d, 'sessions', 's1.jsonl'),
       '{"t":1,"kind":"cast"}\n{CORRUPT\n{"t":2,"kind":"resolve"}\n');
@@ -115,7 +115,7 @@ test('readEvents skips corrupt JSONL lines instead of throwing', () => {
     assert.strictEqual(evs[1].t, 2);
   } finally {
     delete process.env.SLIME_ROOT;
-    delete require.cache[require.resolve('../scripts/lib/state')];
+    delete require.cache[require.resolve('../core/state')];
   }
 });
 
@@ -123,13 +123,13 @@ test('literal-null JSON files do not crash locale/usage', () => {
   const d = tmpdir();
   process.env.SLIME_ROOT = d;
   for (const m of ['state', 'locale', 'usage', 'safe-io']) {
-    delete require.cache[require.resolve(`../scripts/lib/${m}`)];
+    delete require.cache[require.resolve(`../core/${m}`)];
   }
   try {
     fs.writeFileSync(path.join(d, 'config.json'), 'null');
     fs.writeFileSync(path.join(d, 'usage.json'), 'null');
-    const locale = require('../scripts/lib/locale');
-    const usage = require('../scripts/lib/usage');
+    const locale = require('../core/locale');
+    const usage = require('../core/usage');
     assert.doesNotThrow(() => locale.current());
     const cache = usage.readCache();
     assert.ok(cache && typeof cache === 'object');
@@ -137,7 +137,7 @@ test('literal-null JSON files do not crash locale/usage', () => {
   } finally {
     delete process.env.SLIME_ROOT;
     for (const m of ['state', 'locale', 'usage', 'safe-io']) {
-      delete require.cache[require.resolve(`../scripts/lib/${m}`)];
+      delete require.cache[require.resolve(`../core/${m}`)];
     }
   }
 });

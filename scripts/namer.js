@@ -3,8 +3,8 @@
 // rewrites the boss file when the name arrives. Template name stays if we fail.
 // No shell: argv-array exec only (SLIME_NAMER_CMD must be a JSON argv array).
 const { execFileSync } = require('node:child_process');
-const boss = require('./lib/boss');
-const locale = require('./lib/locale');
+const boss = require('../core/boss');
+const locale = require('../core/locale');
 
 const cwd = process.argv[2];
 const prompt = process.argv[3] || '';

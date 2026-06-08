@@ -184,7 +184,7 @@ test('stop hook auto-defeats a broken boss: milestone + boss_down + file gone', 
     tool_input: { todos: [{ content: 'a', activeForm: 'a', status: 'completed' }] }, tool_response: {},
   });
   run('hook-stop.js', { session_id: 's9', cwd: '/tmp/auto' });
-  const bossLib = require('../scripts/lib/boss');
+  const bossLib = require('../core/boss');
   assert.equal(fs.existsSync(bossLib.bossPath('/tmp/auto')), false);
   const evs = fs.readFileSync(path.join(ROOT, 'sessions', 's9.jsonl'), 'utf8')
     .trim().split('\n').map((l) => JSON.parse(l));
@@ -196,7 +196,7 @@ test('stop hook auto-defeats a broken boss: milestone + boss_down + file gone', 
 test('stop hook leaves an unbroken boss alone', () => {
   run('hook-prompt.js', { session_id: 's10', prompt: 'fix thing', cwd: '/tmp/alive' });
   run('hook-stop.js', { session_id: 's10', cwd: '/tmp/alive' });
-  const bossLib = require('../scripts/lib/boss');
+  const bossLib = require('../core/boss');
   assert.equal(fs.existsSync(bossLib.bossPath('/tmp/alive')), true);
 });
 

@@ -8,7 +8,7 @@
 body{background:#1a1d24;color:#e8e0d0;font-family:monospace;overflow:hidden;height:100vh;display:flex;flex-direction:column;align-items:center;user-select:none}
 #top-bar{width:100%;max-width:640px;display:flex;align-items:center;gap:8px;padding:6px 10px;background:#232733;border-bottom:2px solid #f0b541}
 #title{color:#f0b541;font-size:13px;font-weight:bold;white-space:nowrap;flex-shrink:0}
-#boss-name{color:#e8e0d0;font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+#boss-name{position:absolute;top:5px;left:50%;transform:translateX(-50%);z-index:5;color:#f0b541;font-size:12px;font-weight:bold;text-shadow:1px 1px 2px #000,0 0 3px #000;max-width:85%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;pointer-events:none}
 #hp-bar{display:flex;gap:2px;flex-shrink:0}
 .hp-seg{width:10px;height:10px;background:#232733;border:1px solid #f0b541;transition:background 0.2s}
 .hp-seg.on{background:#f0b541}
@@ -57,13 +57,14 @@ body.calm .minion-hp-fill{transition:none}
 <body>
 <div id="top-bar">
   <span id="title">🟢 SLIME</span>
-  <span id="boss-name">—</span>
+  <span style="flex:1"></span>
   <div id="hp-bar"></div>
   <span id="player-token">⚡Token —</span>
   <button id="calm-btn" title="flash / calm toggle">✨</button>
   <button id="help-btn" title="game guide (h)">?</button>
 </div>
 <div id="stage-wrap">
+  <div id="boss-name">—</div>
   <div id="canvas-wrap">
     <div id="crt"></div>
     <div id="overlay">waiting for a session…</div>

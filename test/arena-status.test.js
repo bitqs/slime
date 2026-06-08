@@ -52,3 +52,33 @@ test('clearMarker leaves a foreign-pid marker intact (no link-wipe on re-launch)
   arena.clearMarker();
   assert.strictEqual(fs.existsSync(MARKER), true);
 });
+
+test('default marker filename is namespaced by SLIME_ROOT — a debug arena under a different ROOT cannot hijack the real HUD link', () => {
+  // Load arena-status fresh with NO override and a chosen SLIME_ROOT, read its
+  // default markerPath, repeat for a second root. They must differ; same root
+  // must be stable. (This is the bug: a fixed temp marker let the demo/debug
+  // server overwrite the real session's arena-live marker.)
+  const savedMarker = process.env.SLIME_ARENA_MARKER;
+  const savedRoot = process.env.SLIME_ROOT;
+  delete process.env.SLIME_ARENA_MARKER;
+  /** @param {string} root @returns {string} */
+  const markerFor = (root) => {
+    process.env.SLIME_ROOT = root;
+    delete require.cache[require.resolve('../core/state')];
+    delete require.cache[require.resolve('../core/arena-status')];
+    return require('../core/arena-status').markerPath();
+  };
+  try {
+    const real = markerFor('/Users/x/.claude/slime');
+    const demo = markerFor('/tmp/slime-demo');
+    const realAgain = markerFor('/Users/x/.claude/slime');
+    assert.notStrictEqual(real, demo, 'distinct roots must map to distinct markers');
+    assert.strictEqual(real, realAgain, 'same root must be stable');
+    assert.ok(real.startsWith(path.join(os.tmpdir(), 'slime-arena-')), 'stays in tmpdir');
+  } finally {
+    if (savedMarker === undefined) delete process.env.SLIME_ARENA_MARKER; else process.env.SLIME_ARENA_MARKER = savedMarker;
+    if (savedRoot === undefined) delete process.env.SLIME_ROOT; else process.env.SLIME_ROOT = savedRoot;
+    delete require.cache[require.resolve('../core/state')];
+    delete require.cache[require.resolve('../core/arena-status')];
+  }
+});

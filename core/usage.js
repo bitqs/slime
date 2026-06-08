@@ -52,6 +52,13 @@ function hp(cache) {
   return Math.max(0, Math.round(100 - cache.fiveHour.used));
 }
 
+/** Weekly Token % left (7-day window) — mirrors hp() for the 5h window.
+ *  @param {UsageCache | null | undefined} cache @returns {number | null} */
+function week(cache) {
+  if (!cache || !cache.sevenDay || cache.sevenDay.used == null) return null;
+  return Math.max(0, Math.round(100 - cache.sevenDay.used));
+}
+
 /** @param {UsageCache | null | undefined} cache @returns {string | null} */
 function restTime(cache) {
   if (!cache || !cache.fiveHour || !cache.fiveHour.resetsAt) return null;
@@ -59,4 +66,4 @@ function restTime(cache) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-module.exports = { readCache, cacheFromStatusline, hp, restTime, cachePath };
+module.exports = { readCache, cacheFromStatusline, hp, week, restTime, cachePath };

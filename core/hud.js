@@ -6,13 +6,13 @@ const { bar } = require('./report');
 const usage = require('./usage');
 
 // OSC 8 hyperlink: terminals that support it make [HUD] clickable → local arena.
-// Built only when the arena is actually live, and from a numeric port + constants
-// only — never from state files (sanitize strips ESC). No live arena → no link,
-// so the HUD never shows a dead [HUD].
+// Always shown so the arena is one click away; the port is the live arena's when
+// one is running, else the default arena port. Built from a numeric port +
+// constants only — never from state files (sanitize strips ESC).
 /** @param {{ port: number } | null | undefined} live @returns {string} */
 function uiLink(live) {
-  if (!live || !Number.isInteger(live.port)) return '';
-  return `]8;;http://127.0.0.1:${live.port}[HUD]]8;;`;
+  const port = (live && Number.isInteger(live.port)) ? live.port : (Number(process.env.SLIME_PORT) || 4117);
+  return `]8;;http://127.0.0.1:${port}[HUD]]8;;`;
 }
 
 // Strip C0/C1 controls (incl. ESC → kills ANSI/OSC); preserve emoji/CJK;
@@ -49,6 +49,10 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live, level) {
   const T = (key, vars) => locale.fmt(locale.t(key, l), vars);
   const lv = level ? ` ✦Lv${level}` : '';
   const hpVal = usage.hp(usageCache);
+  const wtkVal = usage.week(usageCache);
+  // DTK (daily, 5h window) + WTK (weekly, 7-day window) meters, shown together.
+  const meters = [hpVal != null ? `⚡${hpVal}%` : '', wtkVal != null ? `🏕${wtkVal}%` : ''].filter(Boolean).join(' ');
+  const mSuffix = meters ? ' ' + meters : '';
   if (hpVal === 0) {
     const t = usage.restTime(usageCache);
     return t ? T('hud.restAt', { time: t }) : T('hud.restSoon');
@@ -63,12 +67,12 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live, level) {
   // Between turns: still lead with the badge + live arena link, then the result.
   if (!snap.inTurn) {
     const body = sanitize(snap.lastText, 120) || T('hud.yourTurn');
-    return `🟢${uiLink(live)}${lv} ${body}`;
+    return `🟢${uiLink(live)}${lv}${mSuffix} ${body}`;
   }
 
   const parts = [];
-  // plugin badge leads the line; boss shows as a slime icon + hp, never a name
-  parts.push(hpVal != null ? `🟢${uiLink(live)}${lv} ⚡${hpVal}%` : `🟢${uiLink(live)}${lv}`);
+  // plugin badge leads the line, then DTK/WTK meters; boss shows as a slime icon + hp
+  parts.push(`🟢${uiLink(live)}${lv}${mSuffix}`);
   const todos = Array.isArray(snap.todos) ? snap.todos : [];
   const doneCnt = todos.filter((t) => t.status === 'completed').length;
   const cnt = todos.length ? ` ⚔${doneCnt}/${todos.length}` : '';

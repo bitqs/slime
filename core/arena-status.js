@@ -12,11 +12,25 @@ const { safeWrite, readJson } = require('./safe-io');
 
 /** @typedef {{ port: number, pid: number }} ArenaMarker */
 
-// Fixed temp path so writer (serve.js) and reader (statusline) agree without
-// passing state. SLIME_ARENA_MARKER overrides it — tests use this to isolate.
+// Tiny stable string hash (djb2) → hex. Used only to namespace the marker
+// filename by SLIME_ROOT; not security-sensitive.
+/** @param {string} s @returns {string} */
+function rootKey(s) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+  return h.toString(16);
+}
+
+// Temp path so writer (serve.js) and reader (statusline) agree without passing
+// state, while keeping serve READ-ONLY w.r.t. ROOT. The filename is namespaced
+// by SLIME_ROOT so a throwaway arena (demo/debug under a different ROOT) can't
+// hijack the real session's HUD arena link — different ROOT → different marker.
+// SLIME_ARENA_MARKER overrides it — tests use this to isolate.
 /** @returns {string} */
 function markerPath() {
-  return process.env.SLIME_ARENA_MARKER || path.join(os.tmpdir(), 'slime-arena.json');
+  if (process.env.SLIME_ARENA_MARKER) return process.env.SLIME_ARENA_MARKER;
+  const root = require('./state').ROOT;
+  return path.join(os.tmpdir(), `slime-arena-${rootKey(root)}.json`);
 }
 
 /** @param {number} pid @returns {boolean} */

@@ -5,6 +5,9 @@
   const CALM = new URLSearchParams(location.search).has('calm')
     || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   if (CALM) document.body.classList.add('calm');
+  // Day (light) / night (dark) theme. The page sets body.day from localStorage
+  // before paint; the arena reads it to render a daytime sky vs the night starfield.
+  const DAY = document.body.classList.contains('day');
 
   const P = { bg:'#1a1d24', bg2:'#232733', gold:'#f0b541', ember:'#e8842c', red:'#c83737',
     bone:'#e8e0d0', steel:'#7fa8c0', dark:'#2e3547', floor:'#2e3547', green:'#6abe30' };
@@ -51,9 +54,13 @@
   }
 
   const W = 320, H = 180, FLOOR_Y = 145;
+  // The boss stands on the ground (a low stone dais step), facing the knight —
+  // big and planted, not floating. BOSS_FLOOR is the boss's feet line; just a few
+  // px above FLOOR_Y so the dais riser reads while the boss stays grounded.
+  const BOSS_FLOOR = FLOOR_Y - 4;
   // Boss slime renders at least this many times the knight's size. KNIGHT and
   // BOSS matrices share a 14px height, so scale maps 1:1 to "× the knight".
-  const SLIME_MIN_SCALE = 2;
+  const SLIME_MIN_SCALE = 3;
 
   function showOverlay(msg) {
     const ov = document.getElementById('overlay');
@@ -69,7 +76,7 @@
   if (typeof PIXI === 'undefined') return showOverlay('arena needs WebGL — PIXI failed to load');
   PIXI.TextureSource.defaultOptions.scaleMode = 'nearest';
   const app = new PIXI.Application();
-  try { await app.init({ width: W, height: H, background: P.bg, antialias: false }); }
+  try { await app.init({ width: W, height: H, background: DAY ? '#add2ef' : P.bg, antialias: false }); }
   catch (e) { return showOverlay('arena needs WebGL — ' + e.message); }
   app.canvas.style.width = '100%';
   document.getElementById('canvas-wrap').prepend(app.canvas);
@@ -108,6 +115,21 @@
   const bgFar = starLayer(40, 0.35);
   const bgNear = starLayer(28, 0.6);
   world.addChild(bgFar, bgNear);
+  // Day theme: hide the night stars, paint a sun + drifting clouds behind the floor.
+  if (DAY) {
+    bgFar.visible = bgNear.visible = false;
+    const sky = new PIXI.Graphics();
+    sky.rect(0, 0, W, FLOOR_Y).fill({ color: 0xbfe0f5, alpha: 0.5 });            // soft sky wash
+    sky.circle(48, 30, 13).fill(0xfff1b0);                                        // sun core
+    sky.circle(48, 30, 19).fill({ color: 0xffe680, alpha: 0.28 });               // sun glow
+    const cloud = (cx, cy, s) => {
+      sky.ellipse(cx, cy, 13 * s, 5 * s).fill({ color: 0xffffff, alpha: 0.85 });
+      sky.ellipse(cx + 9 * s, cy + 1, 9 * s, 4 * s).fill({ color: 0xffffff, alpha: 0.85 });
+      sky.ellipse(cx - 9 * s, cy + 1, 8 * s, 4 * s).fill({ color: 0xf0f6ff, alpha: 0.8 });
+    };
+    cloud(120, 26, 1); cloud(232, 18, 1.3); cloud(180, 44, 0.8);
+    world.addChildAt(sky, 0);
+  }
 
   // ── sky decor: sci-fi / AI things that drift across the starfield ──────────────
   // Pixel sprites + text ribbons + the odd meteor. Pure ambience: lives behind the
@@ -334,7 +356,7 @@
     return { tier, tex: bossTex[tier] };
   }
   const boss = new PIXI.Sprite(bossTexFor(100).tex);
-  boss.x = 220; boss.y = FLOOR_Y - 14;
+  boss.x = 220; boss.y = BOSS_FLOOR - 14;
   boss.visible = false;
   world.addChild(boss);
 
@@ -393,15 +415,18 @@
   function drawHud() {
     hpBars.clear();
     groundFx.clear();
-    const shadow = (cx, w, a) => groundFx.ellipse(Math.round(cx), FLOOR_Y + 1, Math.max(4, w / 2), 2).fill({ color: 0x000000, alpha: a });
+    // dais platforms first (behind shadows + units): hero wide/low, foe small/high
+    drawDais(groundFx, knight.x + knight.width / 2, FLOOR_Y, 20, 7);
+    const shadow = (cx, w, a, fy) => groundFx.ellipse(Math.round(cx), (fy == null ? FLOOR_Y : fy) + 1, Math.max(4, w / 2), 2).fill({ color: 0x000000, alpha: a });
     shadow(knight.x + knight.width / 2, knight.width * 0.85, 0.35);
     summons.forEach((su) => shadow(su.sprite.x + su.sprite.width / 2, su.sprite.width * 0.7, 0.25));
     packSprites.forEach((s) => { if (s.visible) shadow(s.x + s.width / 2, s.width * 0.7, 0.3); });
     if (boss.visible && !bossDead) {
       const cx = boss.x + boss.width / 2;
-      shadow(cx, boss.width * 0.85, 0.42);
+      drawDais(groundFx, cx, BOSS_FLOOR, Math.max(16, boss.width * 0.6), 9);
+      shadow(cx, boss.width * 0.85, 0.42, BOSS_FLOOR);
       const pulse = CALM ? 1 : 1 + Math.sin(frame / 20) * 0.12; // glowing target ring at the boss's feet
-      groundFx.ellipse(Math.round(cx), FLOOR_Y + 1, boss.width * 0.5 * pulse, 3.2 * pulse).stroke({ color: 0xf0b541, width: 1, alpha: 0.5 });
+      groundFx.ellipse(Math.round(cx), BOSS_FLOOR + 1, boss.width * 0.5 * pulse, 3.2 * pulse).stroke({ color: 0xf0b541, width: 1, alpha: 0.5 });
     }
     if (boss.visible && !bossDead) drawBar(hpBars, boss.x + boss.width / 2, boss.y - 4, lastBossPct, true);
     packSprites.forEach((s) => { if (s.visible) drawBar(hpBars, s.x + s.width / 2, s.y - 3, s._pct != null ? s._pct : 100); });
@@ -421,6 +446,17 @@
   }
   /** plant a sprite's feet on the floor (scaled height aware) */
   function ground(s, slump) { s.y = FLOOR_Y - s.height + (slump || 0); }
+  /** plant the boss's feet on its raised dais (the up-stage diagonal position) */
+  function groundBoss(slump) { boss.y = BOSS_FLOOR - boss.height + (slump || 0); }
+  /** a faked stone dome (3 stacked ellipses) the duelists stand on — Pokemon's
+   *  platform read, KOEI's muted stone palette. Drawn into groundFx behind units. */
+  function drawDais(g, cx, fy, rx, ry) {
+    const x = Math.round(cx), y = Math.round(fy);
+    g.ellipse(x, y + 2, rx, ry).fill({ color: 0x1d222c, alpha: 0.55 });        // cast shadow
+    g.ellipse(x, y, rx, ry).fill(0x1d222c);                                     // base
+    g.ellipse(x, y - 1, rx * 0.9, ry * 0.78).fill(0x2e3547);                    // mid
+    g.ellipse(x, y - 2, rx * 0.74, ry * 0.5).fill({ color: 0x3a4456, alpha: 0.9 }); // top crescent
+  }
 
   // ── encounter forms ──────────────────────────────────────────────────────────
   let encForm = 'big';          // 'mini' | 'big' | 'pack' | 'tentacled'
@@ -457,9 +493,9 @@
       const baseX = cx + side * (boss.width / 2 + reach);
       const sway = CALM ? 0 : Math.sin(frame / 12 + i * 1.7) * 2 * k;
       // 3 stacked segments tapering to a swaying tip — reads as a reaching arm
-      tentacleGfx.rect(baseX - 1.5 * k, FLOOR_Y - 4 * k, 3 * k, 4 * k).fill(col);
-      tentacleGfx.rect(baseX - k + sway * 0.5, FLOOR_Y - 8.5 * k, 2 * k, 4.5 * k).fill(col);
-      tentacleGfx.rect(baseX - 0.5 * k + sway, FLOOR_Y - 12 * k, k, 3.5 * k).fill(col);
+      tentacleGfx.rect(baseX - 1.5 * k, BOSS_FLOOR - 4 * k, 3 * k, 4 * k).fill(col);
+      tentacleGfx.rect(baseX - k + sway * 0.5, BOSS_FLOOR - 8.5 * k, 2 * k, 4.5 * k).fill(col);
+      tentacleGfx.rect(baseX - 0.5 * k + sway, BOSS_FLOOR - 12 * k, k, 3.5 * k).fill(col);
     }
   }
 
@@ -492,10 +528,13 @@
         ground(s);
       }
     });
-    // the boss (the quest itself) stays on stage in every form
+    // the boss (the quest itself) stays on stage in every form — and stays BIG.
+    // It looms up-stage on its dais in every form; the todos are the smaller
+    // front-line mobs (Pokemon read). Never shrink the foe just because there
+    // are pack mobs — the boss is the threat.
     if (!bossDead) boss.visible = true;
-    if (encForm === 'mini' || encForm === 'pack') { boss.scale.set(0.85); boss.x = 252; ground(boss); }
-    // 'big'/'tentacled' keep tier scale (encounter/feeding own it)
+    groundBoss();
+    // scale/x are owned by encounter + feeding (tier scale, centered up-stage)
     drawTentacles(alive.length);
   }
 
@@ -610,9 +649,9 @@
     zoom({ scale = 1.12, frames: f = 8 } = {}) { if (!CALM) { fx.zoom = scale; fx.zoomLeft = f; } },
     slam() {
       bossDead = false;
-      boss.visible = true; boss.y = FLOOR_Y - 14;
+      boss.visible = true; groundBoss();
       this.shake({ amp: 4, frames: 12 });
-      burst(boss.x + 8, FLOOR_Y, P.dark, 14);
+      burst(boss.x + 8, BOSS_FLOOR, P.dark, 14);
     },
     bossdrop() { bossDead = false; boss.visible = true; boss.y = -20; fx.bossFalling = true; },
     bossburst() { bossDead = true; burst(boss.x + boss.width / 2, boss.y + boss.height / 2, P.bone, 26); boss.visible = false; },
@@ -655,8 +694,8 @@
   function bossTierFor(est) {
     if (est == null) return { scale: SLIME_MIN_SCALE, color: '#e8e0d0', label: '' };
     if (est < 45000) return { scale: SLIME_MIN_SCALE, color: '#e8e0d0', label: 'normal' };
-    if (est < 120000) return { scale: 2.5, color: '#f0b541', label: 'ELITE' };
-    return { scale: 3, color: '#c83737', label: 'RAID BOSS' };
+    if (est < 120000) return { scale: 3.6, color: '#f0b541', label: 'ELITE' };
+    return { scale: 4.4, color: '#c83737', label: 'RAID BOSS' };
   }
   // mirror of scripts/lib/estimate.js fmtTokens (browser has no require)
   function fmtTokensJs(n) { return `≈${Math.round(n / 10000) * 10}k`; }
@@ -787,7 +826,7 @@
     // boss falling
     if (fx.bossFalling) {
       boss.y += 6;
-      if (boss.y >= FLOOR_Y - boss.height) { ground(boss); fx.bossFalling = false; PRIM.slam(); }
+      if (boss.y >= BOSS_FLOOR - boss.height) { groundBoss(); fx.bossFalling = false; PRIM.slam(); }
     }
 
     // knight lunge decay
@@ -805,7 +844,7 @@
       const s = boss.scale.x + (bossScaleTarget - boss.scale.x) * 0.06;
       boss.scale.set(s);
       boss.x = 220 - (s - 1) * 8;
-      ground(boss, bossBroken ? 3 : 0);
+      groundBoss(bossBroken ? 3 : 0);
       if (Math.abs(s - bossScaleTarget) < 0.01) { boss.scale.set(bossScaleTarget); bossScaleTarget = null; }
     }
 
@@ -814,7 +853,7 @@
     // always standing on the floor.
     if (boss.visible && !fx.bossFalling) {
       boss.scale.y = CALM ? boss.scale.x : boss.scale.x * (1 + Math.sin(frame / 9) * 0.05);
-      ground(boss, bossBroken ? 3 : 0);
+      groundBoss(bossBroken ? 3 : 0);
     }
     if (!CALM) {
       for (let i = 0; i < packSprites.length; i++) {
@@ -1149,8 +1188,8 @@
   let scene = 'battle';
   let bossScaleTarget = null; // feeding growth tween target (pre-engage baby slime only)
   let lastFedEst = null;
-  // Boss battle size is fixed per tier (>= SLIME_MIN_SCALE = 2× the knight), set
-  // once on appear; HP no longer resizes it.
+  // Boss battle size is fixed per tier (>= SLIME_MIN_SCALE = 3× the knight), set
+  // once on appear; HP no longer resizes it. The boss towers up-stage on its dais.
   function setScene(next) {
     if (scene === next) return;
     scene = next;
@@ -1158,7 +1197,7 @@
     if (next === 'feeding') {
       PRIM.dim({ on: true });
       // baby slime: if no engaged boss yet, show the boss sprite tiny — it IS the creature being fed
-      if (!engagedBoss) { bossDead = false; boss.visible = true; boss.scale.set(0.5); boss.x = 220 + 8; ground(boss); }
+      if (!engagedBoss) { bossDead = false; boss.visible = true; boss.scale.set(0.5); boss.x = 220 + 8; groundBoss(); }
       if (counter) counter.style.display = 'block';
     } else {
       PRIM.dim({ on: false });
@@ -1177,7 +1216,7 @@
       counter.textContent = `≈${fmtTokensJs(est).slice(1)} tokens${tier.label && tier.label !== 'normal' ? ' · ' + tier.label : ''}`;
     }
     if (delta && delta > 0) floater(`+${fmtTokensJs(delta)}`, boss.x + 8, boss.y - 10, P.gold, 9, true);
-    if (CALM) { boss.scale.set(bossScaleTarget); ground(boss); bossScaleTarget = null; return; }
+    if (CALM) { boss.scale.set(bossScaleTarget); groundBoss(); bossScaleTarget = null; return; }
     // morsel arc: knight → slime
     const n = small ? 3 : 6;
     for (let i = 0; i < n; i++) {
@@ -1191,7 +1230,25 @@
   let engagedBoss = null;
   let minionStreak = 0;
   let lastMinionKill = 0;
+  /** Map a battle event to a sound (no-op when muted / audio absent). */
+  function audioFor(d) {
+    const A = window.SlimeAudio;
+    if (!A || A.isMuted()) return;
+    switch (d.kind) {
+      case 'encounter': A.play('encounter'); A.startBgm(); break;
+      case 'resolve': A.play(d.kill ? 'kill' : (d.combo >= 10 ? 'crit' : 'hit')); break;
+      case 'minion_down': A.play('kill'); break;
+      case 'boss_broken': A.play('crit'); break;
+      case 'boss_down': A.play('victory'); break;
+      case 'level_up': case 'badge_unlocked': A.play('levelup'); break;
+      case 'choice_open': case 'choice_made': A.play('choice'); break;
+      case 'cast': if (d.tool === 'Agent') A.play('summon'); break;
+      case 'potion': A.play('potion'); break;
+      default: break;
+    }
+  }
   SlimeArena.on((d) => {
+    audioFor(d);
     if (d.kind === 'encounter') {
       const isNew = d.bossName && d.bossName !== engagedBoss;
       if (isNew) {
@@ -1201,7 +1258,7 @@
         regenBoss(d.bossName);                 // seed the look from the boss's name
         const est = bossAppearanceEst();        // size/form/tier from identity, not tokens
         const tier = bossTierFor(est);
-        boss.scale.set(tier.scale); ground(boss); bossScaleTarget = null; // appear at full size, then constant
+        boss.scale.set(tier.scale); boss.x = 220 - (tier.scale - 1) * 8; groundBoss(); bossScaleTarget = null; // appear at full size, then constant
         applyForm(lastTodos, est);
         lockedTierColor = tier.color;
         document.getElementById('boss-name').style.color = tier.color;
@@ -1244,9 +1301,9 @@
           s.visible = false;
         } else {
           PRIM.hitstop({ frames: 5 });
-          burst(boss.x + boss.width / 2, FLOOR_Y - 6, P.red, d.count ? 16 : 8);
-          burst(boss.x + boss.width / 2, FLOOR_Y - 6, P.bone, d.count ? 18 : 8);
-          floater(d.count ? `✦×${d.count}` : '✦', boss.x + boss.width / 2, FLOOR_Y - 18, P.gold, 10, true);
+          burst(boss.x + boss.width / 2, BOSS_FLOOR - 6, P.red, d.count ? 16 : 8);
+          burst(boss.x + boss.width / 2, BOSS_FLOOR - 6, P.bone, d.count ? 18 : 8);
+          floater(d.count ? `✦×${d.count}` : '✦', boss.x + boss.width / 2, BOSS_FLOOR - 18, P.gold, 10, true);
         }
         if (encForm === 'tentacled') drawTentacles(Math.max(0, lastTodos.filter((t) => t.status !== 'completed').length - 1));
       }
@@ -1359,6 +1416,30 @@
       const sp = new URLSearchParams(location.search);
       if (sp.has('calm')) sp.delete('calm'); else sp.set('calm', '1');
       location.search = sp.toString();
+    });
+  }
+  const soundBtn = document.getElementById('sound-btn');
+  if (soundBtn && window.SlimeAudio) {
+    const sync = () => {
+      const m = window.SlimeAudio.isMuted();
+      soundBtn.textContent = m ? '🔇' : '🔊';
+      soundBtn.title = m ? 'sound off — click for sound' : 'sound on';
+      soundBtn.style.borderColor = m ? '' : '#f0b541';
+    };
+    sync();
+    soundBtn.addEventListener('click', async () => {
+      window.SlimeAudio.unlock();                       // user gesture → unlock AudioContext
+      await window.SlimeAudio.setMuted(!window.SlimeAudio.isMuted());
+      sync();
+    });
+  }
+  const dayBtn = document.getElementById('day-btn');
+  if (dayBtn) {
+    dayBtn.textContent = DAY ? '☀️' : '🌙';
+    dayBtn.title = DAY ? 'switch to night (dark)' : 'switch to day (light)';
+    dayBtn.addEventListener('click', () => {
+      try { if (DAY) localStorage.removeItem('slimeDay'); else localStorage.setItem('slimeDay', '1'); } catch {}
+      location.reload();
     });
   }
   const langBtn = document.getElementById('lang-btn');

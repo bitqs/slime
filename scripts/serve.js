@@ -146,7 +146,26 @@ function handle404(res) {
 
 // Exact-match whitelist: no fs paths are derived from user input, so
 // traversal is structurally impossible.
-const STATIC_WHITELIST = new Set(['/arena.js', '/sequencer.js', '/minions.js', '/vendor/pixi.min.js']);
+const STATIC_WHITELIST = new Set(['/arena.js', '/sequencer.js', '/minions.js', '/audio.js', '/vendor/pixi.min.js']);
+
+// Vendored audio (optional, dropped in later — e.g. ElevenLabs-generated SFX/BGM).
+// The regex is the whole guard: a flat filename, fixed extensions, no slashes or
+// dots beyond the suffix, so path traversal is structurally impossible.
+const AUDIO_RE = /^\/audio\/[a-z0-9_-]+\.(mp3|ogg|wav)$/i;
+/** @type {Record<string, string>} */
+const AUDIO_TYPES = { mp3: 'audio/mpeg', ogg: 'audio/ogg', wav: 'audio/wav' };
+/** @param {string} url @param {ServerResponse} res */
+function handleAudio(url, res) {
+  try {
+    const ext = url.slice(url.lastIndexOf('.') + 1).toLowerCase();
+    const body = fs.readFileSync(path.join(PUBLIC_DIR, url));
+    res.writeHead(200, { 'Content-Type': AUDIO_TYPES[ext] || 'application/octet-stream' });
+    res.end(body);
+  } catch {
+    res.writeHead(404);
+    res.end('Not found');
+  }
+}
 
 /**
  * @param {string} url
@@ -197,6 +216,8 @@ function createServer() {
       handleSetLang(req, res);
     } else if (req.method === 'GET' && STATIC_WHITELIST.has(url)) {
       handleStatic(url, res);
+    } else if (req.method === 'GET' && AUDIO_RE.test(url)) {
+      handleAudio(url, res);
     } else {
       handle404(res);
     }

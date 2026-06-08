@@ -52,6 +52,7 @@ const FILES = [
 
   'public/index.html',
   'public/arena.js',
+  'public/audio.js',
   'public/minions.js',
   'public/sequencer.js',
   'public/vendor/VERSION',

@@ -8,6 +8,11 @@ const arenaStatus = require('../core/arena-status');
 try {
   const stdin = state.readStdin() || {};
   usage.cacheFromStatusline(stdin);          // relay official fields to hooks
+  // Opt-in: keep the arena server alive so the [HUD] link stays clickable.
+  try {
+    const cfg = /** @type {Record<string, unknown>} */ (require('../core/safe-io').readJson(path.join(state.ROOT, 'config.json'), {}) || {});
+    if (cfg.autoArena) require('../core/arena-launch').ensureArena();
+  } catch {}
   const id = stdin.session_id;
   const snap = id ? state.readSnapshot(id) : null;
   const lang = locale.current();

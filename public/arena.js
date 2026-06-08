@@ -911,7 +911,13 @@
         if (d.combo && d.combo > 1) floater(`×${d.combo}`, 250, 100, P.ember, 9, true);
         onCombo(d.combo || 0, d.dmg);
       }
-      if (d.kill) { burst(238, 125, P.bone, 8); PRIM.flash({ strength: 0.4 }); }
+      if (d.kill) { // execution: freeze-frame punch + splat + reward sparkle
+        PRIM.hitstop({ frames: 6 }); PRIM.shake({ amp: 3, frames: 7 });
+        burst(238, 125, P.red, 9); burst(238, 125, P.bone, 9);
+        PRIM.flash({ strength: 0.45 });
+        floater('SLAIN', 238, 108, P.red, 9, true);
+        floater('✦', 238, 96, P.gold, 10, true);
+      }
       if (d.hit) { PRIM.flash({ color: '#c83737', strength: 0.35 }); onCombo(0, 0); }
       if (d.text) pushLog(d.text);
     }
@@ -1035,10 +1041,17 @@
         const idx = lastTodos.findIndex((t) => t.label === d.minion);
         const s = idx >= 0 ? packSprites[idx] : null;
         if (s && s.visible) {
+          // execution: punch-freeze, slime splat + shards, and a reward sparkle
+          PRIM.hitstop({ frames: 6 }); PRIM.shake({ amp: 2, frames: 6 });
+          burst(s.x + s.width / 2, s.y + s.height / 2, P.red, 10);
           burst(s.x + s.width / 2, s.y + s.height / 2, P.bone, 12);
+          floater(d.count ? `✦×${d.count}` : '✦', s.x + s.width / 2, s.y - 6, P.gold, 10, true);
           s.visible = false;
         } else {
+          PRIM.hitstop({ frames: 5 });
+          burst(boss.x + boss.width / 2, FLOOR_Y - 6, P.red, d.count ? 16 : 8);
           burst(boss.x + boss.width / 2, FLOOR_Y - 6, P.bone, d.count ? 18 : 8);
+          floater(d.count ? `✦×${d.count}` : '✦', boss.x + boss.width / 2, FLOOR_Y - 18, P.gold, 10, true);
         }
         if (encForm === 'tentacled') drawTentacles(Math.max(0, lastTodos.filter((t) => t.status !== 'completed').length - 1));
       }

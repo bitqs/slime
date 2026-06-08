@@ -23,7 +23,7 @@ window.SlimeAudio = (function () {
   let loaded = false;
   /** @type {Record<string, AudioBuffer>} */ const buffers = {};
 
-  const NAMES = ['hit', 'crit', 'kill', 'encounter', 'levelup', 'victory', 'choice', 'summon', 'potion', 'ui'];
+  const NAMES = ['hit', 'crit', 'kill', 'encounter', 'levelup', 'victory', 'choice', 'summon', 'potion', 'ui', 'badge', 'quest', 'ultimate', 'loot'];
 
   try {
     sfxOn = localStorage.getItem('slimeSfx') === '1';
@@ -101,6 +101,11 @@ window.SlimeAudio = (function () {
     summon: () => tone({ freq: 180, dur: 0.14, type: 'sawtooth', vol: 0.15, slideTo: 320 }),
     potion: () => tone({ freq: 500, dur: 0.12, type: 'sine', vol: 0.14, slideTo: 920 }),
     ui: () => tone({ freq: 880, dur: 0.04, type: 'square', vol: 0.1 }),
+    // distinct progression cues so level / badge / quest don't all sound alike
+    badge: () => { tone({ freq: 784, dur: 0.12, type: 'triangle', vol: 0.18, slideTo: 1175 }); tone({ freq: 1047, dur: 0.18, type: 'sine', vol: 0.12, delay: 0.09 }); },
+    quest: () => [659, 880, 1047, 1319].forEach((f, i) => tone({ freq: f, dur: 0.16, type: 'triangle', vol: 0.15, delay: i * 0.07 })),
+    ultimate: () => { tone({ freq: 110, dur: 0.32, type: 'sawtooth', vol: 0.22, slideTo: 55 }); noise({ dur: 0.26, vol: 0.12 }); tone({ freq: 440, dur: 0.22, type: 'square', vol: 0.13, slideTo: 880, delay: 0.05 }); },
+    loot: () => { tone({ freq: 988, dur: 0.07, type: 'square', vol: 0.14, slideTo: 1319 }); tone({ freq: 1319, dur: 0.12, type: 'sine', vol: 0.1, slideTo: 1760, delay: 0.06 }); },
   };
 
   function play(name) {

@@ -1209,18 +1209,19 @@
       if (/\b(Agent|Task)\b/.test(d.tool || '') || /召唤|派遣|summon/i.test(d.text || '')) spawnSummon();
     }
     if (d.kind === 'resolve') {
+      const bx = boss.x + boss.width / 2; // anchor hit FX to the boss, not a fixed pixel
       if (typeof d.dmg === 'number' && d.dmg > 0) {
-        floater(`-${d.dmg}`, 230, 110, P.gold);
+        floater(`-${d.dmg}`, bx - 8, 110, P.gold);
         PRIM.shake({ amp: 3, frames: 6 });
-        if (d.combo && d.combo > 1) floater(`×${d.combo}`, 250, 100, P.ember, 9, true);
+        if (d.combo && d.combo > 1) floater(`×${d.combo}`, bx + 12, 100, P.ember, 9, true);
         onCombo(d.combo || 0, d.dmg);
       }
       if (d.kill) { // execution: freeze-frame punch + splat + reward sparkle
         PRIM.hitstop({ frames: 6 }); PRIM.shake({ amp: 3, frames: 7 });
-        burst(238, 125, P.red, 9); burst(238, 125, P.bone, 9);
+        burst(bx, 125, P.red, 9); burst(bx, 125, P.bone, 9);
         PRIM.flash({ strength: 0.45 });
-        floater('SLAIN', 238, 108, P.red, 9, true);
-        floater('✦', 238, 96, P.gold, 10, true);
+        floater('SLAIN', bx, 108, P.red, 9, true);
+        floater('✦', bx, 96, P.gold, 10, true);
       }
       if (d.hit) { PRIM.flash({ color: '#c83737', strength: 0.35 }); onCombo(0, 0); }
       if (d.text) pushLog(d.text);
@@ -1237,9 +1238,10 @@
       }
     }
     if (d.kind === 'loot_drop') {
-      floater(`+${d.xp} XP`, 238, 100, P.gold, 10, true);
-      floater('✨', 238, 88, P.gold, 11, true);
-      if (!CALM && d.fx === 'burst') burst(238, 112, P.gold, 9);
+      const cx = boss.x + boss.width / 2;
+      floater(`+${d.xp} XP`, cx, 100, P.gold, 10, true);
+      floater('✨', cx, 88, P.gold, 11, true);
+      if (!CALM && d.fx === 'burst') burst(cx, 112, P.gold, 9);
       if (d.text) pushLog(d.text);
     }
     EXTRA_HANDLERS.forEach((h) => { try { h(d); } catch {} });
@@ -1311,10 +1313,14 @@
       case 'minion_down': A.play('kill'); break;
       case 'boss_broken': A.play('crit'); break;
       case 'boss_down': A.play('victory'); break;
-      case 'level_up': case 'badge_unlocked': case 'quest_done': A.play('levelup'); break;
+      case 'ultimate': A.play('ultimate'); break;
+      case 'level_up': A.play('levelup'); break;
+      case 'badge_unlocked': A.play('badge'); break;
+      case 'quest_done': A.play('quest'); break;
       case 'choice_open': case 'choice_made': A.play('choice'); break;
       case 'cast': if (d.tool === 'Agent') A.play('summon'); break;
-      case 'potion': case 'loot_drop': A.play('potion'); break;
+      case 'potion': A.play('potion'); break;
+      case 'loot_drop': A.play('loot'); break;
       default: break;
     }
   }
@@ -1346,6 +1352,18 @@
     if (d.kind === 'boss_down') { clearSummons(); setScene('battle'); engagedBoss = null; setBroken(false); packSprites.forEach((s) => { s.visible = false; }); tentacleGfx.clear(); playScene(SCENE_VICTORY()); if (d.text) pushLog(d.text); }
     if (d.kind === 'potion') { playScene(SCENE_POTION); if (d.text) pushLog(d.text); }
     if (d.kind === 'boss_broken') { setBroken(true); PRIM.shake({ amp: 2, frames: 8 }); if (d.text) pushLog(d.text); }
+    // progression payoffs — each gets its own colour/word so they read as distinct
+    // wins (sound is differentiated in audioFor). Floaters are flash-safe; the
+    // sparkle burst is CALM-gated. Anchored to the boss so coords track the stage.
+    if (d.kind === 'level_up' || d.kind === 'badge_unlocked' || d.kind === 'quest_done') {
+      const cx = boss.x + boss.width / 2;
+      const pop = d.kind === 'level_up' ? ['LEVEL UP!', P.gold]
+        : d.kind === 'badge_unlocked' ? ['🏅 BADGE', P.steel]
+        : ['🎯 QUEST!', P.ember];
+      floater(pop[0], cx, 70, pop[1], 12, true);
+      if (!CALM) burst(cx, 82, pop[1], 10);
+      if (d.text) pushLog(d.text);
+    }
     if (d.kind === 'ultimate') {
       playScene([
         { at: 0,  do: 'letterbox', on: true },

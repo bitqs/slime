@@ -1305,7 +1305,7 @@
       case 'minion_down': A.play('kill'); break;
       case 'boss_broken': A.play('crit'); break;
       case 'boss_down': A.play('victory'); break;
-      case 'level_up': case 'badge_unlocked': A.play('levelup'); break;
+      case 'level_up': case 'badge_unlocked': case 'quest_done': A.play('levelup'); break;
       case 'choice_open': case 'choice_made': A.play('choice'); break;
       case 'cast': if (d.tool === 'Agent') A.play('summon'); break;
       case 'potion': A.play('potion'); break;

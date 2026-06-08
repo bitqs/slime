@@ -43,4 +43,56 @@ function xpForDefeat(m) {
   return 50 + (m.dmg || 0) + (m.kills || 0) * 20 + (m.maxCombo || 0) * 5;
 }
 
-module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS };
+/** @typedef {import('./types').Profile} Profile */
+/** @typedef {import('./types').BadgeDef} BadgeDef */
+
+/** Declarative badge criteria — the add-a-badge seam (data/badges.json). */
+const BADGES = /** @type {BadgeDef[]} */ (require('../data/badges.json'));
+
+/** Build the flat stat object every badge predicate checks. Pure; tolerates
+ *  old profiles missing any field.
+ *  @param {Profile} profile
+ *  @returns {{ bossCount: number, kills: number, maxCombo: number, projects: number, nightKills: number, badgeCount: number }} */
+function deriveStats(profile) {
+  const ms = (profile && profile.milestones) || [];
+  const totals = (profile && profile.totals) || { kills: 0 };
+  let maxCombo = 0;
+  let nightKills = 0;
+  const projects = new Set();
+  for (const m of ms) {
+    if (typeof m.maxCombo === 'number' && m.maxCombo > maxCombo) maxCombo = m.maxCombo;
+    if (m.project) projects.add(m.project);
+    if (typeof m.at === 'number' && new Date(m.at).getHours() < 6) nightKills++;
+  }
+  return {
+    bossCount: ms.length,
+    kills: totals.kills || 0,
+    maxCombo,
+    projects: projects.size,
+    nightKills,
+    badgeCount: ((profile && profile.badges) || []).length,
+  };
+}
+
+/** Ids of badges whose threshold is met and that the profile does not yet own.
+ *  @param {Profile} profile @param {BadgeDef[]} [defs]
+ *  @returns {string[]} */
+function evaluateBadges(profile, defs = BADGES) {
+  const stats = deriveStats(profile);
+  const owned = new Set(((profile && profile.badges) || []).map((b) => b.id));
+  const out = [];
+  for (const d of defs) {
+    if (owned.has(d.id)) continue;
+    const v = /** @type {Record<string, number>} */ (stats)[d.stat];
+    if (typeof v === 'number' && v >= d.gte) out.push(d.id);
+  }
+  return out;
+}
+
+/** @param {string} id @returns {string | undefined} the badge's locale nameKey */
+function nameKeyFor(id) {
+  const d = BADGES.find((b) => b.id === id);
+  return d ? d.nameKey : undefined;
+}
+
+module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS, BADGES, deriveStats, evaluateBadges, nameKeyFor };

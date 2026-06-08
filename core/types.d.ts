@@ -71,6 +71,13 @@ export interface Profile {
   streak?: { days: number; lastActiveDay: string };
 }
 
+export interface BadgeDef {
+  id: string;
+  nameKey: string;
+  stat: 'bossCount' | 'maxCombo' | 'kills' | 'projects' | 'nightKills' | 'badgeCount';
+  gte: number;
+}
+
 /** Locale catalog: string keys → string values (loaded from JSON). */
 export type LocaleCatalog = Record<string, unknown>;
 

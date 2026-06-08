@@ -40,3 +40,53 @@ test('xpForDefeat: 50 base + dmg + kills·20 + maxCombo·5', () => {
   assert.equal(prog.xpForDefeat({ dmg: 42, kills: 3, maxCombo: 7 }), 50 + 42 + 60 + 35);
   assert.equal(prog.xpForDefeat(), 50);
 });
+
+test('deriveStats: aggregates profile into badge stats', () => {
+  const profile = {
+    milestones: [
+      { boss: 'A', date: '2026-06-01', turns: 2, project: '/p/x', at: Date.parse('2026-06-01T03:00:00'), maxCombo: 4 },
+      { boss: 'B', date: '2026-06-02', turns: 3, project: '/p/y', at: Date.parse('2026-06-02T14:00:00'), maxCombo: 11 },
+      { boss: 'C', date: '2026-06-03', turns: 1, project: '/p/x', at: Date.parse('2026-06-03T13:00:00'), maxCombo: 2 },
+    ],
+    totals: { turns: 6, dmg: 100, kills: 60 },
+    badges: [{ id: 'first-blood', unlockedAt: 1 }],
+  };
+  const s = prog.deriveStats(profile);
+  assert.equal(s.bossCount, 3);
+  assert.equal(s.kills, 60);
+  assert.equal(s.maxCombo, 11);
+  assert.equal(s.projects, 2);       // /p/x, /p/y distinct
+  assert.equal(s.nightKills, 1);     // only the 03:00 kill is < 6h
+  assert.equal(s.badgeCount, 1);
+});
+
+test('deriveStats: empty/old profile defaults to zeros', () => {
+  const s = prog.deriveStats({ milestones: [], totals: { turns: 0, dmg: 0, kills: 0 } });
+  assert.deepEqual(s, { bossCount: 0, kills: 0, maxCombo: 0, projects: 0, nightKills: 0, badgeCount: 0 });
+});
+
+test('evaluateBadges: returns newly-satisfied ids, excludes owned', () => {
+  const profile = {
+    milestones: [
+      { boss: 'A', date: '2026-06-01', turns: 1, project: '/p/x', at: Date.parse('2026-06-01T13:00:00'), maxCombo: 12 },
+    ],
+    totals: { turns: 1, dmg: 10, kills: 5 },
+    badges: [{ id: 'first-blood', unlockedAt: 1 }],
+  };
+  // bossCount 1 → first-blood (owned, excluded); maxCombo 12 → combo-king (new)
+  assert.deepEqual(prog.evaluateBadges(profile), ['combo-king']);
+});
+
+test('evaluateBadges: nothing new when all thresholds owned or unmet', () => {
+  const profile = {
+    milestones: [{ boss: 'A', date: '2026-06-01', turns: 1, project: '/p/x', at: Date.parse('2026-06-01T13:00:00') }],
+    totals: { turns: 1, dmg: 0, kills: 0 },
+    badges: [{ id: 'first-blood', unlockedAt: 1 }],
+  };
+  assert.deepEqual(prog.evaluateBadges(profile), []);
+});
+
+test('nameKeyFor: maps id to its locale key, undefined for unknown', () => {
+  assert.equal(prog.nameKeyFor('combo-king'), 'badge.comboKing');
+  assert.equal(prog.nameKeyFor('nope'), undefined);
+});

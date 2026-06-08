@@ -189,8 +189,11 @@
   function encounterFormFor(est, todoCount) {
     const tier = bossTierFor(est);
     const big = tier.label === 'ELITE' || tier.label === 'RAID BOSS';
-    if (!big) return todoCount >= 2 ? 'pack' : 'mini';
-    return todoCount >= 3 ? 'tentacled' : 'big';
+    // todos are the most common honest "big quest" signal and re-evaluate on
+    // every state poll, so a session visibly escalates as its checklist grows.
+    if (todoCount >= 4 || tier.label === 'RAID BOSS') return 'tentacled';
+    if (todoCount >= 2) return 'pack';
+    return big ? 'big' : 'mini';
   }
 
   function drawTentacles(aliveCount) {
@@ -242,7 +245,7 @@
     });
     // the boss (the quest itself) stays on stage in every form
     if (!bossDead) boss.visible = true;
-    if (encForm === 'mini' || encForm === 'pack') { boss.scale.set(0.7); boss.x = 252; ground(boss); }
+    if (encForm === 'mini' || encForm === 'pack') { boss.scale.set(0.85); boss.x = 252; ground(boss); }
     // 'big'/'tentacled' keep tier scale (encounter/feeding own it)
     drawTentacles(alive.length);
   }
@@ -403,8 +406,8 @@
   // ── token threat helpers ───────────────────────────────────────────────────────
   function bossTierFor(est) {
     if (est == null) return { scale: 1, color: '#e8e0d0', label: '' };
-    if (est < 100000) return { scale: 1, color: '#e8e0d0', label: 'normal' };
-    if (est < 300000) return { scale: 1.25, color: '#f0b541', label: 'ELITE' };
+    if (est < 45000) return { scale: 1, color: '#e8e0d0', label: 'normal' };
+    if (est < 120000) return { scale: 1.25, color: '#f0b541', label: 'ELITE' };
     return { scale: 1.5, color: '#c83737', label: 'RAID BOSS' };
   }
   // mirror of scripts/lib/estimate.js fmtTokens (browser has no require)

@@ -25,3 +25,12 @@ test('emitRewards: tolerates missing sid / result', () => {
   assert.doesNotThrow(() => flow.emitRewards(null, { newBadges: [] }, 'en'));
   assert.doesNotThrow(() => flow.emitRewards('s3', null, 'en'));
 });
+
+test('rewardLines (console) matches the emitRewards event text — no drift', () => {
+  const r = { leveledUp: true, level: 3, titleKey: 'title.apprentice', newBadges: ['first-blood', 'combo-king'] };
+  flow.emitRewards('s4', r, 'en');
+  const texts = state.readEvents('s4')
+    .filter((e) => e.kind === 'level_up' || e.kind === 'badge_unlocked')
+    .map((e) => e.text);
+  assert.deepEqual(flow.rewardLines(r, 'en'), texts);
+});

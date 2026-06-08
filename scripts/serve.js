@@ -17,6 +17,10 @@ const { safeWrite, readJson } = require('../core/safe-io');
 const locale = require('../core/locale');
 const arenaStatus = require('../core/arena-status');
 
+// cap concurrent SSE viewers so a leaked/abusive client can't pile up timers
+let sseCount = 0;
+const SSE_MAX = 16;
+
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const PORT = Number(process.env.SLIME_PORT) || 4117;
 
@@ -55,6 +59,8 @@ function handleState(res) {
  * @param {ServerResponse} res
  */
 function handleEvents(req, res) {
+  if (sseCount >= SSE_MAX) { res.writeHead(503); res.end('too many arena viewers'); return; }
+  sseCount++;
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -109,6 +115,7 @@ function handleEvents(req, res) {
       }
       byteOffset = stat.size;
 
+      if (res.writableEnded) { cleanup(); return; }
       const chunk = buf.toString('utf8');
       const lines = chunk.split('\n').filter(Boolean);
       for (const line of lines) {
@@ -117,12 +124,18 @@ function handleEvents(req, res) {
     } catch { /* fail-soft: skip tick on any error */ }
   }, 1000);
 
+  let done = false;
   const cleanup = () => {
+    if (done) return; // close + error + writableEnded can all fire
+    done = true;
     clearInterval(pollTimer);
+    sseCount--;
+    try { res.end(); } catch { /* already gone */ }
   };
 
   req.on('close', cleanup);
   req.on('error', cleanup);
+  res.on('close', cleanup);
 }
 
 /** @param {ServerResponse} res */

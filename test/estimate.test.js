@@ -3,14 +3,14 @@ const assert = require('node:assert');
 const { estimateTokens, fmtTokens } = require('../core/estimate');
 
 test('base estimate for tiny text is the floor', () => {
-  assert.equal(estimateTokens(''), 25000);
-  assert.equal(estimateTokens('fix typo'), 25000 + 'fix typo'.length * 3);
+  assert.equal(estimateTokens(''), 15000);
+  assert.equal(estimateTokens('fix typo'), 15000 + 'fix typo'.length * 4);
 });
 
-test('each plan step adds 30k', () => {
+test('each plan step adds 12k', () => {
   const plan = '1. slay dragon\n2. loot hoard\n- profit';
-  const base = 25000 + plan.length * 3;
-  assert.equal(estimateTokens(plan), base + 3 * 30000);
+  const base = 15000 + plan.length * 4;
+  assert.equal(estimateTokens(plan), base + 3 * 12000);
 });
 
 test('clamped to 900k', () => {
@@ -31,5 +31,5 @@ test('CJK chars weigh more than ascii', () => {
 
 test('bounds hold with heavy CJK', () => {
   assert.equal(estimateTokens('改'.repeat(200000)), 900000);
-  assert.ok(estimateTokens('') >= 20000); // floor
+  assert.ok(estimateTokens('') >= 15000); // floor
 });

@@ -17,9 +17,6 @@ try {
   const r = boss.recordDefeat(cwd, b, { dmg: agg.dmg, kills: agg.kills, maxCombo: agg.maxCombo });
   const locale = require('../core/locale');
   const lang = locale.current();
-  const levelUp = r.leveledUp
-    ? locale.fmt(locale.t('boss.levelup', lang), { level: r.level, title: locale.t(r.titleKey, lang) })
-    : null;
   if (sid) {
     state.appendEvent(sid, { t: Date.now(), kind: 'boss_down', boss: b.name, text: `⚡⚡⚡ ${b.name} — DEFEATED ⚡⚡⚡` });
     defeatFlow.emitRewards(sid, r, lang);
@@ -27,11 +24,8 @@ try {
   const out = [
     `⚡⚡⚡ ${b.name} — DEFEATED ⚡⚡⚡`,
     `Recorded on the Milestone Wall (${r.total} total).`,
+    ...defeatFlow.rewardLines(r, lang), // same source as the arena events — can't drift
   ];
-  if (levelUp) out.push(levelUp);
-  for (const bid of r.newBadges) {
-    out.push(locale.fmt(locale.t('badge.unlocked', lang), { name: locale.t(require('../core/progression').nameKeyFor(bid) || bid, lang) }));
-  }
   out.push(`💡 Sage: quest complete — strike camp (/clear) before the next hunt.`);
   console.log(out.join('\n'));
 } catch (e) {

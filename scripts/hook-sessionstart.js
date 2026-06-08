@@ -75,7 +75,7 @@ try {
     state.writeSnapshot(p.session_id, {
       sessionId: p.session_id, turn: 0, combo: 0, kills: 0, dmg: 0,
       summons: 0, gear, inTurn: false, updated: Date.now(),
-      lastText: '⚔️ Slime — awaiting first encounter',
+      lastText: require('../core/locale').t('hud.awaiting', require('../core/locale').current()),
     });
     // Display-only systemMessages (Observer Principle intact): a one-line hint to
     // open the live arena, plus any available update notice.

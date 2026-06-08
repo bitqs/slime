@@ -53,10 +53,11 @@ installed, the agent's behavior must be byte-identical to without it. Therefore:
 
 ```
 core/        harness-agnostic engine — consumes a normalized event stream + Snapshot.
-             mapper, boss, estimate, report, usage, state, safe-io, hud, locale,
-             arena-status, update-check, sage; types.d.ts holds the shared shapes.
+             mapper, boss, progression, defeat-flow, estimate, report, usage, state,
+             safe-io, hud, locale, arena-status, update-check, sage; types.d.ts holds
+             the shared shapes.
 scripts/     entry points: hook-*.js (writers), statusline.js / watch.js / serve.js
-             (readers), and command-backed defeat/battlelog/milestones/wrapped/namer.
+             (readers), and command-backed achievements/battlelog/milestones/wrapped/namer.
 public/      the PixiJS arena (index.html, arena.js, sequencer.js, minions.js, vendor/).
 data/        config.default.json, tips, locales/{en,zh}.json (+ future badges/loot).
 hooks/       hooks.json — wires Claude Code lifecycle events → scripts/hook-*.js.

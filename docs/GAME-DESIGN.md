@@ -74,15 +74,16 @@ type lives, and its health:
 | Turn rank (S/A/B…) | per turn | deterministic | ✅ solid |
 | Kill log entry | per boss | persistent milestone | ✅ done (Phase 1) |
 | XP / level / title | per boss | accrues, crosses thresholds | ✅ done (Phase 2) |
-| **Badges (unlocks)** | on conditions | collection | ⏳ Phase 3 |
+| **Badges (unlocks)** | on conditions | collection | ✅ done (Phase 3) |
 | **Quests (weekly/streak)** | rolling | goal + completion | ⏳ Phase 4 |
 | **Random loot drops** | ~per tool call, rare | variable-ratio surprise | ⏳ Phase 5 |
 | Weekly wrap | weekly | retrospective | ✅ done |
 
-The **variable** half of the loop (loot drops, surprise XP) is the most
-psychologically potent and is **not built yet** (Phase 5). The **visible-progress**
-half past a single session (levels, badges) is also pending (Phase 2-3). These are
-the two highest-leverage gaps.
+The **visible-progress** half past a single session is now built — levels,
+titles, and unlockable badges all persist and surface via `/achievements`
+(Phases 2-3 ✅). The remaining gaps are the **variable** half of the loop (loot
+drops, surprise XP — Phase 5, the most psychologically potent) and **quests**
+(Phase 4).
 
 ## 5. Surfaces & their job
 
@@ -92,8 +93,9 @@ the two highest-leverage gaps.
 - **Arena (browser)** — the showcase: full FX, cutscenes, the diverse slimes. Opt-in
   (`/arena`); where delight is densest. Flash-safe (`?calm=1`).
 - **tmux pane** — passive ambient monitor.
-- **Commands** — `/milestones` (wall), `/wrapped` (weekly), `/battlelog`, `/defeat`;
-  `/achievements` to come. The meta-loop's reading room.
+- **Commands** — `/milestones` (wall), `/wrapped` (weekly), `/battlelog`,
+  `/achievements` (level + title + badge grid). The meta-loop's reading room.
+  (Kills auto-confirm at Stop — no manual `/defeat`.)
 - **session-start notice** — the re-entry hook ("what changed since last time").
 
 ## 6. Cohesion read — strong / weak / polish
@@ -105,9 +107,9 @@ the two highest-leverage gaps.
 - Appearance variety now lands (procedural slimes, seeded, decoupled).
 
 **Weak / rough edges**
-- **Meta progression, partly built.** XP/levels/titles now accrue per kill and
-  show on the statusline (Phase 2 ✅). Still missing: unlockable badges (Phase 3)
-  and quests (Phase 4) — the long-tail "gotta collect / weekly goal" hooks.
+- **Meta progression, largely built.** XP/levels/titles accrue per kill and show on
+  the statusline (Phase 2 ✅); unlockable badges + the `/achievements` wall ship too
+  (Phase 3 ✅). Still missing: quests (Phase 4) — the weekly/streak return-driver.
 - **No variable reward yet.** Every reward is deterministic; the dopamine spike of
   a surprise drop is missing (Phase 5).
 - **Low stakes.** The only failure state is token exhaustion (rest). There's no
@@ -124,7 +126,8 @@ the two highest-leverage gaps.
 2. **Random loot / variable reward (Phase 5)** — the missing dopamine half; small,
    rare, instant, seeded (replay-stable). Pairs with the instant-feedback pillar.
    Next-highest leverage.
-3. **Badges (Phase 3)** — a collection wall; long-tail "gotta unlock them all."
+3. ~~**Badges (Phase 3)**~~ — ✅ done: declarative `data/badges.json`, unlocked on
+   confirmed kills, shown on the `/achievements` wall.
 4. **Quests (Phase 4)** — weekly/streak goals; the explicit return-driver.
 5. **(Optional) soft tension** — a non-punishing enrage/streak beat for the moment
    loop. Design carefully against the Observer pillar.

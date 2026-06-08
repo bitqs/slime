@@ -20,8 +20,11 @@ try {
     if (ev.text) snap.lastText = ev.text;
     if (ev.dmg && p.cwd) {
       const b = boss.loadOrCreate(p.cwd, '');
-      b.dmgTaken = (b.dmgTaken || 0) + ev.dmg;
       if (!b.estLines) b.estLines = require('../core/estimate').estLines(null);
+      // Cap each hit's HP damage so one giant edit can't one-shot the boss (≥4 hits
+      // to kill). XP is unaffected — it reads raw dmg from the event log.
+      const hpHit = Math.min(ev.dmg, Math.ceil(b.estLines * 0.25));
+      b.dmgTaken = (b.dmgTaken || 0) + hpHit;
       b.hp = Math.max(0, Math.round(100 * (1 - b.dmgTaken / b.estLines)));
       if (b.hp === 0 && !b.broken) {
         b.broken = true;

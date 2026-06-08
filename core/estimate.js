@@ -12,8 +12,10 @@ function estimateTokens(text) {
     if ((cp >= 0x3000 && cp <= 0x9fff) || (cp >= 0xf900 && cp <= 0xfaff)) cjk++;
     else ascii++;
   }
-  const est = 25000 + steps * 30000 + ascii * 3 + cjk * 9;
-  return Math.max(20000, Math.min(900000, est));
+  // weight real content (chars) over list-formatting so a single bullet can't
+  // vault a prompt into ELITE; bigger prose/CJK + more steps still escalate.
+  const est = 15000 + steps * 12000 + ascii * 4 + cjk * 12;
+  return Math.max(15000, Math.min(900000, est));
 }
 /** @param {number} n @returns {string} */
 function fmtTokens(n) {

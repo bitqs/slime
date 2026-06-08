@@ -63,3 +63,17 @@ test('render shows stamina line and sage line via extras', () => {
   assert.match(txt, /Weekly/);
   assert.match(txt, /💡 Sage: test line/);
 });
+
+test('aggregate tracks maxCombo across a streak and resets on a hit', () => {
+  const evs = [
+    { kind: 'resolve', dmg: 5 },
+    { kind: 'resolve', dmg: 5 },
+    { kind: 'resolve', dmg: 5 }, // combo → 3
+    { kind: 'resolve', hit: true }, // miss resets combo
+    { kind: 'resolve', dmg: 5 }, // combo → 1
+  ];
+  const a = report.aggregate(evs);
+  assert.equal(a.maxCombo, 3);
+  assert.equal(a.dmg, 20);
+  assert.equal(a.hits, 1);
+});

@@ -24,8 +24,8 @@ hooks  ──writes──▶  SLIME_ROOT state dir  ──reads──▶  consum
 slime/
 ├── .claude-plugin/      plugin + marketplace manifests (how Claude Code loads it)
 ├── hooks/               hooks.json — wires session events → scripts/hook-*.js
-├── scripts/             all Node entrypoints + the shared lib/ layer
-│   └── lib/             shared modules; types.d.ts holds central JSDoc shapes
+├── scripts/             all Node entrypoints (hook-*.js + command-backed)
+├── core/                shared engine modules; types.d.ts holds central JSDoc shapes
 ├── commands/            slash-command definitions (*.md) → invoke scripts/*
 ├── public/              browser arena (PixiJS) — served by scripts/serve.js
 ├── data/                static config, tips, and i18n locale catalogs
@@ -80,7 +80,7 @@ crash or slowness here must never affect the real session.
 
 | File             | Role |
 |------------------|------|
-| `statusline.js`  | One-line HUD, runs on every keystroke. Reads snapshot + usage, renders via `lib/hud.js`. Shows the clickable `【UI】` arena link when an arena is live (see `lib/arena-status.js`). |
+| `statusline.js`  | One-line HUD, runs on every keystroke. Reads snapshot + usage, renders via `core/hud.js`. Shows the clickable `[HUD]` arena link when an arena is live (see `core/arena-status.js`). |
 | `watch.js`       | tmux top-pane live battle monitor. |
 | `serve.js`       | Local HTTP server for the web arena: `/` (index.html), `/state` (JSON), `/events` (SSE tail of the jsonl), and an exact-match static whitelist. Writes a liveness/port marker on listen, clears it on exit, and exits gracefully if the port is already owned by a live arena. |
 
@@ -88,16 +88,17 @@ crash or slowness here must never affect the real session.
 
 Invoked by the matching `commands/*.md` slash command:
 
-| File             | Command        | Role |
-|------------------|----------------|------|
-| `defeat.js`      | `/defeat`      | Confirm a boss kill → milestone |
-| `battlelog.js`   | `/battlelog`   | This session's turn reports |
-| `milestones.js`  | `/milestones`  | The Milestone Wall |
-| `wrapped.js`     | `/wrapped`     | Weekly Wrapped stats (last 7 days) |
-| `namer.js`       | —              | Detached async boss namer (hooks can't wait on the 2s cap, so naming runs out-of-band) |
-| `demo-feed.js`   | —              | Synthesize a fake session to eyeball the arena without real work |
+| File             | Command          | Role |
+|------------------|------------------|------|
+| `achievements.js`| `/achievements`  | Level, title & badge grid |
+| `battlelog.js`   | `/battlelog`     | This session's turn reports |
+| `milestones.js`  | `/milestones`    | The Milestone Wall |
+| `wrapped.js`     | `/wrapped`       | Weekly Wrapped stats (last 7 days) |
+| `defeat.js`      | — (legacy)       | Manual kill+reward CLI. Kills now auto-confirm at Stop via `core/defeat-flow.js`; no slash command points here anymore. |
+| `namer.js`       | —                | Detached async boss namer (hooks can't wait on the 2s cap, so naming runs out-of-band) |
+| `demo-feed.js`   | —                | Synthesize a fake session to eyeball the arena without real work |
 
-## `scripts/lib/` — shared layer
+## `core/` — shared engine layer
 
 `types.d.ts` holds the central JSDoc shapes (`Snapshot`, `UsageCache`,
 `SlimeEvent`, `BossState`, `Profile`, …) imported across the codebase.
@@ -107,11 +108,13 @@ Invoked by the matching `commands/*.md` slash command:
 | `safe-io.js`      | The single IO gateway: atomic writes (temp+rename, 0600), tolerant reads, symlink refusal. Every function silent-fails. |
 | `state.js`        | Reads/writes the `SLIME_ROOT` files: snapshots, the event stream, profile. Owns `ROOT` and path helpers. |
 | `mapper.js`       | Maps a tool call → a `SlimeEvent` (verb table: which tools are which "spells"). |
-| `boss.js`         | Boss state + naming (regex name table) per project. |
+| `boss.js`         | Boss state + naming (regex name table) per project; `recordDefeat` awards XP/badges. |
+| `progression.js`  | Pure XP/level/title/badge engine: `xpForDefeat`, `levelFor`, `deriveStats`, `evaluateBadges`. |
+| `defeat-flow.js`  | Shared post-kill reward text + events (`rewardLines`, `emitRewards`), used by the Stop hook, the auto-down path, and `defeat.js`. |
 | `usage.js`        | Token-usage cache → HP%, rest time. Relays official statusline fields to hooks. |
 | `estimate.js`     | Gamified token-cost heuristic (deliberately NOT a real estimator — avoids any LLM call). |
-| `report.js`       | Turn-report and progress-bar (`bar()`) rendering. |
-| `hud.js`          | Composes the one-line statusline string. Owns `sanitize` (strips control chars/ANSI) and `uiLink` (the live, port-aware `【UI】` hyperlink). |
+| `report.js`       | Turn-report aggregate + progress-bar (`bar()`) rendering. |
+| `hud.js`          | Composes the one-line statusline string. Owns `sanitize` (strips control chars/ANSI) and `uiLink` (the live, port-aware `[HUD]` hyperlink). |
 | `sage.js`         | Context-aware tips/advice from usage + boss HP. |
 | `locale.js`       | i18n: loads `data/locales/{en,zh}.json`, `t`/`fmt` with en fallback. |
 | `arena-status.js` | Arena liveness + port marker shared by `serve.js` (writer) and `statusline.js` (reader). Marker lives in the OS temp dir, **not** under `SLIME_ROOT`, so `serve.js` stays read-only w.r.t. game state. |
@@ -134,9 +137,9 @@ is vendored, never a CDN.
 
 - **`data/`** — `config.default.json`, `tips.json` / `tips.zh.json`, and
   `locales/{en,zh}.json` (flat key→string; add both languages when adding keys).
-- **`commands/`** — one `*.md` per slash command (`arena`, `battlelog`, `defeat`,
-  `milestones`, `setup`, `update`, `wrapped`). `arena.md` starts `serve.js` in the
-  background if not already running and prints the URL.
+- **`commands/`** — one `*.md` per slash command (`arena`, `achievements`,
+  `battlelog`, `milestones`, `setup`, `update`, `wrapped`). `arena.md` starts
+  `serve.js` in the background if not already running and prints the URL.
 - **`demo/`** — a self-contained Cloudflare Worker (`worker.js`) serving `../public`
   plus a synthetic `/state` + `/events` show. Excluded from tsconfig.
   Deploy: `cd demo && npx wrangler deploy`.

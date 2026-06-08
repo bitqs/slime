@@ -7,7 +7,6 @@ const path = require('node:path');
 process.env.SLIME_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'slime-'));
 const boss = require('../core/boss');
 const state = require('../core/state');
-const prog = require('../core/progression');
 
 test('nameBoss: epithet + compressed base + type, deterministic per prompt', () => {
   const a = boss.nameBoss('fix the login crash', '/p/slime');

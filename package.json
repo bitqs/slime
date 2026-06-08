@@ -10,7 +10,8 @@
     "typescript": "^5.6.0"
   },
   "scripts": {
-    "test": "node --test test/",
+    "package:codex": "node install/codex-package.js",
+    "test": "node --test ./test/*.test.js",
     "typecheck": "tsc -p ."
   }
 }

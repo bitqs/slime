@@ -53,9 +53,12 @@ test('serves /state and / and 404', async () => {
     const base = `http://127.0.0.1:${srv.address().port}`;
     const st = await (await fetch(`${base}/state`)).json();
     assert.equal(st.snapshot.turn, 2);
+    assert.equal(st.harness, process.env.SLIME_HARNESS || 'claude-code');
     const home = await fetch(base);
     assert.equal(home.status, 200);
-    assert.match(await home.text(), /Slime/i); // brand — a failed assert must still close srv (finally)
+    const html = await home.text();
+    assert.match(html, /Slime/i); // brand — a failed assert must still close srv (finally)
+    assert.match(html, /id="user-status"/);
     assert.equal((await fetch(`${base}/nope`)).status, 404);
   } finally {
     srv.close();

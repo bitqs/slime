@@ -54,6 +54,21 @@ third-party marketplaces ship with it off).
 
 That's it — just work. The game plays itself.
 
+### Codex adapter preview
+
+This repo also includes an early Codex plugin surface:
+
+- `.codex-plugin/plugin.json` exposes Slime as a Codex plugin.
+- `hooks.json` wires Codex-compatible hook events through `scripts/dispatch.js`.
+- `adapters/codex/` normalizes Codex hook/status payloads before dispatch reuses the existing observer scripts.
+- Codex state defaults to `~/.codex/slime` when hooks run with `SLIME_HARNESS=codex`.
+
+Codex does not expose a stable command-backed statusline equivalent yet, so the
+full Claude Code HUD is not mirrored in the TUI footer. Instead, Codex gets a
+light HUD: each turn report includes the Slime battle card plus an Arena link or
+`/slime:arena` hint. The arena, battlelog, milestones, wrapped, and defeat
+scripts read the shared Slime state with `SLIME_HARNESS=codex`.
+
 ## What You Get
 
 | | |

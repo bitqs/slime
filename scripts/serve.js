@@ -43,7 +43,7 @@ function handleState(res) {
     const usage = readCache();
     const lang = locale.current();
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ snapshot, usage, lang }));
+    res.end(JSON.stringify({ snapshot, usage, lang, harness: process.env.SLIME_HARNESS || 'claude-code' }));
   } catch {
     res.writeHead(500);
     res.end('{}');

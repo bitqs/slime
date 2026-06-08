@@ -16,11 +16,10 @@ body{background:#1a1d24;color:#e8e0d0;font-family:monospace;overflow:hidden;heig
 #canvas-wrap{position:relative;width:100%}
 canvas{display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 #crt{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 1px,rgba(0,0,0,0.15) 1px,rgba(0,0,0,0.15) 2px);z-index:2}
-#overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(26,29,36,0.82);z-index:10;font-size:14px;text-align:center;color:#e8e0d0;display:none}
+#overlay{position:absolute;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;background:rgba(26,29,36,0.82);z-index:10;font-size:14px;text-align:center;color:#e8e0d0;display:none}
 #log{width:100%;max-width:640px;min-height:80px;padding:6px 10px;background:#232733;border-top:1px solid #333a4a;overflow:hidden}
 .log-line{font-size:11px;color:#e8e0d0;opacity:0;animation:fadein 0.4s forwards;line-height:1.4em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-#player-token{color:#f0b541;font-size:11px;white-space:nowrap;flex-shrink:0}
 #stats{width:100%;max-width:640px;display:flex;gap:14px;padding:3px 10px;background:#232733;font-size:10px;color:#7fa8c0;border-top:1px solid #333a4a}
 #stats b{color:#e8e0d0;font-weight:normal}
 .gold-tick{animation:goldpop .5s}
@@ -45,6 +44,16 @@ body.calm .minion-hp-fill{transition:none}
 .minion-name{font-size:8px;color:#7fa8c0;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .minion-grave{position:absolute;top:0;font-size:12px}
 #feed-counter{position:absolute;right:8px;bottom:26px;font-size:10px;color:#f0b541;text-shadow:1px 1px #000;display:none;z-index:3}
+#user-status{width:100%;max-width:640px;display:flex;align-items:stretch;gap:8px;padding:5px 10px;background:#1f2530;border-bottom:1px solid #333a4a;font-size:10px}
+#user-status .us-badge{align-self:center;color:#1a1d24;background:#7fa8c0;font-weight:bold;padding:2px 5px;flex-shrink:0}
+#user-status .us-action{flex:1;align-self:center;color:#f0b541;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#user-status .us-meters{display:flex;flex-direction:column;gap:3px;flex-shrink:0;min-width:132px}
+#user-status .us-meter{display:flex;align-items:center;gap:5px}
+#user-status .us-label{color:#7fa8c0;width:54px;flex-shrink:0}
+#user-status .us-track{flex:1;height:5px;background:#1a1d24;border:1px solid #333a4a;overflow:hidden}
+#user-status .us-fill{display:block;height:100%;width:0;background:#6abe30;transition:width .3s}
+body.calm #user-status .us-fill{transition:none}
+#user-status .us-val{color:#e8e0d0;width:34px;text-align:right;flex-shrink:0}
 #calm-btn{flex-shrink:0;background:#232733;color:#f0b541;border:1px solid #333a4a;font-family:monospace;font-size:11px;width:18px;height:18px;cursor:pointer;padding:0}
 #help-btn,#lang-btn{flex-shrink:0;background:#232733;color:#f0b541;border:1px solid #f0b541;font-family:monospace;font-size:11px;width:18px;height:18px;cursor:pointer;padding:0}
 #guide-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(26,29,36,.92);z-index:30}
@@ -59,10 +68,17 @@ body.calm .minion-hp-fill{transition:none}
   <span id="title">🟢 SLIME</span>
   <span style="flex:1"></span>
   <div id="hp-bar"></div>
-  <span id="player-token">⚡Token —</span>
   <button id="lang-btn" title="language / 语言">🌐</button>
   <button id="calm-btn" title="flash / calm toggle">✨</button>
   <button id="help-btn" title="game guide (h)">?</button>
+</div>
+<div id="user-status">
+  <span id="us-badge" class="us-badge">PLAYER</span>
+  <span id="us-action" class="us-action">awaiting action</span>
+  <div class="us-meters">
+    <div class="us-meter"><span class="us-label">⚡ Token</span><span class="us-track"><span id="us-token-fill" class="us-fill"></span></span><span id="us-token" class="us-val">—</span></div>
+    <div class="us-meter"><span class="us-label">🧠 Ctx</span><span class="us-track"><span id="us-ctx-fill" class="us-fill"></span></span><span id="us-ctx" class="us-val">—</span></div>
+  </div>
 </div>
 <div id="stage-wrap">
   <div id="boss-name">—</div>
@@ -76,14 +92,14 @@ body.calm .minion-hp-fill{transition:none}
       <div id="guide-box">
         <b>⚔️ How to read the battle · 怎么看懂这场仗</b>
         <p>🗡️ <b>Boss</b> — your current quest in this project. Forged from your prompt; its size/tier comes from the estimated token cost. <i>Boss=当前任务,体型=预估 token 量。</i></p>
-        <p>❤️ <b>Boss HP</b> — falls as todos get checked off. At 0 the boss kneels (☠ broken); it dies automatically when the session stops. <i>todo 全勾=濒死,停机自动击杀,免打字。</i></p>
+        <p>❤️ <b>Boss HP</b> — falls as todos get checked off. At 0 the boss kneels (☠ broken); your next strike finishes it automatically. <i>todo 全勾=濒死,下一击自动击杀,免打字。</i></p>
         <p>🟢 <b>Minions</b> — the todo list. Each completed todo drains a slime's HP to zero. <i>小怪=todo,做完一只死一只。</i></p>
         <p>⚡ <b>Token</b> — your resource (5h rate window). Rest restores it. <i>Token=你的资源,休息回复。</i></p>
         <p>🔥 <b>Combo</b> — consecutive successful tool strikes. <i>连击=连续成功操作。</i></p>
         <p>🍖 <b>Feeding</b> — while planning, every plan update and answered question feeds the boss and it grows. <i>计划和问答越喂越大。</i></p>
         <p>🐺 <b>Summons</b> — subagent dispatches fight beside the knight. <i>召唤兽=subagent。</i></p>
         <p>💰 <b>Gold</b> — real session cost (USD). ⚔️ weapon = model, 🗡️ ATK = lines changed, ⏳ session time, 🏕️ weekly quota. <i>金币=本会话花费,武器=模型,ATK=改动行数。</i></p>
-    <p>Commands: <code>/slime:arena</code> · <code>/slime:defeat</code> · <code>/slime:milestones</code> · <code>/slime:wrapped</code></p>
+        <p>Commands: <code>/slime:arena</code> · <code>/slime:milestones</code> · <code>/slime:wrapped</code></p>
         <p id="guide-close-hint">esc / click to close</p>
       </div>
     </div>

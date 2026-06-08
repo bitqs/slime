@@ -26,14 +26,15 @@ const ICONS = {
 /** @param {string | null | undefined} tool @returns {string} */
 function category(tool) {
   const t = (tool || '').toLowerCase();
-  if (t === 'read' || t === 'glob') return 'read';
-  if (t === 'grep') return 'grep';
-  if (t === 'edit' || t === 'notebookedit') return 'edit';
-  if (t === 'write') return 'write';
-  if (t === 'bash') return 'bash';
-  if (t === 'agent' || t === 'task') return 'agent';
-  if (t.startsWith('web')) return 'web';
-  if (t === 'skill') return 'skill';
+  const simple = t.split(/[.:]/).pop() || t;
+  if (simple === 'read' || simple === 'glob' || simple === 'view_image') return 'read';
+  if (simple === 'grep' || simple === 'rg') return 'grep';
+  if (simple === 'edit' || simple === 'notebookedit' || simple === 'apply_patch') return 'edit';
+  if (simple === 'write') return 'write';
+  if (simple === 'bash' || simple === 'exec_command' || simple === 'shell_command') return 'bash';
+  if (simple === 'agent' || simple === 'task' || t.startsWith('multi_tool_use.')) return 'agent';
+  if (t.startsWith('web') || t.startsWith('browser') || simple === 'open' || simple === 'click') return 'web';
+  if (simple === 'skill') return 'skill';
   return 'other';
 }
 
@@ -52,16 +53,23 @@ function hash(s) {
  * }} ToolInput
  */
 
-/** @param {ToolInput} [input] @returns {string} */
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isObj(value) {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+/** @param {ToolInput | unknown} [input] @returns {string} */
 function target(input = {}) {
   const { sanitize } = require('./hud');
-  if (input.file_path) return sanitize(path.basename(input.file_path), 40);
-  if (input.pattern) return `"${sanitize(input.pattern, 40)}"`;
-  if (input.query) return `"${sanitize(input.query, 40)}"`;
-  if (input.skill) return sanitize(input.skill, 40);
-  if (input.description) return sanitize(input.description, 40);
-  if (input.prompt) return sanitize(input.prompt, 40);
-  if (input.command) return sanitize(input.command, 40);
+  if (!isObj(input)) return sanitize(String(input || ''), 40);
+  if (input.file_path) return sanitize(path.basename(String(input.file_path)), 40);
+  if (input.pattern) return `"${sanitize(String(input.pattern), 40)}"`;
+  if (input.query) return `"${sanitize(String(input.query), 40)}"`;
+  if (input.skill) return sanitize(String(input.skill), 40);
+  if (input.description) return sanitize(String(input.description), 40);
+  if (input.prompt) return sanitize(String(input.prompt), 40);
+  if (input.command) return sanitize(String(input.command), 40);
+  if (input.cmd) return sanitize(String(input.cmd), 40);
   return '';
 }
 
@@ -110,6 +118,23 @@ const TEST_CMD = /\b(test|spec|pytest|jest|vitest|tape|--test)\b/;
 /** @param {unknown} s @returns {number} */
 function lineCount(s) { return s ? String(s).split('\n').length : 0; }
 
+/** @param {unknown} input @returns {Record<string, unknown>} */
+function inputBag(input) {
+  if (isObj(input)) return input;
+  return typeof input === 'string' ? { content: input } : {};
+}
+
+/** @param {Record<string, unknown>} input @returns {number} */
+function changedLineCount(input) {
+  const body = input.new_string ?? input.content ?? input.patch ?? input.diff;
+  if (!body) return 0;
+  const text = String(body);
+  const patchLines = text.split('\n').filter((line) =>
+    (/^[+-]/.test(line) && !line.startsWith('+++') && !line.startsWith('---'))
+  ).length;
+  return patchLines || lineCount(text);
+}
+
 /**
  * @param {HookPayload | null | undefined} payload
  * @param {{ combo?: number; [key: string]: unknown }} [snap]
@@ -120,7 +145,7 @@ function resolve(payload, snap = {}, lang) {
   payload = payload || {};
   const tool = payload.tool_name || 'Unknown';
   const cat = category(tool);
-  const input = /** @type {ToolInput} */ (payload.tool_input || {});
+  const input = inputBag(payload.tool_input || {});
   const isError = Boolean(payload.tool_response && payload.tool_response.is_error);
   let combo = snap.combo || 0;
   /** @type {SlimeEvent} */
@@ -136,7 +161,7 @@ function resolve(payload, snap = {}, lang) {
   }
 
   if (cat === 'edit' || cat === 'write') {
-    ev.dmg = lineCount(input.new_string ?? input.content);
+    ev.dmg = changedLineCount(input);
     ev.combo = combo + 1;
     ev.text = lang
       ? locale.fmt(locale.t('resolve.hit', lang), { dmg: ev.dmg, combo: ev.combo })
@@ -144,7 +169,7 @@ function resolve(payload, snap = {}, lang) {
     return ev;
   }
 
-  if (cat === 'bash' && TEST_CMD.test(input.command || '')) {
+  if (cat === 'bash' && TEST_CMD.test(String(input.command || input.cmd || ''))) {
     ev.kill = true;
     ev.combo = combo;
     ev.text = lang

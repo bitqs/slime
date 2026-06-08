@@ -62,6 +62,35 @@ test('resolve test-passing Bash is a kill', () => {
   assert.match(ev.text, /💀/);
 });
 
+test('codex exec_command maps to bash and test pass is a kill', () => {
+  const ev = mapper.resolve(
+    { tool_name: 'functions.exec_command', tool_input: { cmd: 'npm test' }, tool_response: {} },
+    { combo: 0 }
+  );
+  assert.equal(mapper.category('functions.exec_command'), 'bash');
+  assert.equal(ev.kill, true);
+});
+
+test('codex apply_patch maps to edit and counts patch changed lines', () => {
+  const ev = mapper.resolve(
+    { tool_name: 'functions.apply_patch', tool_input: { patch: '*** Begin Patch\n*** Update File: a.js\n@@\n-old\n+new\n+again\n*** End Patch' }, tool_response: {} },
+    { combo: 1 }
+  );
+  assert.equal(mapper.category('functions.apply_patch'), 'edit');
+  assert.equal(ev.dmg, 3);
+  assert.equal(ev.combo, 2);
+});
+
+test('codex web.run maps to web and remains quiet success', () => {
+  const ev = mapper.resolve(
+    { tool_name: 'web.run', tool_input: { search_query: [{ q: 'slime' }] }, tool_response: {} },
+    { combo: 5 }
+  );
+  assert.equal(mapper.category('web.run'), 'web');
+  assert.equal(ev.dmg, undefined);
+  assert.equal(ev.combo, 5);
+});
+
 test('resolve errored tool is a hit and breaks combo', () => {
   const ev = mapper.resolve(
     { tool_name: 'Bash', tool_input: { command: 'npm test' }, tool_response: { is_error: true } },

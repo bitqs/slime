@@ -1,0 +1,32 @@
+{
+  "name": "slime",
+  "version": "0.1.0",
+  "description": "Your work goals are the bosses. A zero-impact RPG layer over Codex.",
+  "author": {
+    "name": "bitqs",
+    "url": "https://github.com/bitqs"
+  },
+  "homepage": "https://github.com/bitqs/slime",
+  "repository": "https://github.com/bitqs/slime",
+  "license": "MIT",
+  "keywords": ["codex", "rpg", "hooks", "productivity"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Slime",
+    "shortDescription": "Watch Codex sessions become turn-based RPG battles.",
+    "longDescription": "Slime observes Codex hook events and renders a local RPG layer over real coding work without changing the session.",
+    "developerName": "bitqs",
+    "category": "Productivity",
+    "capabilities": ["Read", "Interactive"],
+    "websiteURL": "https://github.com/bitqs/slime",
+    "privacyPolicyURL": "https://github.com/bitqs/slime",
+    "termsOfServiceURL": "https://github.com/bitqs/slime",
+    "defaultPrompt": [
+      "Use Slime to show my current battle log",
+      "Open the Slime arena for this session",
+      "Record this boss as defeated"
+    ],
+    "brandColor": "#22C55E",
+    "screenshots": []
+  }
+}

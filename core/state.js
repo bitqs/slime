@@ -11,6 +11,7 @@ const { safeWrite, safeAppend, readJson, safeMkdir } = require('./safe-io');
 // Claude Code's config-dir override, then the default.
 const ROOT = process.env.SLIME_ROOT
   || (process.env.CLAUDE_CONFIG_DIR && path.join(process.env.CLAUDE_CONFIG_DIR, 'slime'))
+  || (process.env.SLIME_HARNESS === 'codex' && path.join(process.env.CODEX_CONFIG_DIR || process.env.CODEX_HOME || path.join(os.homedir(), '.codex'), 'slime'))
   || path.join(os.homedir(), '.claude', 'slime');
 
 function ensureDirs() {

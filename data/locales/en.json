@@ -12,6 +12,8 @@
   "report.stamina": "⚡ Token {bar} {hp}% (5h window){weekly}",
   "report.weekly": " | Weekly {bar} {pct}%",
   "report.stagger": "⚡ {name} staggers — confirm the kill with /slime:defeat",
+  "codex.uiLive": "【UI】 Arena live: {url}",
+  "codex.uiHint": "【UI】 Pixel Arena: run /slime:arena to open it.",
   "turn.complete": "🏆 Turn {turn} complete — Rank {rank}",
   "sage.rest": "💡 Sage: 🛌 your Token is nearly spent — rest, the window restores it.",
   "sage.potion": "💡 Sage: mana runs low — a potion (/compact) or strike camp (/clear).",

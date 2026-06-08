@@ -85,6 +85,9 @@ The plan (`docs/superpowers/specs/2026-06-08-harness-portable-architecture-desig
 
 When you add code, put harness-agnostic logic in `core/`, keep Claude-Code-only
 glue in `scripts/`/`hooks/`/`.claude-plugin/`, and surface new strings via locales.
+The current Codex preview lives in `.codex-plugin/`, root `hooks.json`,
+`scripts/dispatch.js`, and `adapters/codex/`; keep Codex-specific parsing or
+install metadata there.
 
 ## How to work (the loop)
 

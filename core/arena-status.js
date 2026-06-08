@@ -36,9 +36,18 @@ function writeMarker(port) {
   return safeWrite(markerPath(), JSON.stringify({ port, pid: process.pid }));
 }
 
-/** Remove the marker. Best-effort; never throws. @returns {void} */
+/**
+ * Remove the marker — but only if THIS process owns it. A second serve.js that
+ * hits EADDRINUSE and exits must not wipe the live server's marker (that killed
+ * the statusline 【UI】 link on every re-launch). Best-effort; never throws.
+ * @returns {void}
+ */
 function clearMarker() {
-  try { fs.unlinkSync(markerPath()); } catch { /* already gone */ }
+  try {
+    const m = readJson(markerPath(), /** @type {ArenaMarker | null} */ (null));
+    if (m && m.pid !== process.pid) return; // not ours — leave it
+    fs.unlinkSync(markerPath());
+  } catch { /* already gone */ }
 }
 
 /**

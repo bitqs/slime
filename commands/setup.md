@@ -5,6 +5,9 @@ allowed-tools: Read, Edit, Bash
 
 Help the user enable the Slime HUD:
 
+Claude Code only. Codex does not expose a stable statusline equivalent yet; do
+not edit Codex config for the HUD.
+
 1. Resolve the plugin root: the directory containing this command file, up one level.
 2. Read `~/.claude/settings.json`. If a `statusLine` key exists, show it and ask before replacing.
 3. Set:

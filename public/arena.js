@@ -188,15 +188,11 @@
     return 120000 + (bossSeed % 180000);             // RAID BOSS (≥120k)
   }
 
-  // ── on-stage HP bars (boss + every live mob) + a player HUD above the knight ──
+  // ── on-stage HP bars (boss + every live mob) ──
+  // Player stats (token/week/context, name) live only in the top status window;
+  // no overhead text above the knight — it was illegible against the sprites.
   const hpBars = new PIXI.Graphics();
-  const playerHud = new PIXI.Text({ text: '', style: {
-    fontFamily: 'monospace', fontSize: 9, fontWeight: 'bold', fill: 0xf0b541,
-    stroke: { color: 0x000000, width: 3 }, align: 'center',
-  } });
-  playerHud.resolution = 3;       // crisp at the canvas's pixelated upscale
-  playerHud.anchor.set(0.5, 1);
-  world.addChild(hpBars, playerHud);
+  world.addChild(hpBars);
   /** tiny HP pip above a sprite: bg track + colored fill */
   function drawBar(g, cx, topY, pct) {
     const w = 14, h = 2, x = cx - w / 2;
@@ -209,10 +205,8 @@
     hpBars.clear();
     if (boss.visible && !bossDead) drawBar(hpBars, boss.x + boss.width / 2, boss.y - 3, lastBossPct);
     packSprites.forEach((s) => { if (s.visible) drawBar(hpBars, s.x + s.width / 2, s.y - 3, s._pct != null ? s._pct : 100); });
-    // re-add keeps the bars/text above pack sprites that get addChild'd later
-    world.addChild(hpBars, playerHud);
-    playerHud.x = knight.x + knight.width / 2;
-    playerHud.y = knight.y - 3;
+    // re-add keeps the bars above pack sprites that get addChild'd later
+    world.addChild(hpBars);
   }
 
   // slime textures shared with the rail (minions.js defines window.SlimeDesigns)
@@ -747,6 +741,40 @@
     return `${m}:${String(s % 60).padStart(2, '0')}`;
   }
   function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+  function compactAction(text) {
+    return String(text || 'awaiting action')
+      .replace(/\s+/g, ' ')
+      .replace(/^[-–—\s]+/, '')
+      .slice(0, 72);
+  }
+  // top status window: who's acting + their resource meters (Token over Context).
+  function setUserStatus(data) {
+    const snap = data && data.snapshot;
+    const usage = data && data.usage;
+    const isCodex = String((data && data.harness) || '').toLowerCase() === 'codex';
+    const label = isCodex ? 'CODEX' : 'PLAYER';
+    setText('us-badge', label);
+
+    const action = snap && snap.lastText ? compactAction(snap.lastText)
+      : (isCodex ? 'awaiting Codex action' : 'awaiting player action');
+    setText('us-action', action);
+
+    // Token = 5h rate window left (low is bad); Context = window used (high is bad).
+    const token = stats.token;
+    setText('us-token', token != null ? token + '%' : '—');
+    const tf = document.getElementById('us-token-fill');
+    if (tf) {
+      tf.style.width = (token != null ? Math.max(0, Math.min(100, token)) : 0) + '%';
+      tf.style.background = (token != null && token < 30) ? '#e8842c' : '#6abe30';
+    }
+    const ctx = usage && typeof usage.contextPct === 'number' ? Math.round(usage.contextPct) : null;
+    setText('us-ctx', ctx != null ? ctx + '%' : '—');
+    const cf = document.getElementById('us-ctx-fill');
+    if (cf) {
+      cf.style.width = (ctx != null ? Math.max(0, Math.min(100, ctx)) : 0) + '%';
+      cf.style.background = (ctx != null && ctx > 80) ? '#e8842c' : '#7fa8c0';
+    }
+  }
 
   // hover titles for every chrome icon — single language, picked from /state lang
   const TITLES = {
@@ -773,7 +801,6 @@
       if (el) (onParent ? el.parentElement : el).title = t;
     };
     set('title', T.title); set('boss-name', T.boss); set('hp-bar', T.hp);
-    set('player-token', T.token);
     set('gold', T.gold, true); set('weapon', T.weapon, true); set('atk', T.atk, true);
     set('timer', T.timer, true); set('stamina', T.stamina, true);
     set('minion-rail', T.rail); set('calm-btn', T.calm); set('help-btn', T.help);
@@ -830,12 +857,15 @@
       }
       stats.token = token;
       // resetsAt rides along (epoch seconds) → show time left in the window
+      // reset-time used to sit in a duplicate top-bar token readout; now it's a
+      // hover tooltip on the single us-token meter so the % isn't shown twice.
       let tokenLeft = '';
       if (u.fiveHour && u.fiveHour.resetsAt) {
         const h = (u.fiveHour.resetsAt * 1000 - Date.now()) / 3600000;
-        if (h > 0) tokenLeft = h < 1 ? ` · ${Math.max(1, Math.round(h * 60))}m` : ` · ${(Math.round(h * 10) / 10)}h`;
+        if (h > 0) tokenLeft = h < 1 ? `${Math.max(1, Math.round(h * 60))}m` : `${(Math.round(h * 10) / 10)}h`;
       }
-      setText('player-token', token != null ? `⚡Token ${token}%${tokenLeft}` : '⚡Token —');
+      const tokEl = document.getElementById('us-token');
+      if (tokEl) tokEl.title = tokenLeft ? `resets in ${tokenLeft}` : '';
 
       if (u.sevenDay && typeof u.sevenDay.used === 'number') {
         let weekLeft = '';
@@ -864,14 +894,6 @@
       if (u.lines) setText('atk', `+${u.lines.added || 0} / −${u.lines.removed || 0}`);
       if (typeof u.durationMs === 'number') setText('timer', fmtDuration(u.durationMs));
 
-      // player HUD above the knight: today's token (5h) · week · context size
-      {
-        const tk = token != null ? `⚡${token}%` : '';
-        const wk = (u.sevenDay && typeof u.sevenDay.used === 'number') ? ` 🗓${Math.max(0, Math.round(100 - u.sevenDay.used))}%` : '';
-        const cx = typeof u.contextPct === 'number' ? ` ▣${Math.round(u.contextPct)}%` : '';
-        playerHud.text = `${tk}${wk}${cx}`.trim();
-      }
-
       // grayscale when out of tokens + a one-shot Zzz on the zero transition
       if (token === 0) {
         app.canvas.classList.add('gray');
@@ -881,6 +903,7 @@
         wasZero = false;
       }
     }
+    setUserStatus(data);
   }
   async function pollState() {
     try { const r = await fetch('/state'); if (r.ok) applyState(await r.json()); } catch {}

@@ -44,3 +44,11 @@ test('clearMarker removes the file and is idempotent', () => {
   assert.strictEqual(fs.existsSync(MARKER), false);
   arena.clearMarker(); // second call must not throw
 });
+
+test('clearMarker leaves a foreign-pid marker intact (no link-wipe on re-launch)', () => {
+  // A second serve.js that hits EADDRINUSE exits → its clearMarker() must NOT
+  // delete the live server's marker. Foreign pid → left untouched.
+  fs.writeFileSync(MARKER, JSON.stringify({ port: 4117, pid: 2147483647 }));
+  arena.clearMarker();
+  assert.strictEqual(fs.existsSync(MARKER), true);
+});

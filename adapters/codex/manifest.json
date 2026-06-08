@@ -1,0 +1,19 @@
+{
+  "harness": "codex",
+  "events": [
+    "session_start",
+    "prompt",
+    "pre_tool",
+    "post_tool",
+    "stop",
+    "subagent_stop",
+    "pre_compact"
+  ],
+  "statuslineCommand": "",
+  "commands": ["arena", "battlelog", "defeat", "milestones", "wrapped"],
+  "installTargets": [".codex-plugin/plugin.json", "hooks.json", "commands/"],
+  "notes": [
+    "Codex hooks enter through scripts/dispatch.js, then adapters/codex normalizes payloads before reusing the observer scripts.",
+    "No stable Codex statusline equivalent is exposed in the local plugin examples yet."
+  ]
+}

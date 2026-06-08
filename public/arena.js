@@ -164,6 +164,24 @@
   boss.visible = false;
   world.addChild(boss);
 
+  // Boss appearance is seeded by its NAME — intrinsic, decoupled from project est.
+  // (Combat HP/damage still come from the real session; only the look is seeded.)
+  let bossSeed = 1;
+  function seedFromName(name) {
+    let h = 2166136261; const s = String(name || '');
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+    return (h >>> 0) || 1;
+  }
+  function regenBoss(name) {
+    bossSeed = seedFromName(name);
+    if (window.SlimeDesigns) {
+      const d = SlimeDesigns.designFor(bossSeed);
+      boss.texture = texFromMatrix(d.mat, SlimeDesigns.PALETTES[d.pal]);
+    }
+  }
+  // map the seed onto the threat-tier range so size/form/tier vary by identity, not tokens
+  function bossAppearanceEst() { return bossSeed % 320000; }
+
   // ── on-stage HP bars (boss + every live mob) + a player HUD above the knight ──
   const hpBars = new PIXI.Graphics();
   const playerHud = new PIXI.Text({ text: '', style: {
@@ -762,15 +780,16 @@
     // boss snapshot
     if (snap) {
       if (window.SlimeMinions) SlimeMinions.render(snap.todos);
-      // est rides the snapshot so a page refresh can't lose the form decision
-      applyForm(snap.todos, typeof snap.est === 'number' ? snap.est : null);
-      hideOverlay();
-      // a new boss showed up in a real session → revive the sprite (handles the
-      // case where the victory cutscene hid it and no intro fired to reset bossDead)
+      // a fresh boss → reseed its whole look from its NAME (revives the sprite too,
+      // in case a victory cutscene hid it and no intro fired to reset bossDead)
       if (snap.boss && snap.boss.name && snap.boss.name !== lastPolledBoss) {
         lastPolledBoss = snap.boss.name;
         bossDead = false;
+        regenBoss(snap.boss.name);
       }
+      // form/size driven by the boss's own identity, never the token estimate
+      applyForm(snap.todos, bossAppearanceEst());
+      hideOverlay();
       if (!bossDead && encForm !== 'pack') boss.visible = true;
       if (snap.boss && snap.boss.name) setText('boss-name', snap.boss.name);
       let pct = null;
@@ -779,9 +798,8 @@
       if (pct != null) {
         lastBossPct = pct;
         updateBossHpBar(pct);
-        const { tier, tex } = bossTexFor(pct);
-        if (tier !== bossHpTier) { bossHpTier = tier; boss.texture = tex; }
-        // hp drives the body: full-HP boss looms huge, a battered one shrivels
+        // boss keeps its species look; HP shows on the bars, not by recoloring.
+        // hp still drives body size: full-HP looms huge, a battered one shrivels.
         if (scene === 'battle' && encForm !== 'pack' && encForm !== 'mini') {
           bossScaleTarget = battleScaleFor(lastEncEst, pct);
         }
@@ -972,7 +990,8 @@
         setScene('battle');
         engagedBoss = d.bossName;
         hideOverlay();
-        const est = d.est != null ? d.est : pendingEst;
+        regenBoss(d.bossName);                 // seed the look from the boss's name
+        const est = bossAppearanceEst();        // size/form/tier from identity, not tokens
         const tier = bossTierFor(est);
         bossScaleTarget = battleScaleFor(est, 100); // fresh boss arrives at full menace
         applyForm(lastTodos, est);
@@ -981,8 +1000,7 @@
         setBroken(false);
         if (d.bossName) {
           const label = tier.label && tier.label !== 'normal' ? ` · ${tier.label}` : '';
-          const estStr = est != null ? ` · ${fmtTokensJs(est)} tokens` : '';
-          setText('boss-name', `${d.bossName}${estStr}${label}`);
+          setText('boss-name', `${d.bossName}${label}`);
         }
         playScene(SCENE_BOSS_INTRO(d.bossName || 'A NEW FOE'));
       }

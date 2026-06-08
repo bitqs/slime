@@ -106,13 +106,13 @@
     const s = ((seed | 0) >>> 0) || 1;
     if (_cache[s]) return _cache[s];
     const shape = SHAPES[s % SHAPES.length];
-    const pal = (s >> 3) % PALETTES.length;
-    const level = ((s >> 7) % 5) + 1;                 // 1..5 — higher wears more
-    const scale = SIZES[(s >> 10) % SIZES.length];
+    const pal = (s >>> 3) % PALETTES.length;          // >>> (unsigned): seeds exceed 2^31
+    const level = ((s >>> 7) % 5) + 1;                // 1..5 — higher wears more
+    const scale = SIZES[(s >>> 10) % SIZES.length];
     let mat = mirror(shape);
     const featCount = level >= 5 ? 2 : level >= 3 ? 1 : 0;
     for (let k = 0; k < featCount; k++) {
-      mat = withFeature(mat, FEATS[(s >> (12 + k * 3)) % FEATS.length]);
+      mat = withFeature(mat, FEATS[(s >>> (12 + k * 3)) % FEATS.length]);
     }
     return (_cache[s] = { mat, pal, scale, level });
   }

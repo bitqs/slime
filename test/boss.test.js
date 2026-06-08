@@ -82,8 +82,8 @@ test('minionLabel: compressed base + numbered mob, per lang', () => {
 test('recordDefeat: milestone pushed, boss file cleared, count returned', () => {
   const b = boss.loadOrCreate('/p/defeatme', 'fix it');
   boss.save('/p/defeatme', b);
-  const n = boss.recordDefeat('/p/defeatme', b);
-  assert.ok(n >= 1);
+  const r = boss.recordDefeat('/p/defeatme', b);
+  assert.ok(r.total >= 1);
   assert.equal(fs.existsSync(boss.bossPath('/p/defeatme')), false);
   const state = require('../core/state');
   const prof = state.readProfile();

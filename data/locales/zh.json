@@ -70,5 +70,12 @@
   "hud.broken": "👾☠ 濒死 — /defeat 斩杀",
   "hud.next": "▶ 下一步:{step}",
   "minion.down": "✄ 斩杀:{minion}",
-  "minion.multi": "✄ ×{count} 连斩!"
+  "minion.multi": "✄ ×{count} 连斩!",
+  "boss.levelup": "⭐ 升级 — 现为{title}(Lv{level})",
+  "title.novice": "新手",
+  "title.apprentice": "学徒",
+  "title.adept": "好手",
+  "title.veteran": "老兵",
+  "title.master": "大师",
+  "title.grandmaster": "宗师"
 }

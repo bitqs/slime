@@ -29,9 +29,13 @@ try {
       b.turns = snap.turn || 0;
       if (b.broken) {
         // all todos done and still broken at stop → confirmed kill, no typing needed
-        const total = boss.recordDefeat(p.cwd, b, { dmg: agg.dmg, kills: agg.kills, maxCombo: agg.maxCombo });
+        const r = boss.recordDefeat(p.cwd, b, { dmg: agg.dmg, kills: agg.kills, maxCombo: agg.maxCombo });
         state.appendEvent(id, { t: Date.now(), kind: 'boss_down', boss: b.name,
-          text: locale.fmt(locale.t('boss.autoDown', lang), { name: b.name, count: total }) });
+          text: locale.fmt(locale.t('boss.autoDown', lang), { name: b.name, count: r.total }) });
+        if (r.leveledUp) {
+          state.appendEvent(id, { t: Date.now(), kind: 'level_up',
+            text: locale.fmt(locale.t('boss.levelup', lang), { level: r.level, title: locale.t(r.titleKey, lang) }) });
+        }
         delete snap.boss;
         delete snap.todos;
       } else {

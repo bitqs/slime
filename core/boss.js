@@ -101,23 +101,29 @@ function minionLabel(cwd, idx, lang) {
   return lang === 'zh' ? `${base}·小兵 ${idx + 1}` : `${base} mob ${idx + 1}`;
 }
 
-/** Push a milestone for this boss and clear its file. Returns total milestone count.
+/** Push a milestone, award XP, recompute level, and clear the boss file.
  *  @param {string} cwd @param {BossState} b
  *  @param {{ dmg?: number; kills?: number; maxCombo?: number }} [stats]
- *  @returns {number} */
+ *  @returns {{ total: number, level: number, leveledUp: boolean, titleKey: string }} */
 function recordDefeat(cwd, b, stats = {}) {
   const prof = state.readProfile();
-  prof.milestones.push({
+  const m = {
     boss: b.name, date: new Date().toISOString().slice(0, 10),
     turns: b.turns || 0, project: cwd,
     at: Date.now(),
     dmg: typeof stats.dmg === 'number' ? stats.dmg : (b.dmgTaken || 0),
     kills: stats.kills || 0,
     maxCombo: stats.maxCombo || 0,
-  });
+  };
+  prof.milestones.push(m);
+  const prog = require('./progression');
+  const fromLevel = prog.levelFor(prof.xp || 0).level;
+  prof.xp = (prof.xp || 0) + prog.xpForDefeat(m);
+  const lv = prog.levelFor(prof.xp);
+  prof.level = lv.level;
   state.writeProfile(prof);
   clear(cwd);
-  return prof.milestones.length;
+  return { total: prof.milestones.length, level: lv.level, leveledUp: lv.level > fromLevel, titleKey: lv.titleKey };
 }
 
 module.exports = { nameBoss, loadOrCreate, save, clear, bossPath, compressName, minionLabel, recordDefeat };

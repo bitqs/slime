@@ -63,6 +63,12 @@ export interface Profile {
   gear: Record<string, unknown>;
   langStats?: Record<string, number>;
   gearUse?: Record<string, number>;
+  // progression (all optional; back-filled by core/progression on first defeat)
+  xp?: number;
+  level?: number;
+  badges?: Array<{ id: string; unlockedAt: number }>;
+  quests?: Array<{ id: string; kind: string; target: number; progress: number; startedAt: number; doneAt?: number }>;
+  streak?: { days: number; lastActiveDay: string };
 }
 
 /** Locale catalog: string keys → string values (loaded from JSON). */

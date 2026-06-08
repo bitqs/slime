@@ -60,7 +60,8 @@ test('defeat appends boss_down to the newest session', () => {
   execFileSync('node', [S('defeat.js'), '/tmp/defeat-event-app'], { env: ENV });
 
   const lines = fs.readFileSync(path.join(ROOT, 'sessions', `${sid}.jsonl`), 'utf8').trim().split('\n');
-  const ev = JSON.parse(lines[lines.length - 1]);
-  assert.equal(ev.kind, 'boss_down');
+  // a defeat may append boss_down then a level_up — find the boss_down, don't assume it's last
+  const ev = lines.map((l) => JSON.parse(l)).find((e) => e.kind === 'boss_down');
+  assert.ok(ev, 'boss_down event emitted');
   assert.ok(ev.boss);
 });

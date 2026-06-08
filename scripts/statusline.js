@@ -22,7 +22,8 @@ try {
     tips = readJson(fallbackTips, []);
   }
   if (!Array.isArray(tips)) tips = [];
-  process.stdout.write(hud.render(snap, stdin, tips, Date.now(), usage.readCache(), lang, arenaStatus.readLive()));
+  const level = state.readProfile().level;
+  process.stdout.write(hud.render(snap, stdin, tips, Date.now(), usage.readCache(), lang, arenaStatus.readLive(), level));
 } catch {
   process.stdout.write('🟢 Slime');
 }

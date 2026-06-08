@@ -31,5 +31,12 @@
   "hud.broken": "👾☠ broken — /defeat to finish",
   "hud.next": "▶ next: {step}",
   "minion.down": "✄ slain: {minion}",
-  "minion.multi": "✄ ×{count} multi-kill!"
+  "minion.multi": "✄ ×{count} multi-kill!",
+  "boss.levelup": "⭐ LEVEL UP — now {title} (Lv{level})",
+  "title.novice": "Novice",
+  "title.apprentice": "Apprentice",
+  "title.adept": "Adept",
+  "title.veteran": "Veteran",
+  "title.master": "Master",
+  "title.grandmaster": "Grandmaster"
 }

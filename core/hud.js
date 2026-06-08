@@ -39,13 +39,15 @@ function sanitize(s, max = 60) {
  * @param {UsageCache | null | undefined} usageCache
  * @param {string} [lang]
  * @param {{ port: number } | null} [live] live arena info → renders clickable 【UI】 link
+ * @param {number} [level] player level → shown as a ✦Lv badge
  * @returns {string}
  */
-function render(snap, stdinJson, tips, now, usageCache, lang, live) {
+function render(snap, stdinJson, tips, now, usageCache, lang, live, level) {
   const locale = require('./locale');
   const l = lang || locale.current();
   /** @param {string} key @param {Record<string, unknown>} [vars] @returns {string} */
   const T = (key, vars) => locale.fmt(locale.t(key, l), vars);
+  const lv = level ? ` ✦Lv${level}` : '';
   const hpVal = usage.hp(usageCache);
   if (hpVal === 0) {
     const t = usage.restTime(usageCache);
@@ -61,12 +63,12 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live) {
   // Between turns: still lead with the badge + live arena link, then the result.
   if (!snap.inTurn) {
     const body = sanitize(snap.lastText, 120) || T('hud.yourTurn');
-    return `🟢${uiLink(live)} ${body}`;
+    return `🟢${uiLink(live)}${lv} ${body}`;
   }
 
   const parts = [];
   // plugin badge leads the line; boss shows as a slime icon + hp, never a name
-  parts.push(hpVal != null ? `🟢${uiLink(live)} ⚡${hpVal}%` : `🟢${uiLink(live)}`);
+  parts.push(hpVal != null ? `🟢${uiLink(live)}${lv} ⚡${hpVal}%` : `🟢${uiLink(live)}${lv}`);
   const todos = Array.isArray(snap.todos) ? snap.todos : [];
   const doneCnt = todos.filter((t) => t.status === 'completed').length;
   const cnt = todos.length ? ` ⚔${doneCnt}/${todos.length}` : '';

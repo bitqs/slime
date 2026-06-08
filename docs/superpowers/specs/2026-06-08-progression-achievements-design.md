@@ -150,6 +150,20 @@ Each ends with `node --test test/` + `npm run typecheck` green.
 - **Phase 4 — Quests.** Auto weekly-kills + streak-days; `applyTurnEnd`/`applyDefeat`
   refresh progress, emit `quest_done`, roll the next; progress shown in
   `/slime:achievements` and (compact) statusline.
+- **Phase 5 — Random rewards & instant feedback.** The dopamine layer (added
+  2026-06-08). A **variable-ratio** reward: each resolved tool call has a small
+  chance to drop a bonus — surprise XP, a "loot" sparkle, or an early badge nudge —
+  surfaced instantly in the arena (a `loot_drop` event → short FX + floater) and
+  echoed in the statusline. Randomness is seeded per-event (no `Math.random()` in
+  the hot path that must stay replay-stable — derive from event index/hash, like
+  `mapper`'s existing `hash`), so it is deterministic per session yet feels random.
+  Drop chance + reward table live in `data/loot.json` (declarative, Vibe-friendly).
+
+**Cross-cutting principle — instant feedback (north star).** Every real action
+should produce an *immediate*, visible reaction (damage floater, combo pop, loot
+sparkle, progress tick) within the same frame/poll. This is the addiction loop
+behind the tagline. New features are evaluated against it: if an action accrues
+something, the player must *see* it happen now, not only on `/wrapped` later.
 
 ## Testing strategy
 

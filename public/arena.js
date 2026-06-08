@@ -1545,12 +1545,6 @@
       location.reload();
     });
   }
-  const langBtn = document.getElementById('lang-btn');
-  if (langBtn) langBtn.addEventListener('click', async () => {
-    const next = lastDataLang === 'zh' ? 'en' : 'zh'; // global toggle via config.json
-    try { await fetch('/set-lang?lang=' + next, { method: 'POST' }); } catch {}
-    location.reload();
-  });
   const helpBtn = document.getElementById('help-btn');
   if (helpBtn) helpBtn.addEventListener('click', () => toggleGuide());
   if (guideEl) guideEl.addEventListener('click', () => toggleGuide(false));

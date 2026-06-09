@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const state = require('../core/state');
+const { runHook } = require('../core/hook-runner');
 
 const PLUGIN_ROOT = path.resolve(__dirname, '..');
 
@@ -53,8 +54,7 @@ function ensureArena() {
   }).unref();
 }
 
-try {
-  const p = state.readStdin();
+runHook((p) => {
   if (p && p.session_id) {
     const autoOn = autoHudEnabled();
     if (autoOn) {
@@ -93,5 +93,4 @@ try {
     }
     if (msgs.length) process.stdout.write(JSON.stringify({ systemMessage: msgs.join('\n\n') }));
   }
-} catch {}
-process.exit(0);
+});

@@ -10,10 +10,9 @@ const sage = require('../core/sage');
 const locale = require('../core/locale');
 const defeatFlow = require('../core/defeat-flow');
 const progression = require('../core/progression');
+const { runHook } = require('../core/hook-runner');
 
-try {
-  /** @type {HookPayload | null} */
-  const p = /** @type {HookPayload | null} */ (state.readStdin());
+runHook((/** @type {HookPayload} */ p) => {
   if (p && p.session_id) {
     const id = p.session_id;
     /** @type {Snapshot} */
@@ -71,5 +70,4 @@ try {
     // the only user-visible hook output: the turn report (display only)
     process.stdout.write(JSON.stringify({ systemMessage: card }));
   }
-} catch {}
-process.exit(0);
+});

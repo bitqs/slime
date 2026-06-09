@@ -4,9 +4,9 @@
 const state = require('../core/state');
 const boss = require('../core/boss');
 const locale = require('../core/locale');
-try {
-  /** @type {HookPayload | null} */
-  const p = /** @type {HookPayload | null} */ (state.readStdin());
+const { runHook } = require('../core/hook-runner');
+
+runHook((/** @type {HookPayload} */ p) => {
   if (p && p.session_id) {
     try { locale.tally(p.prompt); } catch {}
     const id = p.session_id;
@@ -35,5 +35,4 @@ try {
     snap.updated = Date.now();
     state.writeSnapshot(id, snap);
   }
-} catch {}
-process.exit(0);
+});

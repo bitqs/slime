@@ -2,8 +2,9 @@
 /** @typedef {import('../core/types').Snapshot} Snapshot */
 const state = require('../core/state');
 const locale = require('../core/locale');
-try {
-  const p = state.readStdin();
+const { runHook } = require('../core/hook-runner');
+
+runHook((p) => {
   if (p && p.session_id) {
     /** @type {Snapshot} */
     const snap = state.readSnapshot(p.session_id) || /** @type {Snapshot} */ ({ sessionId: p.session_id, turn: 0, combo: 0, kills: 0, dmg: 0, summons: 0 });
@@ -12,5 +13,4 @@ try {
     state.appendEvent(p.session_id, { t: Date.now(), kind: 'potion', text: snap.lastText });
     state.writeSnapshot(p.session_id, snap);
   }
-} catch {}
-process.exit(0);
+});

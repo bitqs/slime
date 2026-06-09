@@ -7,9 +7,9 @@ const boss = require('../core/boss');
 const report = require('../core/report');
 const defeatFlow = require('../core/defeat-flow');
 const loot = require('../core/loot');
-try {
-  /** @type {HookPayload | null} */
-  const p = /** @type {HookPayload | null} */ (state.readStdin());
+const { runHook } = require('../core/hook-runner');
+
+runHook((/** @type {HookPayload} */ p) => {
   if (p && p.session_id) {
     const id = p.session_id;
     const snap = state.readSnapshot(id) || { sessionId: id, turn: 0, combo: 0, kills: 0, dmg: 0, summons: 0 };
@@ -131,5 +131,4 @@ try {
       state.appendEvent(id, { t: Date.now(), kind: 'plan_approved' });
     }
   }
-} catch {}
-process.exit(0);
+});

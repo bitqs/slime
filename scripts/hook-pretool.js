@@ -4,9 +4,9 @@
 const state = require('../core/state');
 const mapper = require('../core/mapper');
 const locale = require('../core/locale');
-try {
-  /** @type {HookPayload | null} */
-  const p = /** @type {HookPayload | null} */ (state.readStdin());
+const { runHook } = require('../core/hook-runner');
+
+runHook((/** @type {HookPayload} */ p) => {
   if (p && p.session_id) {
     const id = p.session_id;
     const snap = state.readSnapshot(id) || { sessionId: id, turn: 0, combo: 0, kills: 0, dmg: 0, summons: 0 };
@@ -39,5 +39,4 @@ try {
       state.appendEvent(id, { t: Date.now(), kind: 'plan_scroll', plan: String(p.tool_input.plan).slice(0, 1500), est: require('../core/estimate').estimateTokens(p.tool_input.plan) });
     }
   }
-} catch {}
-process.exit(0);
+});

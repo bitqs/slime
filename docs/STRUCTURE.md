@@ -61,8 +61,9 @@ Event types in the `.jsonl` stream: `cast`, `resolve`, `encounter`, `turn_end`,
 ## `hooks/` — the writers
 
 `hooks.json` registers one script per Claude Code lifecycle event. Each runs with
-a **2-second timeout**, is wrapped entirely in try/catch, and always exits 0 — a
-crash or slowness here must never affect the real session.
+a **2-second timeout** and enters through `core/hook-runner.js`, the shared
+fail-soft shell that reads stdin, catches handler failures, and always exits 0 —
+a crash or slowness here must never affect the real session.
 
 | Hook event       | Script                     | Role |
 |------------------|----------------------------|------|
@@ -106,6 +107,7 @@ Invoked by the matching `commands/*.md` slash command:
 | Module            | Role |
 |-------------------|------|
 | `safe-io.js`      | The single IO gateway: atomic writes (temp+rename, 0600), tolerant reads, symlink refusal. Every function silent-fails. |
+| `hook-runner.js`  | Shared observer shell for hook entrypoints: read stdin, invoke the handler, swallow failures, exit 0. |
 | `state.js`        | Reads/writes the `SLIME_ROOT` files: snapshots, the event stream, profile. Owns `ROOT` and path helpers. |
 | `mapper.js`       | Maps a tool call → a `SlimeEvent` (verb table: which tools are which "spells"). |
 | `boss.js`         | Boss state + naming (regex name table) per project; `recordDefeat` awards XP/badges. |

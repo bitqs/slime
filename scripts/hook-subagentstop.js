@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 const state = require('../core/state');
 const locale = require('../core/locale');
-try {
-  const p = state.readStdin();
+const { runHook } = require('../core/hook-runner');
+
+runHook((p) => {
   if (p && p.session_id) {
     const snap = state.readSnapshot(p.session_id);
     if (snap) {
@@ -13,5 +14,4 @@ try {
       state.writeSnapshot(p.session_id, snap);
     }
   }
-} catch {}
-process.exit(0);
+});

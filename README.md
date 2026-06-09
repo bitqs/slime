@@ -43,6 +43,7 @@ Code in your terminal, watch the fight in the browser — one real session, zero
 | 🔥 Combo | Consecutive successful tool strikes |
 | 🍖 Feeding | Planning and Q&A feed the boss; it grows |
 | 🐺 Summons | Subagent dispatches fight beside you |
+| 💥 Backfire | A failed tool lets the boss counterattack — your combo breaks and the knight takes the hit |
 
 ## The status bar
 

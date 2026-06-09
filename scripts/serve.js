@@ -11,7 +11,7 @@
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
-const { readSnapshot, eventsPath, newestSessionId, ROOT } = require('../core/state');
+const { readSnapshot, eventsPath, newestSessionId, ROOT, readProfile } = require('../core/state');
 const { readCache } = require('../core/usage');
 const { safeWrite, readJson } = require('../core/safe-io');
 const locale = require('../core/locale');
@@ -46,8 +46,9 @@ function handleState(res) {
     const snapshot = id ? readSnapshot(id) : null;
     const usage = readCache();
     const lang = locale.current();
+    const streak = readProfile().streak || null;
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ snapshot, usage, lang, harness: 'claude-code' }));
+    res.end(JSON.stringify({ snapshot, usage, lang, streak, harness: 'claude-code' }));
   } catch {
     res.writeHead(500);
     res.end('{}');

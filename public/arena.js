@@ -804,6 +804,12 @@
   }
   // mirror of scripts/lib/estimate.js fmtTokens (browser has no require)
   function fmtTokensJs(n) { return `≈${Math.round(n / 10000) * 10}k`; }
+  // compact token count for the status bar (24500 → "24.5k", 1.2M)
+  function fmtTok(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+    return String(n);
+  }
 
   // ── cutscene builders ─────────────────────────────────────────────────────────
   function SCENE_BOSS_INTRO(name) {
@@ -1137,6 +1143,12 @@
     setText('pg-kills', s ? String(s.kills || 0) : '—');
     setText('pg-dmg', s ? String(s.dmg || 0) : '—');
     setText('pg-summons', s ? '×' + (s.summons || 0) : '—');
+    // Tokens — input tokens currently in context (the HUD's "↑24.5k", in the arena now)
+    const tok = usage && typeof usage.ctxTokens === 'number' ? usage.ctxTokens : null;
+    setText('pg-tokens', tok != null ? '↑' + fmtTok(tok) : '—');
+    // Streak — consecutive active days, with longest in parens
+    const st = data && data.streak;
+    setText('pg-streak', st && st.days > 0 ? `${st.days}d` + (st.longest > st.days ? ` (best ${st.longest})` : '') : '—');
   }
 
   // ── i18n ──────────────────────────────────────────────────────────────────────

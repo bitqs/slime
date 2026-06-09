@@ -67,10 +67,11 @@
   // enforced separately by bossMinScale() (≥2× the knight, texture-aware).
   const SLIME_MIN_SCALE = 3;
 
-  function showOverlay(msg) {
+  function showOverlay(msg, k) {
     const ov = document.getElementById('overlay');
     if (!ov) return;
     if (msg != null) ov.textContent = msg;
+    if (k != null) ov.dataset.k = k; else delete ov.dataset.k; // key lets applyLang re-translate it
     ov.style.display = 'flex';
   }
   function hideOverlay() {
@@ -653,11 +654,9 @@
     drawFloor();                                                // stone floor re-skin
     torches.forEach((g) => drawTorch(g, true));                 // lit at night, cold post by day
     vignette.texture = day ? vigDayTex : vigNightTex;           // danger glow re-tint
-    if (dayBtn) {
-      // icon shows the theme you'll switch TO (☀️ = go to day, 🌙 = go to night)
-      dayBtn.textContent = day ? '🌙' : '☀️';
-      dayBtn.title = day ? 'switch to night (dark)' : 'switch to day (light)';
-    }
+    // icon shows the theme you'll switch TO (☀️ = go to day, 🌙 = go to night);
+    // the tooltip is a static data-tip owned by applyLang
+    if (dayBtn) dayBtn.textContent = day ? '🌙' : '☀️';
     try { if (day) localStorage.setItem('slimeDay', '1'); else localStorage.removeItem('slimeDay'); } catch {}
   }
 
@@ -1140,39 +1139,90 @@
     setText('pg-summons', s ? '×' + (s.summons || 0) : '—');
   }
 
-  // hover titles for every chrome icon — single language, picked from /state lang
-  const TITLES = {
-    en: { title: 'Slime — your coding session as an RPG', boss: 'The current quest (boss)',
-      hp: 'Boss HP', token: 'Token — 5h rate window left',
-      gold: 'Gold — real session cost (USD)', weapon: 'Weapon — current model',
-      atk: 'ATK — lines added/removed', timer: 'Session time', stamina: 'Camp — weekly quota left',
-      rail: 'Minions — your todo list', calm: 'Flash / calm toggle', help: 'Game guide (h)' },
-    zh: { title: 'Slime — 把写码变成 RPG', boss: '当前任务(Boss)',
-      hp: 'Boss 血量', token: 'Token — 5 小时窗口余量',
-      gold: '金币 — 本会话真实花费(美元)', weapon: '武器 — 当前模型',
-      atk: '攻击 — 增/删行数', timer: '本会话时长', stamina: '营地 — 周配额余量',
-      rail: '小怪 — 你的 todo 列表', calm: '闪烁/舒缓 开关', help: '游戏说明 (h)' },
+  // ── i18n ──────────────────────────────────────────────────────────────────────
+  // ALL static viewer chrome localizes from this one catalog, so English mode shows
+  // zero Chinese. (Event / boss / todo text comes from the session and is localized
+  // server-side by core/locale.js.) Switching is live — no reload.
+  const UI = {
+    en: {
+      doc: '🟢 Slime — Battle Arena', title: '⚓ SLIME', waiting: 'waiting for a session…',
+      langLabel: '🌐',
+      tip: { title: 'Slime — your coding session as an RPG', boss: 'The current quest (boss)',
+        rail: 'Minions — your todo list', music: 'Music on / off', sfx: 'Sound effects on / off',
+        day: 'Day / night theme', calm: 'Flash / calm toggle', help: 'Game guide (h)',
+        lang: 'Switch to Chinese', collapse: 'Collapse the arena', expand: 'Expand the arena',
+        gh: 'Slime on GitHub', issue: 'Report an issue' },
+      guideTitle: '⚔️ How to read the battle',
+      guide: [
+        ['🗡️', 'Boss', 'your current quest in this project. Forged from your prompt; its size / tier comes from the estimated token cost.'],
+        ['❤️', 'Boss HP', 'falls as todos get checked off. At 0 the boss kneels (☠ broken); your next strike finishes it automatically.'],
+        ['🟢', 'Minions', "the todo list. Each completed todo drains a slime's HP to zero."],
+        ['⚡', 'Token', 'your resource (5h rate window). Rest restores it.'],
+        ['🔥', 'Combo', 'consecutive successful tool strikes.'],
+        ['🍖', 'Feeding', 'while planning, every plan update and answered question feeds the boss and it grows.'],
+        ['🐺', 'Summons', 'subagent dispatches fight beside the knight.'],
+        ['💰', 'Gold', 'real session cost (USD). ⚔️ weapon = model, 🗡️ ATK = lines changed, ⏳ session time, 🏕️ weekly quota.'],
+      ],
+      cmds: 'Commands:', close: 'esc / click to close',
+    },
+    zh: {
+      doc: '🟢 Slime · 史莱姆 — 战斗竞技场', title: '⚓ SLIME · 史莱姆', waiting: '等待会话…',
+      langLabel: '🌐',
+      tip: { title: 'Slime — 把写码变成 RPG', boss: '当前任务(Boss)',
+        rail: '小怪 — 你的 todo 列表', music: '音乐 开 / 关', sfx: '音效 开 / 关',
+        day: '白天 / 黑夜 主题', calm: '闪烁 / 舒缓 开关', help: '游戏说明 (h)',
+        lang: '切换英文', collapse: '收起竞技场', expand: '展开竞技场',
+        gh: 'GitHub 上的 Slime', issue: '反馈问题' },
+      guideTitle: '⚔️ 怎么看懂这场仗',
+      guide: [
+        ['🗡️', 'Boss', '当前项目里的任务。由你的 prompt 锻造,体型 / 等级取决于预估 token 花费。'],
+        ['❤️', 'Boss 血量', '随 todo 勾选而下降。归零时 Boss 跪地(☠ 濒死),你的下一击自动击杀。'],
+        ['🟢', '小怪', '你的 todo 列表。每完成一个 todo,一只史莱姆血量清零。'],
+        ['⚡', 'Token', '你的资源(5 小时窗口)。休息可回复。'],
+        ['🔥', '连击', '连续成功的工具操作。'],
+        ['🍖', '喂养', '计划阶段,每次更新计划、回答问题都会把 Boss 喂得更大。'],
+        ['🐺', '召唤', 'subagent 派遣,在骑士身旁并肩作战。'],
+        ['💰', '金币', '本会话真实花费(美元)。⚔️ 武器=模型,🗡️ ATK=改动行数,⏳ 会话时长,🏕️ 周配额。'],
+      ],
+      cmds: '命令:', close: 'esc / 点击关闭',
+    },
   };
-  let titlesApplied = '';
-  let lastDataLang = 'en'; // current display language (from /state) — the lang button toggles it
-  function applyTitles(lang) {
-    const l = lang === 'zh' ? 'zh' : 'en';
-    if (titlesApplied === l) return;
-    titlesApplied = l;
-    const T = TITLES[l];
-    const set = (id, t, onParent) => {
-      const el = document.getElementById(id);
-      if (el) (onParent ? el.parentElement : el).title = t;
-    };
-    set('title', T.title); set('boss-name', T.boss);
-    // stats/progress rows carry their own static title= tooltips (game name + meaning).
-    set('minion-rail', T.rail); set('calm-btn', T.calm); set('help-btn', T.help);
+  let lang = (() => { try { return localStorage.getItem('slimeLang') || 'en'; } catch (e) { return 'en'; } })();
+  let langPinned = (() => { try { return !!localStorage.getItem('slimeLang'); } catch (e) { return false; } })();
+  let lastDataLang = 'en';
+  let langApplied = '';
+  function buildGuide(U) {
+    const items = U.guide.map(([ic, term, desc]) => `<p>${ic} <b>${escHtml(term)}</b> — ${escHtml(desc)}</p>`).join('');
+    return `<b>${escHtml(U.guideTitle)}</b>${items}`
+      + `<p>${escHtml(U.cmds)} <code>/slime:arena</code> · <code>/slime:milestones</code> · <code>/slime:wrapped</code></p>`
+      + `<p id="guide-close-hint">${escHtml(U.close)}</p>`;
+  }
+  function applyLang(l) {
+    lang = l === 'zh' ? 'zh' : 'en';
+    if (langApplied === lang) return;
+    langApplied = lang;
+    const U = UI[lang];
+    document.documentElement.lang = lang;
+    try { document.title = U.doc; } catch (e) {}
+    const tip = (id, t) => { const e = document.getElementById(id); if (e) e.dataset.tip = t; };
+    const titleEl = document.getElementById('title');
+    if (titleEl) { titleEl.textContent = U.title; titleEl.dataset.tip = U.tip.title; }
+    tip('boss-name', U.tip.boss); tip('minion-rail', U.tip.rail);
+    tip('music-btn', U.tip.music); tip('sfx-btn', U.tip.sfx); tip('day-btn', U.tip.day);
+    tip('calm-btn', U.tip.calm); tip('help-btn', U.tip.help); tip('gh-btn', U.tip.gh); tip('issue-btn', U.tip.issue);
+    const lb = document.getElementById('lang-btn');
+    if (lb) { lb.textContent = U.langLabel; lb.dataset.tip = U.tip.lang; }
+    const ov = document.getElementById('overlay');
+    if (ov && ov.dataset.k === 'waiting') ov.textContent = U.waiting;
+    const box = document.getElementById('guide-box');
+    if (box) box.innerHTML = buildGuide(U);
+    if (typeof syncCollapse === 'function') syncCollapse(); // collapse tip is language + state dependent
   }
 
   function applyState(data) {
     if (!data) return;
     lastDataLang = data.lang || lastDataLang;
-    applyTitles(data.lang);
+    if (!langPinned) applyLang(data.lang); // follow the server lang until the viewer pins a choice
     const snap = data.snapshot;
 
     // boss snapshot
@@ -1200,7 +1250,7 @@
       if (snap.boss && typeof snap.boss.broken === 'boolean' && snap.boss.broken !== bossBroken) setBroken(snap.boss.broken);
     } else {
       if (window.SlimeMinions) SlimeMinions.render([], null);
-      showOverlay('waiting for a session…');
+      showOverlay(UI[lang].waiting, 'waiting');
       boss.visible = false;
       setText('boss-name', '—');
     }
@@ -1567,7 +1617,7 @@
   if (calmBtn) {
     if (CALM) calmBtn.style.borderColor = '#f0b541';
     calmBtn.setAttribute('aria-pressed', CALM ? 'true' : 'false');
-    calmBtn.title = CALM ? 'calm on — restore motion/flashes' : 'calm off — reduce motion/flashes';
+    // tooltip is a static data-tip owned by applyLang; the border + aria show the state
     // persist in localStorage (durable across links/bookmarks) and clear any ?calm= so storage is authoritative
     calmBtn.addEventListener('click', () => {
       try { localStorage.setItem('slimeCalm', CALM ? '0' : '1'); } catch (e) { /* private mode */ }
@@ -1579,19 +1629,52 @@
   const A = window.SlimeAudio;
   const musicBtn = document.getElementById('music-btn');
   if (musicBtn && A) {
-    const sync = () => { const on = A.isMusicOn(); musicBtn.textContent = on ? '🎵' : '🔇'; musicBtn.style.opacity = on ? '1' : '0.5'; musicBtn.style.borderColor = on ? '#f0b541' : ''; musicBtn.title = on ? 'music on' : 'music off'; musicBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); };
+    const sync = () => { const on = A.isMusicOn(); musicBtn.textContent = on ? '🎵' : '🔇'; musicBtn.style.opacity = on ? '1' : '0.5'; musicBtn.style.borderColor = on ? '#f0b541' : ''; musicBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); };
     sync();
     musicBtn.addEventListener('click', async () => { A.unlock(); await A.setMusic(!A.isMusicOn()); sync(); });
   }
   const sfxBtn = document.getElementById('sfx-btn');
   if (sfxBtn && A) {
-    const sync = () => { const on = A.isSfxOn(); sfxBtn.textContent = on ? '🔊' : '🔇'; sfxBtn.style.opacity = on ? '1' : '0.5'; sfxBtn.style.borderColor = on ? '#f0b541' : ''; sfxBtn.title = on ? 'sound effects on' : 'sound effects off'; sfxBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); };
+    const sync = () => { const on = A.isSfxOn(); sfxBtn.textContent = on ? '🔊' : '🔇'; sfxBtn.style.opacity = on ? '1' : '0.5'; sfxBtn.style.borderColor = on ? '#f0b541' : ''; sfxBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); };
     sync();
     sfxBtn.addEventListener('click', async () => { A.unlock(); await A.setSfx(!A.isSfxOn()); A.play('ui'); sync(); });
   }
   const dayBtn = document.getElementById('day-btn');
   if (dayBtn) dayBtn.addEventListener('click', () => applyTheme(!theme));
   applyTheme(theme); // sync DOM chrome + canvas to the persisted flag (sets the button icon)
+
+  // ── language toggle (中 ⇄ EN) — live, persisted, and tells the server so new
+  // events are localized too. English mode shows zero Chinese. ──
+  const langBtn = document.getElementById('lang-btn');
+  if (langBtn) langBtn.addEventListener('click', () => {
+    const next = lang === 'zh' ? 'en' : 'zh';
+    langPinned = true;
+    try { localStorage.setItem('slimeLang', next); } catch (e) { /* private mode */ }
+    applyLang(next);
+    // persist server-side so future event/boss text is generated in this language
+    fetch('/set-lang?lang=' + next, { method: 'POST' }).catch(() => {});
+  });
+
+  // ── collapse / expand the arena stage (CRT) ──
+  const collapseBtn = document.getElementById('collapse-btn');
+  function syncCollapse() {
+    const on = document.body.classList.contains('arena-collapsed');
+    const U = UI[lang];
+    if (collapseBtn) {
+      collapseBtn.textContent = on ? '⊞' : '⊟';            // ⊞ = expand, ⊟ = collapse
+      collapseBtn.dataset.tip = on ? U.tip.expand : U.tip.collapse;
+      collapseBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+  }
+  if (collapseBtn) collapseBtn.addEventListener('click', () => {
+    const on = !document.body.classList.contains('arena-collapsed');
+    document.body.classList.toggle('arena-collapsed', on);
+    try { localStorage.setItem('slimeArenaCollapsed', on ? '1' : '0'); } catch (e) { /* private mode */ }
+    syncCollapse();
+  });
+
+  applyLang(lang); // localize all static chrome to the persisted / default language
+
   const helpBtn = document.getElementById('help-btn');
   if (helpBtn) helpBtn.addEventListener('click', () => toggleGuide());
   if (guideEl) guideEl.addEventListener('click', () => toggleGuide(false));

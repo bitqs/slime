@@ -21,13 +21,13 @@ const BOSS = 'The Demo Dragon';
 
 // Todos: shape matches exactly what hook-posttool writes (content/status/label/activeForm/form)
 const TODOS_INITIAL = [
-  { content: 'sharpen the demo', status: 'in_progress', label: 'QL mob 1', activeForm: '打磨演示节奏', form: 0 },
+  { content: 'sharpen the demo', status: 'in_progress', label: 'QL mob 1', activeForm: 'Sharpening the demo', form: 0 },
   { content: 'slay the dragon', status: 'pending',     label: 'QL mob 2', activeForm: '',     form: 1 },
   { content: 'loot the hoard',  status: 'pending',     label: 'QL mob 3', activeForm: '',     form: 2 },
 ];
 const TODOS_FIRST_KILL = [
   { content: 'sharpen the demo', status: 'completed',  label: 'QL mob 1', activeForm: '',     form: 0 },
-  { content: 'slay the dragon', status: 'in_progress', label: 'QL mob 2', activeForm: '猎杀巨龙', form: 1 },
+  { content: 'slay the dragon', status: 'in_progress', label: 'QL mob 2', activeForm: 'Slaying the dragon', form: 1 },
   { content: 'loot the hoard',  status: 'pending',     label: 'QL mob 3', activeForm: '',     form: 2 },
 ];
 const TODOS_ALL_DONE = [
@@ -64,7 +64,7 @@ const script = [
   // ── summon: Agent cast spawns an investigator minion ─────────────────────
   () => {
     snap.summons = (snap.summons || 0) + 1;
-    ev({ kind: 'cast', tool: 'Agent', text: '🐺 召唤:investigator' });
+    ev({ kind: 'cast', tool: 'Agent', text: '🐺 Summoning: investigator' });
   },
   // ── first minion kill (mob 1 → completed) ────────────────────────────────
   () => {

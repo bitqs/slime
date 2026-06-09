@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>🟢 Slime · 史莱姆 — Battle Arena</title>
+<title>🟢 Slime — Battle Arena</title>
 <style>
 :root{
   /* parchment / brass tokens (used by the DAY theme) */
@@ -98,8 +98,14 @@ body.calm .minion-hp-fill{transition:none}
 #user-status .us-track::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 7px,rgba(0,0,0,.4) 7px 8px)}
 body.calm #user-status .us-fill{transition:none}
 #user-status .us-val{position:absolute;right:3px;top:50%;transform:translateY(-50%);z-index:2;color:#fff;font-size:8px;font-weight:bold;text-shadow:1px 1px 0 #000,0 0 2px #000}
-#calm-btn,#help-btn,#day-btn,#music-btn,#sfx-btn,#gh-btn,#issue-btn{position:relative;z-index:4;flex-shrink:0;background:var(--btn-bg);color:var(--btn-fg);border:1px solid var(--btn-border);font-family:monospace;font-size:11px;width:19px;height:19px;cursor:pointer;padding:0;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
-#calm-btn:hover,#help-btn:hover,#day-btn:hover,#music-btn:hover,#sfx-btn:hover,#gh-btn:hover,#issue-btn:hover{color:#fff;box-shadow:inset 0 0 0 1px var(--accent)}
+#calm-btn,#help-btn,#day-btn,#music-btn,#sfx-btn,#lang-btn,#collapse-btn,#gh-btn,#issue-btn{position:relative;z-index:4;flex-shrink:0;background:var(--btn-bg);color:var(--btn-fg);border:1px solid var(--btn-border);font-family:monospace;font-size:11px;width:19px;height:19px;cursor:pointer;padding:0;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+#calm-btn:hover,#help-btn:hover,#day-btn:hover,#music-btn:hover,#sfx-btn:hover,#lang-btn:hover,#collapse-btn:hover,#gh-btn:hover,#issue-btn:hover{color:#fff;box-shadow:inset 0 0 0 1px var(--accent)}
+#lang-btn{font-size:9px;font-weight:bold;letter-spacing:0}
+/* top-bar hover tooltips — same styled bubble as the status bar, anchored below-right */
+#top-bar [data-tip]:hover::after{content:attr(data-tip);position:absolute;right:0;top:calc(100% + 5px);z-index:60;white-space:nowrap;background:#11141b;color:var(--tip-fg);border:1px solid var(--accent);padding:3px 7px;font-size:9px;letter-spacing:.3px;box-shadow:0 2px 8px rgba(0,0,0,.7);pointer-events:none}
+#top-bar #title[data-tip]:hover::after{right:auto;left:0}
+/* collapse the arena stage to focus on the log + stats */
+body.arena-collapsed #stage-wrap{display:none}
 #guide-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(13,15,20,.93);z-index:30}
 #guide-box{max-width:85%;max-height:90%;overflow:auto;font-size:10px;line-height:1.5;color:var(--ink);background:var(--panel-bg);border:1px solid var(--rule);box-shadow:var(--panel-bevel);padding:14px}
 #guide-box b{color:var(--accent)}
@@ -108,18 +114,20 @@ body.calm #user-status .us-fill{transition:none}
 </style>
 </head>
 <body>
-<script>try{if(localStorage.getItem('slimeDay')==='1')document.body.classList.add('day')}catch(e){}</script>
+<script>try{var _ls=localStorage;if(_ls.getItem('slimeDay')==='1')document.body.classList.add('day');if(_ls.getItem('slimeArenaCollapsed')==='1')document.body.classList.add('arena-collapsed')}catch(e){}</script>
 <div id="top-bar" class="uw"><span class="uw-rule"></span>
-  <span id="title">⚓ SLIME · 史莱姆</span>
+  <span id="title" data-tip="Slime — your coding session as an RPG">⚓ SLIME</span>
   <span style="flex:1"></span>
-  <button id="music-btn" title="music on / off">🎵</button>
-  <button id="sfx-btn" title="sound effects on / off">🔊</button>
-  <button id="day-btn" title="day / night theme">☀️</button>
+  <button id="music-btn" data-tip="Music on / off" aria-label="Music on / off">🎵</button>
+  <button id="sfx-btn" data-tip="Sound effects on / off" aria-label="Sound effects on / off">🔊</button>
+  <button id="day-btn" data-tip="Day / night theme" aria-label="Day / night theme">☀️</button>
   <script>try{if(localStorage.getItem('slimeDay')==='1')document.getElementById('day-btn').textContent='🌙'}catch(e){}</script>
-  <button id="calm-btn" title="flash / calm toggle">✨</button>
-  <button id="help-btn" title="game guide (h)" aria-expanded="false" aria-controls="guide-overlay">?</button>
-  <a id="gh-btn" href="https://github.com/bitqs/slime" target="_blank" rel="noopener noreferrer" title="Slime on GitHub" aria-label="Slime on GitHub">🐙</a>
-  <a id="issue-btn" href="https://github.com/bitqs/slime/issues/new" target="_blank" rel="noopener noreferrer" title="report an issue" aria-label="Report an issue">🐛</a>
+  <button id="calm-btn" data-tip="Flash / calm toggle" aria-label="Flash / calm toggle">✨</button>
+  <button id="lang-btn" data-tip="Switch to Chinese" aria-label="Language">🌐</button>
+  <button id="collapse-btn" data-tip="Collapse the arena" aria-label="Collapse the arena" aria-pressed="false">⊟</button>
+  <button id="help-btn" data-tip="Game guide (h)" aria-label="Game guide" aria-expanded="false" aria-controls="guide-overlay">?</button>
+  <a id="gh-btn" href="https://github.com/bitqs/slime" target="_blank" rel="noopener noreferrer" data-tip="Slime on GitHub" aria-label="Slime on GitHub">🐙</a>
+  <a id="issue-btn" href="https://github.com/bitqs/slime/issues/new" target="_blank" rel="noopener noreferrer" data-tip="Report an issue" aria-label="Report an issue">🐛</a>
 </div>
 <div id="user-status" class="uw"><span class="uw-rule"></span>
   <div class="us-meters">
@@ -148,24 +156,12 @@ body.calm #user-status .us-fill{transition:none}
   <div id="boss-name">—</div>
   <div id="canvas-wrap">
     <div id="crt"></div>
-    <div id="overlay">waiting for a session…</div>
+    <div id="overlay" data-k="waiting">waiting for a session…</div>
     <div id="choice-overlay"></div>
     <div id="plan-overlay"></div>
     <div id="feed-counter"></div>
     <div id="guide-overlay" role="dialog" aria-modal="true" aria-label="game guide">
-      <div id="guide-box">
-        <b>⚔️ How to read the battle · 怎么看懂这场仗</b>
-        <p>🗡️ <b>Boss</b> — your current quest in this project. Forged from your prompt; its size/tier comes from the estimated token cost. <i>Boss=当前任务,体型=预估 token 量。</i></p>
-        <p>❤️ <b>Boss HP</b> — falls as todos get checked off. At 0 the boss kneels (☠ broken); your next strike finishes it automatically. <i>todo 全勾=濒死,下一击自动击杀,免打字。</i></p>
-        <p>🟢 <b>Minions</b> — the todo list. Each completed todo drains a slime's HP to zero. <i>小怪=todo,做完一只死一只。</i></p>
-        <p>⚡ <b>Token</b> — your resource (5h rate window). Rest restores it. <i>Token=你的资源,休息回复。</i></p>
-        <p>🔥 <b>Combo</b> — consecutive successful tool strikes. <i>连击=连续成功操作。</i></p>
-        <p>🍖 <b>Feeding</b> — while planning, every plan update and answered question feeds the boss and it grows. <i>计划和问答越喂越大。</i></p>
-        <p>🐺 <b>Summons</b> — subagent dispatches fight beside the knight. <i>召唤兽=subagent。</i></p>
-        <p>💰 <b>Gold</b> — real session cost (USD). ⚔️ weapon = model, 🗡️ ATK = lines changed, ⏳ session time, 🏕️ weekly quota. <i>金币=本会话花费,武器=模型,ATK=改动行数。</i></p>
-        <p>Commands: <code>/slime:arena</code> · <code>/slime:milestones</code> · <code>/slime:wrapped</code></p>
-        <p id="guide-close-hint">esc / click to close</p>
-      </div>
+      <div id="guide-box"></div>
     </div>
   </div>
 </div>

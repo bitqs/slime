@@ -79,6 +79,7 @@ export interface Profile {
   // progression (all optional; back-filled by core/progression on first defeat)
   xp?: number;
   level?: number;
+  prestige?: number;
   badges?: Array<{ id: string; unlockedAt: number }>;
   quests?: Quest[];
   streak?: { days: number; lastActiveDay: string; longest?: number; freezes?: number; freezeMax?: number };

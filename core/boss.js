@@ -119,7 +119,7 @@ function recordDefeat(cwd, b, stats = {}) {
   prof.milestones.push(m);
   const prog = require('./progression');
   const fromLevel = prog.levelFor(prof.xp || 0).level;
-  prof.xp = (prof.xp || 0) + prog.xpForDefeat(m);
+  prof.xp = (prof.xp || 0) + Math.round(prog.xpForDefeat(m) * prog.prestigeMult(prof));
   const lv = prog.levelFor(prof.xp);
   prof.level = lv.level;
   // badges: evaluate against the now-updated profile, persist new ones

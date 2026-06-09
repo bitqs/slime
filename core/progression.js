@@ -228,4 +228,29 @@ function nearestQuest(profile) {
   return best;
 }
 
-module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS, BADGES, deriveStats, evaluateBadges, nameKeyFor, QUEST_DEFS, dayStr, bumpActivity, evaluateQuests, nearestQuest };
+// ── prestige / New Game+ ────────────────────────────────────────────────────
+// Voluntarily reset level + xp for a permanent xp multiplier. Badges, streak and
+// milestones are kept — only level/xp reset. Opt-in (never automatic).
+const PRESTIGE_MIN_LEVEL = 10;     // must reach this to ascend
+const PRESTIGE_XP_BONUS = 0.25;    // +25% xp gain per prestige tier
+
+/** Permanent xp-gain multiplier from prestige tiers. @param {Profile} profile @returns {number} */
+function prestigeMult(profile) {
+  return 1 + PRESTIGE_XP_BONUS * ((profile && profile.prestige) || 0);
+}
+/** @param {Profile} profile @returns {boolean} */
+function canPrestige(profile) {
+  return levelFor((profile && profile.xp) || 0).level >= PRESTIGE_MIN_LEVEL;
+}
+/** Ascend: bump the prestige tier and reset xp to 0 (keeps badges/streak/milestones).
+ *  Refuses below {@link PRESTIGE_MIN_LEVEL}. Mutates + returns the outcome.
+ *  @param {Profile} profile
+ *  @returns {{ ok: true, prestige: number, mult: number } | { ok: false, reason: string, minLevel: number }} */
+function prestige(profile) {
+  if (!canPrestige(profile)) return { ok: false, reason: 'level', minLevel: PRESTIGE_MIN_LEVEL };
+  profile.prestige = (profile.prestige || 0) + 1;
+  profile.xp = 0;
+  return { ok: true, prestige: profile.prestige, mult: prestigeMult(profile) };
+}
+
+module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS, BADGES, deriveStats, evaluateBadges, nameKeyFor, QUEST_DEFS, dayStr, bumpActivity, evaluateQuests, nearestQuest, prestigeMult, canPrestige, prestige, PRESTIGE_MIN_LEVEL };

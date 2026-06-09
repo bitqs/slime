@@ -34,6 +34,12 @@ test('daily streak shows a 🔥 badge once it is ≥2 days', () => {
   assert.doesNotMatch(hud.render(snap, {}, TIPS, now, null, 'en', null, 5, undefined, 1), /🔥\dd/);
 });
 
+test("prestige shows a ⟳ badge", () => {
+  const now = Date.now();
+  const snap = { inTurn: true, combo: 0, kills: 0, dmg: 1, summons: 0, lastText: "x", updated: now };
+  assert.match(hud.render(snap, {}, TIPS, now, null, "en", null, 5, undefined, 0, 2), /⟳2/);
+});
+
 test('in-turn frame wraps elapsed + context tokens from the usage cache', () => {
   const now = Date.now();
   const snap = { inTurn: true, combo: 0, kills: 0, dmg: 1, summons: 0, lastText: 'x', updated: now };

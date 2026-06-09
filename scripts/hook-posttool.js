@@ -42,7 +42,7 @@ try {
       const drop = loot.roll(seed);
       if (drop) {
         const prof = state.readProfile();
-        prof.xp = (prof.xp || 0) + drop.xp;
+        prof.xp = (prof.xp || 0) + Math.round(drop.xp * require('../core/progression').prestigeMult(prof));
         // only announce the reward if the XP actually persisted — never show fake XP
         if (state.writeProfile(prof)) {
           const lang = locale.current();

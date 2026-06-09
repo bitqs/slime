@@ -54,13 +54,15 @@ function fmtTok(n) {
  * @param {number} [level] player level → shown as a ✦Lv badge
  * @param {string} [quest] nearest quest "progress/target" → shown as a 🎯 badge
  * @param {number} [streak] current daily streak in days → shown as a 🔥 badge (≥2)
+ * @param {number} [prestige] prestige/New Game+ tier → shown as a ⟳ badge
  * @returns {string}
  */
-function render(snap, stdinJson, tips, now, usageCache, lang, live, level, quest, streak) {
+function render(snap, stdinJson, tips, now, usageCache, lang, live, level, quest, streak, prestige) {
   const locale = require('./locale');
   const l = lang || locale.current();
   /** @param {string} key @param {Record<string, unknown>} [vars] @returns {string} */
   const T = (key, vars) => locale.fmt(locale.t(key, l), vars);
+  const pr = prestige ? ` ⟳${prestige}` : '';
   const lv = level ? ` ✦Lv${level}` : '';
   const q = quest ? ` 🎯${sanitize(quest, 12)}` : '';
   // daily streak badge (only once it's a real streak, so a single day isn't noise)
@@ -84,12 +86,12 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live, level, quest
   // Between turns: still lead with the badge + live arena link, then the result.
   if (!snap.inTurn) {
     const body = sanitize(snap.lastText, 120) || T('hud.yourTurn');
-    return `🟢${uiLink(live)}${lv}${q}${st}${mSuffix} ${body}`;
+    return `🟢${uiLink(live)}${pr}${lv}${q}${st}${mSuffix} ${body}`;
   }
 
   const parts = [];
   // plugin badge + arena link lead the line, then DTK/WTK meters; boss is a slime icon + hp
-  parts.push(`🟢${uiLink(live)}${lv}${q}${st}${mSuffix}`);
+  parts.push(`🟢${uiLink(live)}${pr}${lv}${q}${st}${mSuffix}`);
   const todos = Array.isArray(snap.todos) ? snap.todos : [];
   const doneCnt = todos.filter((t) => t.status === 'completed').length;
   const cnt = todos.length ? ` ⚔${doneCnt}/${todos.length}` : '';

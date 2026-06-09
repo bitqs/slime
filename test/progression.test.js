@@ -296,3 +296,22 @@ test('nearestQuest: null when no active quests / missing / empty', () => {
   assert.equal(prog.nearestQuest({ quests: [] }), null);
   assert.equal(prog.nearestQuest({}), null);
 });
+
+test('prestige: refuses below the minimum level', () => {
+  const p = { xp: 0 };
+  const r = prog.prestige(p);
+  assert.equal(r.ok, false);
+  assert.equal(p.prestige, undefined); // unchanged
+  assert.equal(p.xp, 0);
+});
+
+test('prestige: ascends, resets xp, bumps tier + multiplier', () => {
+  const p = { xp: prog.xpToReach(prog.PRESTIGE_MIN_LEVEL) + 5 };
+  assert.equal(prog.canPrestige(p), true);
+  const r = prog.prestige(p);
+  assert.equal(r.ok, true);
+  assert.equal(r.prestige, 1);
+  assert.equal(p.xp, 0);          // level/xp reset
+  assert.equal(p.prestige, 1);
+  assert.equal(prog.prestigeMult(p), 1.25); // +25% per tier
+});

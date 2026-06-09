@@ -34,7 +34,8 @@ function ensureStatusline() {
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
     if (obj.statusLine) return; // respect whatever is already there
   }
-  obj.statusLine = { type: 'command', command: `node "${path.join(PLUGIN_ROOT, 'scripts', 'statusline.js')}"` };
+  // refreshInterval: 2 → the ⏱ session clock ticks live (not only on tool calls)
+  obj.statusLine = { type: 'command', command: `node "${path.join(PLUGIN_ROOT, 'scripts', 'statusline.js')}"`, refreshInterval: 2 };
   io.safeWrite(settingsPath, JSON.stringify(obj, null, 2));
 }
 

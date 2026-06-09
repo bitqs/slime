@@ -83,9 +83,12 @@ Run `/slime:wrapped` for a recap of your last 7 days — and a **shareable battl
 ```
 /plugin marketplace add bitqs/slime
 /plugin install slime@slime
+/reload-plugins
 ```
 
-Then run `/slime:setup` once to enable the HUD, and turn on auto-update so every improvement reaches you (`/plugin` → Marketplaces → slime → Enable auto-update — third-party marketplaces ship with it off).
+**The HUD turns itself on.** Slime's session-start hook wires the statusline into your settings automatically, so on your next session the game is just *there* — no setup step. (Already have a statusline, or prefer to do it by hand? Run `/slime:setup`. To opt out of auto-HUD, set `"autoHud": false` in `~/.claude/slime/config.json`.)
+
+Turn on auto-update so every improvement reaches you: `/plugin` → Marketplaces → slime → Enable auto-update (third-party marketplaces ship with it off).
 
 That's it — just work. The game plays itself.
 

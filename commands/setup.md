@@ -17,4 +17,6 @@ Claude Code only.
 
 (`refreshInterval: 2` re-runs the HUD every 2s on top of event updates, so the ⏱ session clock ticks live instead of only on tool calls. If a `statusLine` already exists, preserve any `refreshInterval` the user set.)
 
-4. Tell the user to restart Claude Code (or run /statusline) to see the HUD.
+4. Tell the user to **restart Claude Code** to see the HUD. (Avoid suggesting `/statusline` — that command regenerates the statusLine config and would overwrite Slime's.)
+
+Note: for most users this is optional — Slime's session-start hook auto-installs the statusLine on first run (unless `~/.claude/slime/config.json` has `"autoHud": false`, or a `statusLine` is already set). `/slime:setup` is the manual fallback.

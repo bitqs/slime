@@ -282,6 +282,7 @@ test('auto-HUD installs the statusline + emits the [HUD] open hint', () => {
   }).toString();
   const settings = JSON.parse(fs.readFileSync(path.join(cfgDir, 'settings.json'), 'utf8'));
   assert.match(settings.statusLine.command, /statusline\.js/);
+  assert.equal(settings.statusLine.refreshInterval, 2); // ⏱ ticks live (matches /slime:setup)
   assert.match(JSON.parse(out).systemMessage, /Cmd\+Click.*\[HUD\]/);
 });
 

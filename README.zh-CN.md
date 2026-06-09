@@ -12,7 +12,7 @@
 
 [English](README.md) · **中文**
 
-**[▶️ 在线竞技场 Demo](https://slime-arena-demo.shuangqu.workers.dev)** —— 装之前先看一场完整战斗([无闪光版](https://slime-arena-demo.shuangqu.workers.dev/?calm=1))
+![Slime 竞技场 —— 一场战斗、一串连击、一场胜利](docs/media/arena.gif)
 
 </div>
 
@@ -20,9 +20,9 @@
 
 Claude Code 本身就是个回合制游戏:你下一道 prompt(出招),Claude 走一个回合,你等着。Slime 把这场游戏**画出来** —— 在你真实的 session 之上叠一层完整的 RPG,而且**对工作零影响**。
 
-```
-🗡️ The Auth Bugbear ████░░░░░░ 38% | 🔥连击×7 | 🐺×2 | 💀3 ⚔️842 | ⚔️ 用 [Edit] 劈向 → auth.ts…
-```
+它就活在你终端的状态栏里 —— Boss、token 余量、下一个任务,一眼尽收:
+
+![终端状态栏里的 Slime](docs/media/statusline.png)
 
 ## 怎么看懂这场仗
 

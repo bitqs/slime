@@ -12,7 +12,7 @@ Your goals are the bosses. Your plugins are your gear. Watch Claude fight — ov
 
 **English** · [中文](README.zh-CN.md)
 
-**[▶️ Live arena demo](https://slime-arena-demo.shuangqu.workers.dev)** — watch a full battle before you install ([flash-free](https://slime-arena-demo.shuangqu.workers.dev/?calm=1))
+![Slime arena — a battle, a combo, and a victory](docs/media/arena.gif)
 
 </div>
 
@@ -20,9 +20,9 @@ Your goals are the bosses. Your plugins are your gear. Watch Claude fight — ov
 
 Claude Code is already a turn-based game: you cast a prompt, Claude takes its turn, you wait. Slime makes the game **visible** — a full RPG layer rendered from your real session, with **zero impact on it**.
 
-```
-🗡️ The Auth Bugbear ████░░░░░░ 38% | 🔥combo×7 | 🐺×2 | 💀3 ⚔️842 | ⚔️ Carves with [Edit] → auth.ts…
-```
+It lives right in your terminal status line — the boss, your token meters, the next quest, all at a glance:
+
+![Slime status line in the terminal](docs/media/statusline.png)
 
 ## How to read the battle
 

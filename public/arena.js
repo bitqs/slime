@@ -639,7 +639,12 @@
     fontWeight: 'bold', fill: colorNum(P.gold), align: 'center' } });
   bigText.anchor.set(0.5);
   bigText.x = W / 2; bigText.y = H / 2; bigText.visible = false;
-  uiLayer.addChild(flashRect, vignette, vignetteEdge, letterTop, letterBot, bigText);
+  // context "fuse": a thin ember gauge across the top that fills as the context
+  // window burns down; sits under the letterbox so cutscenes still cover it.
+  const ctxFx = new PIXI.Graphics();
+  let ctxPct = null;          // 0–100 context-window used
+  let lastCtxTokens = null;   // to detect tokens burned between polls
+  uiLayer.addChild(flashRect, vignette, vignetteEdge, ctxFx, letterTop, letterBot, bigText);
 
   // ── live day/night switch ──────────────────────────────────────────────────
   // Re-skin both the DOM chrome and the baked canvas in place — no page reload.
@@ -855,10 +860,50 @@
     ];
   }
 
+  // ── context "burn" gauge ───────────────────────────────────────────────────────
+  // The context window is fuel: this thin top bar fills + heats up (gold→orange→red)
+  // as it's consumed, with a flickering flame at the burning edge and a danger pulse
+  // when nearly full. Drawn every frame from the latest ctxPct.
+  function drawCtxBar() {
+    ctxFx.clear();
+    if (ctxPct == null) return;
+    const pct = Math.max(0, Math.min(100, ctxPct));
+    const h = 3;
+    ctxFx.rect(0, 0, W, h).fill({ color: 0x000000, alpha: 0.4 });           // charred track
+    const fw = Math.round(W * pct / 100);
+    if (fw > 0) {
+      const col = pct > 80 ? 0xc83737 : pct > 50 ? 0xe8842c : 0xf0b541;     // heat ramps with fill
+      ctxFx.rect(0, 0, fw, h).fill(col);
+      ctxFx.rect(0, 0, fw, 1).fill({ color: 0xfff2c0, alpha: 0.55 });       // hot top edge
+      if (!CALM) {                                                          // flame licking the burning edge
+        const flick = 1 + Math.sin(frame / 4) * 0.6 + Math.sin(frame / 1.7) * 0.3;
+        ctxFx.rect(fw - 1, 0, 2, h + Math.max(0, 2 * flick)).fill(0xfff2c0);
+        ctxFx.rect(fw - 2, h, 4, 1).fill({ color: 0xffd060, alpha: 0.7 });
+      }
+    }
+    if (pct > 80 && !CALM) {                                                // almost full → red pulse
+      ctxFx.rect(0, 0, W, h).fill({ color: 0xc83737, alpha: Math.max(0, 0.12 + Math.sin(frame / 9) * 0.1) });
+    }
+  }
+
+  // tokens were burned this turn → embers lick up off the burning edge + a count floater
+  function burnTokens(delta) {
+    const fw = ctxPct != null ? W * Math.min(100, ctxPct) / 100 : W * 0.5;
+    const n = CALM ? 2 : Math.max(3, Math.min(20, Math.round(delta / 350)));
+    for (let i = 0; i < n; i++) {
+      fx.particles.push({ x: Math.random() * Math.max(8, fw), y: 3,
+        vx: (Math.random() * 2 - 1) * 0.5, vy: -(0.5 + Math.random() * 1.3),
+        age: 0, maxAge: 26 + Math.random() * 22, noGravity: true,
+        color: colorNum(Math.random() < 0.5 ? P.gold : P.ember) });
+    }
+    if (!CALM && delta >= 800) floater('🔥' + fmtTok(delta), Math.min(W - 34, Math.max(6, fw - 12)), 8, P.ember, 8, true);
+  }
+
   // ── render loop ───────────────────────────────────────────────────────────────
   app.ticker.add(() => {
     frame++;
     drawHud();
+    drawCtxBar();
 
     // hitstop: freeze world, count down
     if (fx.hitstop > 0) { fx.hitstop--; return; }
@@ -1270,6 +1315,12 @@
     // usage → stats panel
     const u = data.usage;
     if (u) {
+      // context burn: drive the top fuse gauge + ignite embers for tokens spent this turn
+      if (typeof u.contextPct === 'number') ctxPct = u.contextPct;
+      if (typeof u.ctxTokens === 'number') {
+        if (lastCtxTokens != null && u.ctxTokens > lastCtxTokens) burnTokens(u.ctxTokens - lastCtxTokens);
+        lastCtxTokens = u.ctxTokens;
+      }
       let token = null;
       if (u.fiveHour && typeof u.fiveHour.used === 'number') {
         token = Math.max(0, Math.round(100 - u.fiveHour.used));

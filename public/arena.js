@@ -62,8 +62,9 @@
   // big and planted, not floating. BOSS_FLOOR is the boss's feet line; just a few
   // px above FLOOR_Y so the dais riser reads while the boss stays grounded.
   const BOSS_FLOOR = FLOOR_Y - 4;
-  // Boss slime renders at least this many times the knight's size. KNIGHT and
-  // BOSS matrices share a 14px height, so scale maps 1:1 to "× the knight".
+  // Baseline boss tier scale for the built-in 14px BOSS matrix. Regenerated
+  // SlimeDesigns bosses are shorter (6–11px), so the real on-screen floor is
+  // enforced separately by bossMinScale() (≥2× the knight, texture-aware).
   const SLIME_MIN_SCALE = 3;
 
   function showOverlay(msg) {
@@ -491,6 +492,23 @@
   function ground(s, slump) { s.y = FLOOR_Y - s.height + (slump || 0); }
   /** plant the boss's feet on its raised dais (the up-stage diagonal position) */
   function groundBoss(slump) { boss.y = BOSS_FLOOR - boss.height + (slump || 0); }
+  // The boss must read as a real threat — never shorter than 2× the knight, from
+  // the moment it appears until it dies. The regenerated SlimeDesigns shapes vary
+  // in pixel height (6–11px) vs the knight's 14, so the floor is derived from the
+  // LIVE texture, not a fixed scale. Divide by the breathing trough (0.95) so even
+  // the squash frame stays ≥2×.
+  const BOSS_MIN_PLAYER_X = 2;
+  function bossMinScale() {
+    const texH = (boss.texture && boss.texture.height) || 14;
+    return (BOSS_MIN_PLAYER_X * (knight.height || 14)) / (texH * 0.95);
+  }
+  /** set the boss scale to at least `s` AND the 2×-player floor, recentring x. */
+  function setBossScale(s) {
+    const v = Math.max(s, bossMinScale());
+    boss.scale.set(v);
+    boss.x = 220 - (v - 1) * 8;
+    return v;
+  }
   /** a faked stone dome (3 stacked ellipses) the duelists stand on — Pokemon's
    *  platform read, KOEI's muted stone palette. Drawn into groundFx behind units. */
   // Palette read at draw time (groundFx redraws every frame) so it tracks the
@@ -773,8 +791,7 @@
   // look (re-seeded), full HP, falling from the top to slam onto its dais.
   function dropNextFoe() {
     regenBoss('foe-' + frame);
-    boss.scale.set(SLIME_MIN_SCALE);
-    boss.x = 220 - (SLIME_MIN_SCALE - 1) * 8;
+    setBossScale(SLIME_MIN_SCALE);
     lastBossPct = 100;
     PRIM.bossdrop();
   }
@@ -946,17 +963,20 @@
 
     // feeding scale tween
     if (bossScaleTarget != null) {
-      const s = boss.scale.x + (bossScaleTarget - boss.scale.x) * 0.06;
+      const target = Math.max(bossScaleTarget, bossMinScale()); // never tween below the 2×-player floor
+      const s = boss.scale.x + (target - boss.scale.x) * 0.06;
       boss.scale.set(s);
       boss.x = 220 - (s - 1) * 8;
       groundBoss(bossBroken ? 3 : 0);
-      if (Math.abs(s - bossScaleTarget) < 0.01) { boss.scale.set(bossScaleTarget); bossScaleTarget = null; }
+      if (Math.abs(s - target) < 0.01) { boss.scale.set(target); bossScaleTarget = null; }
     }
 
     // slime squash-stretch: feet stay planted, body breathes (CALM: no breathe).
     // Grounded EVERY frame in every state (except the intro fall) so the slime is
     // always standing on the floor.
     if (boss.visible && !fx.bossFalling) {
+      const minS = bossMinScale();
+      if (boss.scale.x < minS - 1e-3) { boss.scale.x = minS; boss.x = 220 - (minS - 1) * 8; } // hard 2×-player floor, any state
       boss.scale.y = CALM ? boss.scale.x : boss.scale.x * (1 + Math.sin(frame / 9) * 0.05);
       groundBoss(bossBroken ? 3 : 0);
     }
@@ -1310,7 +1330,7 @@
     if (next === 'feeding') {
       PRIM.dim({ on: true });
       // baby slime: if no engaged boss yet, show the boss sprite tiny — it IS the creature being fed
-      if (!engagedBoss) { bossDead = false; boss.visible = true; boss.scale.set(0.5); boss.x = 220 + 8; groundBoss(); }
+      if (!engagedBoss) { bossDead = false; boss.visible = true; setBossScale(bossMinScale()); groundBoss(); } // stays ≥2× player even pre-engage
       if (counter) counter.style.display = 'block';
     } else {
       PRIM.dim({ on: false });
@@ -1329,7 +1349,7 @@
       counter.textContent = `≈${fmtTokensJs(est).slice(1)} tokens${tier.label && tier.label !== 'normal' ? ' · ' + tier.label : ''}`;
     }
     if (delta && delta > 0) floater(`+${fmtTokensJs(delta)}`, boss.x + 8, boss.y - 10, P.gold, 9, true);
-    if (CALM) { boss.scale.set(bossScaleTarget); groundBoss(); bossScaleTarget = null; return; }
+    if (CALM) { setBossScale(bossScaleTarget); groundBoss(); bossScaleTarget = null; return; }
     // morsel arc: knight → slime
     const n = small ? 3 : 6;
     for (let i = 0; i < n; i++) {
@@ -1377,7 +1397,7 @@
         regenBoss(d.bossName);                 // seed the look from the boss's name
         const est = bossAppearanceEst();        // size/form/tier from identity, not tokens
         const tier = bossTierFor(est);
-        boss.scale.set(tier.scale); boss.x = 220 - (tier.scale - 1) * 8; groundBoss(); bossScaleTarget = null; // appear at full size, then constant
+        setBossScale(tier.scale); groundBoss(); bossScaleTarget = null; // appear at full size (≥2× player), then constant
         applyForm(lastTodos, est);
         lockedTierColor = tier.color;
         document.getElementById('boss-name').style.color = tier.color;

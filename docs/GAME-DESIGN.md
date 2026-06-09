@@ -75,20 +75,19 @@ type lives, and its health:
 | Kill log entry | per boss | persistent milestone | ✅ done (Phase 1) |
 | XP / level / title | per boss | accrues, crosses thresholds | ✅ done (Phase 2) |
 | **Badges (unlocks)** | on conditions | collection | ✅ done (Phase 3) |
-| **Quests (weekly/streak)** | rolling | goal + completion | ⏳ Phase 4 |
-| **Random loot drops** | ~per tool call, rare | variable-ratio surprise | ⏳ Phase 5 |
+| **Quests (weekly/streak)** | rolling | goal + completion | ✅ done (Phase 4, 🎯 statusline meter) |
+| **Random loot drops** | damaging resolves, rare | variable-ratio surprise | ✅ done (Phase 5, seeded) |
 | Weekly wrap | weekly | retrospective | ✅ done |
 
-The **visible-progress** half past a single session is now built — levels,
-titles, and unlockable badges all persist and surface via `/achievements`
-(Phases 2-3 ✅). The remaining gaps are the **variable** half of the loop (loot
-drops, surprise XP — Phase 5, the most psychologically potent) and **quests**
-(Phase 4).
+The full reward loop is now built: visible progress (levels, titles, badges —
+Phases 2-3), the return-driver (weekly/streak quests with a 🎯 statusline meter —
+Phase 4), and the variable half (seeded, replay-stable loot drops on damaging
+resolves — Phase 5). Prestige (New Game+) sits on top as the long-horizon sink.
 
 ## 5. Surfaces & their job
 
 - **Statusline HUD** — highest frequency (every keystroke), lowest bandwidth (one
-  line). It must carry the *signal*: boss state, combo, and soon level/loot — not
+  line). It must carry the *signal*: boss state, combo, ✦Lv, 🎯 nearest quest — not
   just status. This is where most users actually live.
 - **Arena (browser)** — the showcase: full FX, cutscenes, the diverse slimes. Opt-in
   (`/arena`); where delight is densest. Flash-safe (`?calm=1`).
@@ -107,30 +106,28 @@ drops, surprise XP — Phase 5, the most psychologically potent) and **quests**
 - Appearance variety now lands (procedural slimes, seeded, decoupled).
 
 **Weak / rough edges**
-- **Meta progression, largely built.** XP/levels/titles accrue per kill and show on
-  the statusline (Phase 2 ✅); unlockable badges + the `/achievements` wall ship too
-  (Phase 3 ✅). Still missing: quests (Phase 4) — the weekly/streak return-driver.
-- **No variable reward yet.** Every reward is deterministic; the dopamine spike of
-  a surprise drop is missing (Phase 5).
 - **Low stakes.** The only failure state is token exhaustion (rest). There's no
   tension arc within a fight. (Intentional for a work companion — but a *soft*
   tension, e.g. a boss "enrage" on a long stall, could deepen the moment loop
   without ever harming real work.)
-- **Statusline under-uses its frequency.** It shows status well but rewards little;
-  level/combo-milestone/loot flashes there would hit the most-seen surface.
+- **Statusline under-uses its frequency for rewards.** It now carries ✦Lv and the
+  🎯 quest meter, but loot/level-up *moments* still flash only in the arena; a
+  brief statusline flash would hit the most-seen surface.
 
 ## 7. Polish roadmap (prioritized)
 
 1. ~~**Levels & titles (Phase 2)**~~ — ✅ done: XP per kill, ✦Lv on the statusline,
    level_up event. Each boss now feeds visible growth.
-2. **Random loot / variable reward (Phase 5)** — the missing dopamine half; small,
-   rare, instant, seeded (replay-stable). Pairs with the instant-feedback pillar.
-   Next-highest leverage.
+2. ~~**Random loot / variable reward (Phase 5)**~~ — ✅ done: declarative
+   `data/loot.json`, pure seeded roll engine (replay-stable), drops on damaging
+   resolves, arena floater + sfx.
 3. ~~**Badges (Phase 3)**~~ — ✅ done: declarative `data/badges.json`, unlocked on
    confirmed kills, shown on the `/achievements` wall.
-4. **Quests (Phase 4)** — weekly/streak goals; the explicit return-driver.
+4. ~~**Quests (Phase 4)**~~ — ✅ done: weekly/streak quest defs, 🎯 nearest-quest
+   meter on the statusline (Phase 4b).
 5. **(Optional) soft tension** — a non-punishing enrage/streak beat for the moment
-   loop. Design carefully against the Observer pillar.
+   loop. Design carefully against the Observer pillar. The only roadmap item left;
+   prestige (New Game+) shipped beyond the original list.
 
 Each is specced in `docs/superpowers/specs/2026-06-08-progression-achievements-design.md`
 (Phases 1-5). Build order above maximizes felt impact per unit of work.

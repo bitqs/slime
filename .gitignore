@@ -5,3 +5,6 @@ dist/
 
 # local Claude Code workflow artifacts
 .claude/
+
+# macOS Finder metadata
+.DS_Store

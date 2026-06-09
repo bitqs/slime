@@ -172,6 +172,7 @@ Hooks translate real events into game state under `~/.claude/slime/`; the status
 ```bash
 node --test test/        # full suite
 npm run typecheck        # tsc --checkJs strict (run `npm install` once for devDeps)
+npm run demo             # local fake session + arena at http://127.0.0.1:4118
 ```
 
 No build step, no `.ts` source — TypeScript is JSDoc-only, checked with `tsc`.

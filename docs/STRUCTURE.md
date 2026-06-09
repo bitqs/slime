@@ -178,7 +178,6 @@ node --test test/hud.test.js      # one file
 npm run typecheck                 # tsc --checkJs strict (run `npm install` once for devDeps)
 
 # Eyeball the arena without a real session:
-SLIME_ROOT=/tmp/slime-demo node scripts/demo-feed.js &
-SLIME_ROOT=/tmp/slime-demo SLIME_PORT=4118 node scripts/serve.js
+npm run demo
 # open http://127.0.0.1:4118  (?calm=1 = flash-free)
 ```

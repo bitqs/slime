@@ -172,6 +172,7 @@ Hook 把真实事件翻译成 `~/.claude/slime/` 下的游戏状态;状态栏、
 ```bash
 node --test test/        # 全套测试
 npm run typecheck        # tsc --checkJs 严格模式(首次需 `npm install` 装 devDeps)
+npm run demo             # 本地假 session + 竞技场: http://127.0.0.1:4118
 ```
 
 无构建步骤、无 `.ts` 源码 —— TypeScript 仅用 JSDoc 注解,由 `tsc` 检查。

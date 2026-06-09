@@ -22,9 +22,9 @@ Your goals are the bosses. Your plugins are your gear. Watch Claude fight — ov
 
 Claude Code is already a turn-based game: you cast a prompt, Claude takes its turn, you wait. Slime makes the game **visible** — a full RPG layer rendered from your real session, with **zero impact on it**.
 
-It lives right in your terminal status line — the boss, your token meters, the next quest, all at a glance:
+It lives right in your terminal status line — boss, token meters, streak, next quest, all at a glance. That **`[HUD]`** is a clickable link straight to the live arena:
 
-![Slime status line in the terminal](docs/media/statusline.png)
+![Slime HUD in the terminal — Cmd/Ctrl-Click [HUD] to open the arena](docs/media/open-hud.png)
 
 ## The full experience
 
@@ -94,11 +94,7 @@ That's it — just work. The game plays itself.
 
 ## First run — open the arena
 
-On your next session the HUD appears at the bottom of your terminal — your live battle, at a glance:
-
-![Slime HUD — Cmd/Ctrl-Click [HUD] to open the arena](docs/media/open-hud.png)
-
-That **`[HUD]`** is a clickable link: **Cmd-Click** (macOS) or **Ctrl-Click** (Windows / Linux) it to open the full battle arena in your browser — or run **`/slime:arena`**. Leave the tab open beside your terminal and watch the fight unfold as you work.
+On your next session the HUD appears at the bottom of your terminal (shown above). To open the full battle arena in your browser, **Cmd-Click** (macOS) or **Ctrl-Click** (Windows / Linux) the **`[HUD]`** link — or run **`/slime:arena`**. Leave the tab open beside your terminal and watch the fight unfold as you work.
 
 ## Troubleshooting
 

@@ -62,6 +62,14 @@ The arena's top panel is your character sheet — real session telemetry in thre
 | 🗡️ **Atk** · 💥 **Dmg** | Lines added / removed this turn, and total lines changed |
 | 🔥 **Combo** · 💀 **Kills** | Consecutive successful tool strikes, and tests passed |
 | 🐺 **Summon** | Subagent dispatches |
+| 🔼 **Tokens** | ↑ uplink (input/context) and ↓ downlink (output) token counts |
+| 🔥 **Streak** | Consecutive active days (best in parens) |
+
+## Token flow
+
+Two bars across the top of the arena turn your token usage into a live burn: **↑ uplink** (input/context) fills and heats up — gold → orange → 🔥 red — with a flame at the burning edge and a danger pulse near full; **↓ downlink** (the model's output) streams below in cool cyan. Each carries its live count, and every turn's spent tokens spray embers off the edge.
+
+![Slime token flow — uplink and downlink bars burning](docs/media/token-bars.gif)
 
 ## Weekly Wrapped
 

@@ -645,7 +645,14 @@
   let ctxPct = null;          // ↑ uplink: input/context % of the window
   let downPct = null;         // ↓ downlink: output % of the window
   let lastCtxTokens = null;   // to detect tokens burned between polls
-  uiLayer.addChild(flashRect, vignette, vignetteEdge, ctxFx, letterTop, letterBot, bigText);
+  // value labels riding on each bar (↑24.5k / ↓3.1k), outlined so they read on any fill
+  const tokLabelStyle = { fontFamily: 'monospace', fontSize: 8, fontWeight: 'bold', fill: 0xffffff, stroke: { color: 0x000000, width: 2 } };
+  const upLabel = new PIXI.Text({ text: '', style: tokLabelStyle });
+  const downLabel = new PIXI.Text({ text: '', style: tokLabelStyle });
+  upLabel.resolution = downLabel.resolution = 2;
+  upLabel.x = 3; upLabel.y = 0; downLabel.x = 3; downLabel.y = 9;
+  upLabel.visible = downLabel.visible = false;
+  uiLayer.addChild(flashRect, vignette, vignetteEdge, ctxFx, upLabel, downLabel, letterTop, letterBot, bigText);
 
   // ── live day/night switch ──────────────────────────────────────────────────
   // Re-skin both the DOM chrome and the baked canvas in place — no page reload.
@@ -865,29 +872,30 @@
   // Two thin stacked bars at the very top. The ↑ bar is "fuel" — it fills + heats up
   // (gold→orange→red) with a flame at the burning edge and a red pulse near full; the
   // ↓ bar is the cooler cyan output stream. Both normalised to the context window.
+  const TBH = 8; // token-bar height (tall enough to carry the value label)
   function drawTokenBars() {
     ctxFx.clear();
-    const h = 3;
     /** @param {number} y @param {number} pct @param {number} col @param {boolean} flame */
     function bar(y, pct, col, flame) {
-      ctxFx.rect(0, y, W, h).fill({ color: 0x000000, alpha: 0.4 });          // track
+      ctxFx.rect(0, y, W, TBH).fill({ color: 0x000000, alpha: 0.45 });       // track
       let fw = Math.round(W * Math.max(0, Math.min(100, pct)) / 100);
       if (pct > 0 && fw < 2) fw = 2;                                         // keep a nonzero value visible
-      if (fw <= 0) return;
-      ctxFx.rect(0, y, fw, h).fill(col);
-      ctxFx.rect(0, y, fw, 1).fill({ color: 0xffffff, alpha: 0.4 });         // lit top edge
-      if (flame && !CALM) {                                                  // flame at the burning edge
-        const flick = 1 + Math.sin(frame / 4) * 0.6 + Math.sin(frame / 1.7) * 0.3;
-        ctxFx.rect(fw - 1, y, 2, h + Math.max(0, 2 * flick)).fill(0xfff2c0);
-        ctxFx.rect(fw - 2, y + h, 4, 1).fill({ color: 0xffd060, alpha: 0.7 });
+      if (fw > 0) {
+        ctxFx.rect(0, y, fw, TBH).fill(col);
+        ctxFx.rect(0, y, fw, 1).fill({ color: 0xffffff, alpha: 0.45 });      // lit top edge
+        ctxFx.rect(0, y + TBH - 1, fw, 1).fill({ color: 0x000000, alpha: 0.3 });
+        if (flame && !CALM) {                                                // flame at the burning edge
+          const flick = 1 + Math.sin(frame / 4) * 0.6 + Math.sin(frame / 1.7) * 0.3;
+          ctxFx.rect(fw - 1, y - Math.max(0, 2 * flick), 2, TBH + Math.max(0, 2 * flick)).fill(0xfff2c0);
+        }
       }
     }
     if (ctxPct != null) {                                                    // ↑ uplink
       const up = Math.max(0, Math.min(100, ctxPct));
       bar(0, up, up > 80 ? 0xc83737 : up > 50 ? 0xe8842c : 0xf0b541, true);
-      if (up > 80 && !CALM) ctxFx.rect(0, 0, W, h).fill({ color: 0xc83737, alpha: Math.max(0, 0.12 + Math.sin(frame / 9) * 0.1) });
+      if (up > 80 && !CALM) ctxFx.rect(0, 0, W, TBH).fill({ color: 0xc83737, alpha: Math.max(0, 0.12 + Math.sin(frame / 9) * 0.1) });
     }
-    if (downPct != null) bar(4, downPct, 0x46b3c9, false);                   // ↓ downlink
+    if (downPct != null) bar(TBH + 1, downPct, 0x46b3c9, false);             // ↓ downlink
   }
 
   // tokens were burned this turn → embers lick up off the burning edge + a count floater
@@ -1197,6 +1205,9 @@
     const dn = usage && typeof usage.outTokens === 'number' ? usage.outTokens : null;
     const tokTxt = [up != null ? '↑' + fmtTok(up) : '', dn != null ? '↓' + fmtTok(dn) : ''].filter(Boolean).join(' ');
     setText('pg-tokens', tokTxt || '—');
+    // …and label the on-canvas bars themselves
+    upLabel.visible = up != null; if (up != null) upLabel.text = '↑' + fmtTok(up);
+    downLabel.visible = dn != null; if (dn != null) downLabel.text = '↓' + fmtTok(dn);
     // Streak — consecutive active days, with longest in parens
     const st = data && data.streak;
     setText('pg-streak', st && st.days > 0 ? `${st.days}d` + (st.longest > st.days ? ` (best ${st.longest})` : '') : '—');

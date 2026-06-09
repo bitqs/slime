@@ -202,4 +202,6 @@ MIT — see [LICENSE](LICENSE).
 
 **Start your quest →** `/plugin marketplace add bitqs/slime`
 
+If Slime made your work a little more addictive, drop a ⭐ — it helps other Claude Code users find it.
+
 </div>

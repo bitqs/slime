@@ -27,6 +27,13 @@ test('fresh battle event renders battle frame with boss and combo', () => {
   assert.match(line, /\[Edit\]/);
 });
 
+test('daily streak shows a 🔥 badge once it is ≥2 days', () => {
+  const now = Date.now();
+  const snap = { inTurn: true, combo: 0, kills: 0, dmg: 1, summons: 0, lastText: 'x', updated: now };
+  assert.match(hud.render(snap, {}, TIPS, now, null, 'en', null, 5, undefined, 7), /🔥7d/);
+  assert.doesNotMatch(hud.render(snap, {}, TIPS, now, null, 'en', null, 5, undefined, 1), /🔥\dd/);
+});
+
 test('idle >20s during turn rotates loading tips', () => {
   const now = 10 * 60 * 1000;
   const snap = { inTurn: true, updated: now - 25000, lastText: 'x' };

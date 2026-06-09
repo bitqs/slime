@@ -69,6 +69,8 @@
   "wrapped.gear": "惯用装备",
   "wrapped.bosses": "Boss 击杀",
   "wrapped.combo": "最高连击",
+  "wrapped.streak": "连胜天数",
+  "wrapped.best": "最佳",
   "boss.broken": "☠ {name} 濒死 — 补刀!",
   "boss.ultimate": "⚡ 大招 — 一击秒杀 {name}!",
   "boss.autoDown": "⚡⚡⚡ {name} — 击杀!⚡⚡⚡ (里程碑 #{count})",

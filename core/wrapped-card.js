@@ -55,7 +55,7 @@ function range(now, lang) {
 }
 
 /**
- * @param {{dmg:number,kills:number,turns:number,activeDays:number,maxCombo?:number,milestones?:unknown[],topGear?:[string,number][]}} data
+ * @param {{dmg:number,kills:number,turns:number,activeDays:number,maxCombo?:number,milestones?:unknown[],topGear?:[string,number][],streak?:{days:number,longest?:number}}} data
  * @param {(key:string)=>string} T  localized label lookup
  * @param {{lang?:string, now?:number}} [opts]
  * @returns {string} SVG document
@@ -66,6 +66,7 @@ function svg(data, T, opts) {
   const W = 800, H = 420;
   const bosses = (data.milestones && data.milestones.length) || 0;
   const combo = data.maxCombo || 0;
+  const streak = (data.streak && data.streak.days > 0) ? data.streak : null;
 
   // 3×2 stat grid
   const cells = [
@@ -107,6 +108,8 @@ ${stars}
 ${sprite(SLIME, SLIME_PAL, 44, 40, 7)}
 <text x="150" y="74" font-size="34" font-weight="700" fill="${P.gold}" letter-spacing="2">SLIME · WRAPPED</text>
 <text x="152" y="98" font-size="15" fill="${P.label}" letter-spacing="1">${esc(range(now, o.lang))}</text>
+${streak ? `<text x="${W - 44}" y="64" text-anchor="end" font-size="32" font-weight="700" fill="${P.red}">${streak.days}d</text>`
+  + `<text x="${W - 44}" y="86" text-anchor="end" font-size="12" letter-spacing="1.5" fill="${P.label}">${esc(T('wrapped.streak').toUpperCase())} · ${esc(T('wrapped.best').toUpperCase())} ${streak.longest || streak.days}</text>` : ''}
 <line x1="44" y1="132" x2="${W - 44}" y2="132" stroke="${P.border}" stroke-width="1" opacity="0.35"/>
 ${grid}
 ${gearLine}

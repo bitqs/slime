@@ -136,27 +136,46 @@ test('dayStr: local YYYY-MM-DD', () => {
 
 test('bumpActivity: first activity seeds streak at 1', () => {
   const p = {};
-  const now = new Date(2026, 5, 8, 10).getTime();
-  prog.bumpActivity(p, now);
-  assert.deepEqual(p.streak, { days: 1, lastActiveDay: '2026-06-08' });
+  prog.bumpActivity(p, new Date(2026, 5, 8, 10).getTime());
+  assert.equal(p.streak.days, 1);
+  assert.equal(p.streak.lastActiveDay, '2026-06-08');
+  assert.equal(p.streak.longest, 1);
 });
 
 test('bumpActivity: same day is a no-op', () => {
   const p = { streak: { days: 3, lastActiveDay: '2026-06-08' } };
   prog.bumpActivity(p, new Date(2026, 5, 8, 23).getTime());
-  assert.deepEqual(p.streak, { days: 3, lastActiveDay: '2026-06-08' });
+  assert.equal(p.streak.days, 3);
+  assert.equal(p.streak.lastActiveDay, '2026-06-08');
 });
 
 test('bumpActivity: consecutive day increments', () => {
   const p = { streak: { days: 3, lastActiveDay: '2026-06-07' } };
   prog.bumpActivity(p, new Date(2026, 5, 8, 9).getTime());
-  assert.deepEqual(p.streak, { days: 4, lastActiveDay: '2026-06-08' });
+  assert.equal(p.streak.days, 4);
+  assert.equal(p.streak.lastActiveDay, '2026-06-08');
+  assert.equal(p.streak.longest, 4);
 });
 
-test('bumpActivity: a gap resets the streak to 1', () => {
-  const p = { streak: { days: 9, lastActiveDay: '2026-06-05' } };
-  prog.bumpActivity(p, new Date(2026, 5, 8, 9).getTime());
-  assert.deepEqual(p.streak, { days: 1, lastActiveDay: '2026-06-08' });
+test('bumpActivity: an unfrozen gap resets the streak to 1 (best preserved)', () => {
+  const p = { streak: { days: 9, lastActiveDay: '2026-06-05', freezes: 0 } };
+  prog.bumpActivity(p, new Date(2026, 5, 8, 9).getTime()); // 2-day gap, no freezes
+  assert.equal(p.streak.days, 1);
+  assert.equal(p.streak.longest, 9);
+});
+
+test('bumpActivity: a streak-freeze forgives a gap and keeps the streak alive', () => {
+  const p = { streak: { days: 8, lastActiveDay: '2026-06-06', freezes: 2 } };
+  prog.bumpActivity(p, new Date(2026, 5, 8, 9).getTime()); // 1 missed day → spend 1 freeze
+  assert.equal(p.streak.days, 9);
+  assert.equal(p.streak.freezes, 1);
+});
+
+test('bumpActivity: earns a streak-freeze every 5 days (capped)', () => {
+  const p = { streak: { days: 4, lastActiveDay: '2026-06-07', freezes: 0 } };
+  prog.bumpActivity(p, new Date(2026, 5, 8, 9).getTime()); // day 5 → +1 freeze
+  assert.equal(p.streak.days, 5);
+  assert.equal(p.streak.freezes, 1);
 });
 
 test('evaluateQuests: seeds one active quest per kind on a blank profile', () => {
@@ -221,13 +240,15 @@ test('evaluateQuests: a completed quest is not re-completed on the next call', (
 test('bumpActivity: increments across a month boundary', () => {
   const p = { streak: { days: 4, lastActiveDay: '2026-04-30' } };
   prog.bumpActivity(p, new Date(2026, 4, 1, 9).getTime()); // local May 1 2026
-  assert.deepEqual(p.streak, { days: 5, lastActiveDay: '2026-05-01' });
+  assert.equal(p.streak.days, 5);
+  assert.equal(p.streak.lastActiveDay, '2026-05-01');
 });
 
 test('bumpActivity: increments across a year boundary', () => {
   const p = { streak: { days: 9, lastActiveDay: '2025-12-31' } };
   prog.bumpActivity(p, new Date(2026, 0, 1, 9).getTime()); // local Jan 1 2026
-  assert.deepEqual(p.streak, { days: 10, lastActiveDay: '2026-01-01' });
+  assert.equal(p.streak.days, 10);
+  assert.equal(p.streak.lastActiveDay, '2026-01-01');
 });
 
 test('defeat-flow: rewardLines includes a quest line for newQuests', () => {

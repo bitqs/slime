@@ -61,7 +61,8 @@ function weekly(now = Date.now()) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
 
-  return { dmg, kills, hits, turns, potions, summons, maxCombo, activeDays: activeDaySet.size, milestones, topGear };
+  const streak = prof.streak || { days: 0, lastActiveDay: '', longest: 0, freezes: 0 };
+  return { dmg, kills, hits, turns, potions, summons, maxCombo, activeDays: activeDaySet.size, milestones, topGear, streak };
 }
 
 /**
@@ -108,6 +109,11 @@ function card(data, lang) {
     row(T('wrapped.turns'), String(data.turns)),
     row(T('wrapped.days'), String(data.activeDays)),
   ];
+
+  if (data.streak && data.streak.days > 0) {
+    const best = data.streak.longest || data.streak.days;
+    lines.push(row(T('wrapped.streak'), `${data.streak.days}d · ${T('wrapped.best')} ${best}`));
+  }
 
   if (data.topGear && data.topGear.length > 0) {
     lines.push(blank);

@@ -30,6 +30,8 @@
   "wrapped.gear": "favorite gear",
   "wrapped.bosses": "bosses felled",
   "wrapped.combo": "max combo",
+  "wrapped.streak": "day streak",
+  "wrapped.best": "best",
   "boss.broken": "☠ {name} is broken — finish it!",
   "boss.ultimate": "⚡ ULTIMATE — {name} is struck down in one blow!",
   "boss.autoDown": "⚡⚡⚡ {name} — DEFEATED ⚡⚡⚡ (milestone #{count})",

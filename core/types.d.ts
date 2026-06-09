@@ -78,7 +78,7 @@ export interface Profile {
   level?: number;
   badges?: Array<{ id: string; unlockedAt: number }>;
   quests?: Quest[];
-  streak?: { days: number; lastActiveDay: string };
+  streak?: { days: number; lastActiveDay: string; longest?: number; freezes?: number; freezeMax?: number };
 }
 
 export interface BadgeDef {

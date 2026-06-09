@@ -118,23 +118,58 @@ function dayStr(ms) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-/** Advance the activity streak at most once per local day. Same day = no-op,
- *  exactly-yesterday = +1, any gap = reset to 1. Mutates + returns profile.streak.
+/** Whole calendar days from YYYY-MM-DD `a` to `b` (UTC-anchored so it's DST- and
+ *  tz-shift-proof — the day strings already encode the user's local day).
+ *  @param {string} a @param {string} b @returns {number} */
+function daysBetween(a, b) {
+  const pa = a.split('-').map(Number), pb = b.split('-').map(Number);
+  if (pa.length !== 3 || pb.length !== 3) return NaN;
+  return Math.round((Date.UTC(pb[0], pb[1] - 1, pb[2]) - Date.UTC(pa[0], pa[1] - 1, pa[2])) / 86400000);
+}
+
+// earn one streak-freeze every N active days; never hold more than this many.
+const FREEZE_EVERY = 5;
+const FREEZE_MAX = 2;
+
+/** Advance the activity streak at most once per local day. Same day = no-op;
+ *  yesterday = +1; a gap is forgiven by spending streak-freezes (one per missed
+ *  day) so a day off doesn't punish — only an *unfrozen* gap resets to 1. Tracks
+ *  `longest` and earns a freeze every {@link FREEZE_EVERY} days (cap {@link FREEZE_MAX}).
+ *  Mutates + returns profile.streak.
  *  @param {Profile} profile @param {number} now epoch ms
- *  @returns {{ days: number, lastActiveDay: string }} */
+ *  @returns {{ days: number, lastActiveDay: string, longest: number, freezes: number, freezeMax: number }} */
 function bumpActivity(profile, now) {
   const today = dayStr(now);
-  const s = profile.streak || { days: 0, lastActiveDay: '' };
+  const s = /** @type {{ days: number, lastActiveDay: string, longest?: number, freezes?: number, freezeMax?: number }} */ (
+    profile.streak || { days: 0, lastActiveDay: '' });
+  if (s.freezeMax == null) s.freezeMax = FREEZE_MAX;
+  if (s.freezes == null) s.freezes = 0;
+  if (s.longest == null) s.longest = s.days || 0;
+
   if (s.lastActiveDay !== today) {
-    // local midnight today, minus 1ms → yesterday's local date (DST-safe)
-    const midnight = new Date(now);
-    midnight.setHours(0, 0, 0, 0);
-    const yesterday = dayStr(midnight.getTime() - 1);
-    s.days = s.lastActiveDay === yesterday ? (s.days || 0) + 1 : 1;
+    if (!s.lastActiveDay) {
+      s.days = 1;
+    } else {
+      const gap = daysBetween(s.lastActiveDay, today);
+      if (gap === 1) {
+        s.days = (s.days || 0) + 1;                 // consecutive day
+      } else if (gap > 1) {
+        const missed = gap - 1;                     // full days skipped
+        if ((s.freezes || 0) >= missed) {
+          s.freezes -= missed;                      // freezes cover the gap → streak lives
+          s.days = (s.days || 0) + 1;
+        } else {
+          s.days = 1;                               // unfrozen gap → reset
+        }
+      }
+      // gap <= 0 (same day handled above / clock skew): leave days untouched
+    }
     s.lastActiveDay = today;
+    if (s.days > 0 && s.days % FREEZE_EVERY === 0 && s.freezes < s.freezeMax) s.freezes += 1;
+    if (s.days > (s.longest || 0)) s.longest = s.days;
   }
-  profile.streak = s;
-  return s;
+  profile.streak = /** @type {Profile['streak']} */ (s);
+  return /** @type {{ days: number, lastActiveDay: string, longest: number, freezes: number, freezeMax: number }} */ (s);
 }
 
 /** Current progress for a quest of the given kind.

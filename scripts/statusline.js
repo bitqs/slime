@@ -30,7 +30,8 @@ try {
   const prof = state.readProfile();
   const nq = require('../core/progression').nearestQuest(prof);
   const quest = nq ? `${nq.progress}/${nq.target}` : undefined;
-  process.stdout.write(hud.render(snap, stdin, tips, Date.now(), usage.readCache(), lang, arenaStatus.readLive(), prof.level, quest));
+  const streakDays = (prof.streak && prof.streak.days) || 0;
+  process.stdout.write(hud.render(snap, stdin, tips, Date.now(), usage.readCache(), lang, arenaStatus.readLive(), prof.level, quest, streakDays));
 } catch {
   process.stdout.write('🟢 Slime');
 }

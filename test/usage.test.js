@@ -23,6 +23,16 @@ test('cacheFromStatusline stores official rate limits', () => {
   assert.equal(u.source, 'official');
 });
 
+test('cacheFromStatusline stores uplink/downlink token counts + window size', () => {
+  usage.cacheFromStatusline({
+    context_window: { used_percentage: 12, total_input_tokens: 24500, total_output_tokens: 3100, context_window_size: 200000 },
+  });
+  const u = usage.readCache();
+  assert.equal(u.ctxTokens, 24500); // ↑ uplink (input/context)
+  assert.equal(u.outTokens, 3100);  // ↓ downlink (output)
+  assert.equal(u.ctxSize, 200000);
+});
+
 test('cacheFromStatusline tolerates absent rate_limits (non-Pro)', () => {
   usage.cacheFromStatusline({ context_window: { used_percentage: 10 } });
   const u = usage.readCache();

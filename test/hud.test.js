@@ -37,10 +37,11 @@ test('daily streak shows a 🔥 badge once it is ≥2 days', () => {
 test('in-turn frame wraps elapsed + context tokens from the usage cache', () => {
   const now = Date.now();
   const snap = { inTurn: true, combo: 0, kills: 0, dmg: 1, summons: 0, lastText: 'x', updated: now };
-  const cache = { fiveHour: { used: 2, resetsAt: 0 }, sevenDay: null, contextPct: 10, source: 'official', durationMs: 401000, ctxTokens: 24500, t: now };
+  const cache = { fiveHour: { used: 2, resetsAt: 0 }, sevenDay: null, contextPct: 10, source: 'official', durationMs: 401000, ctxTokens: 24500, outTokens: 3100, t: now };
   const line = hud.render(snap, {}, TIPS, now, cache);
   assert.match(line, /⏱6m41s/);
   assert.match(line, /↑24\.5k/);
+  assert.match(line, /↓3\.1k/);
 });
 
 test('idle >20s during turn rotates loading tips', () => {

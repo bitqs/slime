@@ -698,7 +698,7 @@
   let bossDead = false;
   let lastPolledBoss = null; // last boss name seen by applyState — detects a fresh boss in real sessions
   let wasZero = false;       // tracks token===0 transitions for the Zzz floater
-  const fx = { shake: 0, shakeAmp: 4, knightLunge: 0, speed: 1, hitstop: 0, particles: [],
+  const fx = { shake: 0, shakeAmp: 4, knightLunge: 0, knightHurt: 0, speed: 1, hitstop: 0, particles: [],
     floaters: [], chromaFrames: 0, edgeFlame: 0, slowmoLeft: null, zoom: 1, zoomLeft: null,
     bossFalling: false, type: null };
   const governor = SlimeSeq.createGovernor(3, 60);
@@ -1000,6 +1000,10 @@
 
     // knight lunge decay
     if (fx.knightLunge > 0) fx.knightLunge = Math.max(0, fx.knightLunge - 1);
+    // counterattack recoil: a failed tool = the boss strikes back, knight knocked
+    // back + flashing red while hurt
+    if (fx.knightHurt > 0) fx.knightHurt--;
+    knight.tint = (fx.knightHurt > 0 && Math.floor(frame / 3) % 2 === 0) ? 0xff6060 : 0xffffff;
     if (fx.walk) {
       // post-victory march: knight strides off the right, the area refreshes,
       // then the knight walks back in from the left — "on to the next quest".
@@ -1014,7 +1018,8 @@
         dropNextFoe();   // the next slime boss drops into the new scene
       }
     } else {
-      knight.x = 40 + fx.knightLunge;
+      const recoil = fx.knightHurt > 0 ? Math.min(8, fx.knightHurt) : 0; // knocked back, eases home
+      knight.x = 40 + fx.knightLunge - recoil;
     }
 
     if (!CALM && summons.length && frame % 45 === 0) {
@@ -1416,7 +1421,14 @@
         floater('SLAIN', bx, 108, P.red, 9, true);
         floater('✦', bx, 96, P.gold, 10, true);
       }
-      if (d.hit) { PRIM.flash({ color: '#c83737', strength: 0.35 }); onCombo(0, 0); }
+      if (d.hit) { // a tool backfired → the boss counterattacks; the knight takes the hit
+        fx.knightHurt = 16;
+        PRIM.flash({ color: '#c83737', strength: 0.4 });
+        PRIM.shake({ amp: 3, frames: 8 });
+        burst(knight.x + 6, knight.y + 4, P.red, CALM ? 4 : 9);
+        floater('✗', knight.x + 4, knight.y - 8, P.red, 11, true);
+        onCombo(0, 0);
+      }
       if (d.text) pushLog(d.text);
     }
     if (d.kind === 'turn_end') {

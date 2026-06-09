@@ -10,7 +10,8 @@
   if (CALM) document.body.classList.add('calm');
   // Day (light) / night (dark) theme. The page sets body.day from localStorage
   // before paint; the arena reads it to render a daytime sky vs the night starfield.
-  const DAY = document.body.classList.contains('day');
+  // Mutable so the day/night button can re-skin both DOM + canvas live (no reload).
+  let theme = document.body.classList.contains('day'); // true = day
 
   const P = { bg:'#1a1d24', bg2:'#232733', gold:'#f0b541', ember:'#e8842c', red:'#c83737',
     bone:'#e8e0d0', steel:'#7fa8c0', dark:'#2e3547', floor:'#2e3547', green:'#6abe30' };
@@ -79,7 +80,7 @@
   if (typeof PIXI === 'undefined') return showOverlay('arena needs WebGL — PIXI failed to load');
   PIXI.TextureSource.defaultOptions.scaleMode = 'nearest';
   const app = new PIXI.Application();
-  try { await app.init({ width: W, height: H, background: DAY ? '#add2ef' : P.bg, antialias: false }); }
+  try { await app.init({ width: W, height: H, background: theme ? '#add2ef' : P.bg, antialias: false }); }
   catch (e) { return showOverlay('arena needs WebGL — ' + e.message); }
   app.canvas.style.width = '100%';
   document.getElementById('canvas-wrap').prepend(app.canvas);
@@ -118,10 +119,11 @@
   const bgFar = starLayer(40, 0.35);
   const bgNear = starLayer(28, 0.6);
   world.addChild(bgFar, bgNear);
-  // Day theme: hide the night stars, paint a sun + drifting clouds behind the floor.
-  if (DAY) {
-    bgFar.visible = bgNear.visible = false;
-    const sky = new PIXI.Graphics();
+  // Daytime sky (sun + clouds + hills): built unconditionally so the theme can
+  // switch live. Visibility (and the night starfield's) is owned by applyTheme.
+  const skyContainer = new PIXI.Graphics();
+  {
+    const sky = skyContainer;
     // vertical gradient: deeper blue up top fading to pale at the horizon
     const SKY_BANDS = [0x8cc0ec, 0xa0cdef, 0xb6daf3, 0xcde7f6, 0xdceef8];
     const bh = Math.ceil(FLOOR_Y / SKY_BANDS.length);
@@ -141,14 +143,14 @@
       sky.ellipse(cx, cy - 2, 8 * s, 4 * s).fill({ color: 0xffffff, alpha: 0.9 });
     };
     cloud(120, 26, 1); cloud(232, 18, 1.3); cloud(180, 46, 0.8);
-    world.addChildAt(sky, 0);
   }
+  world.addChildAt(skyContainer, 0);
 
   // Re-randomize the night starfield (the "new area" wipe after a victory walk).
   // Day's sky is static, so it's a no-op there.
   function repaintBackdrop() {
     bgFar.clear(); bgNear.clear();
-    if (DAY) return;
+    if (theme) return;
     const paint = (g, n, alpha) => {
       for (let i = 0; i < n; i++) g.rect(Math.random() * W * 2, Math.random() * (FLOOR_Y - 10), 1, 1).fill({ color: 0xffffff, alpha });
     };
@@ -276,7 +278,7 @@
   }
   function spawnRibbon() {
     const t = new PIXI.Text({ text: pick(RIBBONS), style: { fontFamily: 'monospace',
-      fontSize: rnd(7, 10) | 0, fontWeight: 'bold', fill: colorNum(pick(DAY ? [P.gold, P.steel, P.green, P.ember] : [P.gold, P.steel, P.green, P.bone])) } });
+      fontSize: rnd(7, 10) | 0, fontWeight: 'bold', fill: colorNum(pick(theme ? [P.gold, P.steel, P.green, P.ember] : [P.gold, P.steel, P.green, P.bone])) } });
     t.resolution = 2;
     const dir = Math.random() < 0.5 ? 1 : -1;
     const y = rnd(8, FLOOR_Y - 30);
@@ -317,17 +319,21 @@
   }
 
   const floorBar = new PIXI.Graphics();
-  if (DAY) {
-    floorBar.rect(0, FLOOR_Y + 3, W, 4).fill(0x6b5a44);                  // dirt recess below lip
-    floorBar.rect(0, FLOOR_Y, W, 3).fill(0xb6a98c);                       // warm sunlit stone body
-    floorBar.rect(0, FLOOR_Y, W, 1).fill({ color: 0xe6dcc2, alpha: 0.95 }); // bright lit top edge
-    for (let tx = 0; tx < W; tx += 8) floorBar.rect(tx, FLOOR_Y + 1, 1, 2).fill({ color: 0x7a6c52, alpha: 0.55 }); // tile seams
-  } else {
-    floorBar.rect(0, FLOOR_Y + 3, W, 3).fill(0x141821);                 // recess shadow below lip
-    floorBar.rect(0, FLOOR_Y, W, 3).fill(P.floor);                       // floor body
-    floorBar.rect(0, FLOOR_Y, W, 1).fill({ color: 0x4a5570, alpha: 0.9 }); // lit top edge
-    for (let tx = 0; tx < W; tx += 8) floorBar.rect(tx, FLOOR_Y + 1, 1, 2).fill({ color: 0x12151d, alpha: 0.6 }); // tile seams
+  function drawFloor() {
+    floorBar.clear();
+    if (theme) {
+      floorBar.rect(0, FLOOR_Y + 3, W, 4).fill(0x6b5a44);                  // dirt recess below lip
+      floorBar.rect(0, FLOOR_Y, W, 3).fill(0xb6a98c);                       // warm sunlit stone body
+      floorBar.rect(0, FLOOR_Y, W, 1).fill({ color: 0xe6dcc2, alpha: 0.95 }); // bright lit top edge
+      for (let tx = 0; tx < W; tx += 8) floorBar.rect(tx, FLOOR_Y + 1, 1, 2).fill({ color: 0x7a6c52, alpha: 0.55 }); // tile seams
+    } else {
+      floorBar.rect(0, FLOOR_Y + 3, W, 3).fill(0x141821);                 // recess shadow below lip
+      floorBar.rect(0, FLOOR_Y, W, 3).fill(P.floor);                       // floor body
+      floorBar.rect(0, FLOOR_Y, W, 1).fill({ color: 0x4a5570, alpha: 0.9 }); // lit top edge
+      for (let tx = 0; tx < W; tx += 8) floorBar.rect(tx, FLOOR_Y + 1, 1, 2).fill({ color: 0x12151d, alpha: 0.6 }); // tile seams
+    }
   }
+  drawFloor();
   world.addChild(floorBar);
 
   // ground shadows + boss target ring (drawn each frame, behind the units)
@@ -344,7 +350,7 @@
   function drawTorch(g, hot) {
     const tx = g._tx;
     g.clear();
-    if (DAY) {
+    if (theme) {
       // daylight: an unlit post — a lit flame in bright sun reads as a mistake
       g.rect(tx, FLOOR_Y - 18, 3, 18).fill(0x6b5036);          // wooden post
       g.rect(tx - 1, FLOOR_Y - 22, 5, 4).fill(0x4a4038);       // cold, unlit head
@@ -487,10 +493,12 @@
   function groundBoss(slump) { boss.y = BOSS_FLOOR - boss.height + (slump || 0); }
   /** a faked stone dome (3 stacked ellipses) the duelists stand on — Pokemon's
    *  platform read, KOEI's muted stone palette. Drawn into groundFx behind units. */
-  const DAIS = DAY
-    ? { shadow: 0x6b5a44, base: 0x8a7c64, mid: 0xa89a7e, top: 0xc8bc9c }   // sunlit stone
-    : { shadow: 0x1d222c, base: 0x1d222c, mid: 0x2e3547, top: 0x3a4456 };  // night stone
+  // Palette read at draw time (groundFx redraws every frame) so it tracks the
+  // live theme instantly — no baked-once constant.
   function drawDais(g, cx, fy, rx, ry) {
+    const DAIS = theme
+      ? { shadow: 0x6b5a44, base: 0x8a7c64, mid: 0xa89a7e, top: 0xc8bc9c }   // sunlit stone
+      : { shadow: 0x1d222c, base: 0x1d222c, mid: 0x2e3547, top: 0x3a4456 };  // night stone
     const x = Math.round(cx), y = Math.round(fy);
     g.ellipse(x, y + 2, rx, ry).fill({ color: DAIS.shadow, alpha: 0.55 });      // cast shadow
     g.ellipse(x, y, rx, ry).fill(DAIS.base);                                    // base
@@ -585,7 +593,7 @@
   // ── uiLayer chrome ───────────────────────────────────────────────────────────
   const flashRect = new PIXI.Graphics().rect(0, 0, W, H).fill(0xffffff);
   flashRect.alpha = 0;
-  function makeRadial(r, g, b, edgeAlpha) {
+  function makeRadialTex(r, g, b, edgeAlpha) {
     const cv = document.createElement('canvas');
     cv.width = W; cv.height = H;
     const ctx = cv.getContext('2d');
@@ -594,10 +602,14 @@
     grad.addColorStop(1, `rgba(${r},${g},${b},${edgeAlpha})`);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
-    return new PIXI.Sprite(PIXI.Texture.from(cv));
+    return PIXI.Texture.from(cv);
   }
-  // danger (low token) — deeper, more saturated red on the bright day sky so it still reads
-  const vignette = DAY ? makeRadial(150, 20, 20, 0.6) : makeRadial(200, 55, 55, 0.55);
+  function makeRadial(r, g, b, edgeAlpha) { return new PIXI.Sprite(makeRadialTex(r, g, b, edgeAlpha)); }
+  // danger (low token) — deeper, more saturated red on the bright day sky so it still
+  // reads. Both textures pre-built once and swapped on theme change (no GPU leak).
+  const vigDayTex = makeRadialTex(150, 20, 20, 0.6);
+  const vigNightTex = makeRadialTex(200, 55, 55, 0.55);
+  const vignette = new PIXI.Sprite(theme ? vigDayTex : vigNightTex);
   const vignetteEdge = makeRadial(232, 132, 44, 0.6); // combo edge flame
   vignette.alpha = 0; vignetteEdge.alpha = 0;
   const letterTop = new PIXI.Graphics().rect(0, 0, W, 24).fill(0x000000);
@@ -609,6 +621,27 @@
   bigText.anchor.set(0.5);
   bigText.x = W / 2; bigText.y = H / 2; bigText.visible = false;
   uiLayer.addChild(flashRect, vignette, vignetteEdge, letterTop, letterBot, bigText);
+
+  // ── live day/night switch ──────────────────────────────────────────────────
+  // Re-skin both the DOM chrome and the baked canvas in place — no page reload.
+  // Per-frame redrawers (dais, FX palettes) read `theme` directly and self-correct;
+  // this only flips the persistent sprites the scene was built with.
+  function applyTheme(day) {
+    theme = day;
+    document.body.classList.toggle('day', day);                 // DOM chrome (CSS)
+    app.renderer.background.color = day ? 0xadd2ef : colorNum(P.bg); // canvas backdrop
+    bgFar.visible = bgNear.visible = !day;                      // night starfield
+    skyContainer.visible = day;                                 // daytime sky
+    drawFloor();                                                // stone floor re-skin
+    torches.forEach((g) => drawTorch(g, true));                 // lit at night, cold post by day
+    vignette.texture = day ? vigDayTex : vigNightTex;           // danger glow re-tint
+    if (dayBtn) {
+      // icon shows the theme you'll switch TO (☀️ = go to day, 🌙 = go to night)
+      dayBtn.textContent = day ? '🌙' : '☀️';
+      dayBtn.title = day ? 'switch to night (dark)' : 'switch to day (light)';
+    }
+    try { if (day) localStorage.setItem('slimeDay', '1'); else localStorage.removeItem('slimeDay'); } catch {}
+  }
 
   let bossBroken = false;
   let lockedTierColor = '#e8e0d0';
@@ -1537,14 +1570,8 @@
     sfxBtn.addEventListener('click', async () => { A.unlock(); await A.setSfx(!A.isSfxOn()); A.play('ui'); sync(); });
   }
   const dayBtn = document.getElementById('day-btn');
-  if (dayBtn) {
-    dayBtn.textContent = DAY ? '☀️' : '🌙';
-    dayBtn.title = DAY ? 'switch to night (dark)' : 'switch to day (light)';
-    dayBtn.addEventListener('click', () => {
-      try { if (DAY) localStorage.removeItem('slimeDay'); else localStorage.setItem('slimeDay', '1'); } catch {}
-      location.reload();
-    });
-  }
+  if (dayBtn) dayBtn.addEventListener('click', () => applyTheme(!theme));
+  applyTheme(theme); // sync DOM chrome + canvas to the persisted flag (sets the button icon)
   const helpBtn = document.getElementById('help-btn');
   if (helpBtn) helpBtn.addEventListener('click', () => toggleGuide());
   if (guideEl) guideEl.addEventListener('click', () => toggleGuide(false));

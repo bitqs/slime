@@ -1,7 +1,7 @@
 # Day/Night button — live theme switch (no reload)
 
 **Date:** 2026-06-09
-**Status:** Design approved, pending spec review
+**Status:** Implemented (arena.js refactor + live verify via chrome-devtools)
 **Scope:** `public/arena.js` (plus removal of an obsolete language button, already done)
 
 ## Problem

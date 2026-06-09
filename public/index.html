@@ -106,7 +106,8 @@ body.calm #user-status .us-fill{transition:none}
   <span style="flex:1"></span>
   <button id="music-btn" title="music on / off">🎵</button>
   <button id="sfx-btn" title="sound effects on / off">🔊</button>
-  <button id="day-btn" title="day / night theme">🌙</button>
+  <button id="day-btn" title="day / night theme">☀️</button>
+  <script>try{if(localStorage.getItem('slimeDay')==='1')document.getElementById('day-btn').textContent='🌙'}catch(e){}</script>
   <button id="calm-btn" title="flash / calm toggle">✨</button>
   <button id="help-btn" title="game guide (h)" aria-expanded="false" aria-controls="guide-overlay">?</button>
   <a id="gh-btn" href="https://github.com/bitqs/slime" target="_blank" rel="noopener noreferrer" title="Slime on GitHub" aria-label="Slime on GitHub">🐙</a>

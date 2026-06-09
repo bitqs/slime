@@ -5,5 +5,5 @@
   "repository": "https://github.com/bitqs/slime",
   "homepage": "https://github.com/bitqs/slime",
   "license": "MIT",
-  "keywords": ["game", "rpg", "gamification", "statusline", "hud", "fun"]
+  "keywords": ["claude-code", "statusline", "hud", "hooks", "gamification", "rpg", "game", "tmux", "token-usage", "pixijs", "fun"]
 }

@@ -5,7 +5,13 @@
     {
       "name": "slime",
       "source": "./",
-      "description": "Your work goals are the bosses. Your plugins are your gear. Watch Claude fight — a zero-impact RPG layer over Claude Code."
+      "displayName": "Slime — your coding session as an RPG",
+      "description": "Turn your real Claude Code session into a turn-based RPG: a statusline HUD + a PixiJS browser arena render your goals as bosses, your todos as minions, and your token budget as your resource — gamification, hooks, tmux, zero impact on the session.",
+      "category": "Learning",
+      "homepage": "https://github.com/bitqs/slime",
+      "author": { "name": "qs", "url": "https://github.com/bitqs" },
+      "license": "MIT",
+      "keywords": ["claude-code", "statusline", "hud", "hooks", "gamification", "rpg", "game", "tmux", "token-usage", "pixijs", "fun"]
     }
   ]
 }

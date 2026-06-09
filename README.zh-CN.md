@@ -6,6 +6,8 @@
 
 你的目标就是 Boss,你的插件就是装备。看着 Claude 替你战斗 —— 跑在你真实的工作之上,对工作本身零影响。
 
+**别的工具只让你「看着」AI agent 闲逛。Slime 是唯一一个让你「真刀真枪打赢」的** —— 有赌注、有连胜,还有一份你真会想晒出去的周报。
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet)](https://docs.anthropic.com/claude-code)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](package.json)

@@ -6,6 +6,8 @@
 
 Your goals are the bosses. Your plugins are your gear. Watch Claude fight — over your real work, with zero impact on it.
 
+**Every other tool lets you _watch_ your AI agent wander. Slime is the only one where you _fight and win_** — stakes, a streak, and a weekly Wrapped you'll actually share.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet)](https://docs.anthropic.com/claude-code)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](package.json)

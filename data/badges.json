@@ -4,5 +4,10 @@
   { "id": "slayer",      "nameKey": "badge.slayer",     "stat": "kills",      "gte": 50 },
   { "id": "polyglot",    "nameKey": "badge.polyglot",   "stat": "projects",   "gte": 3 },
   { "id": "night-owl",   "nameKey": "badge.nightOwl",   "stat": "nightKills", "gte": 1 },
-  { "id": "veteran",     "nameKey": "badge.veteran",    "stat": "bossCount",  "gte": 25 }
+  { "id": "veteran",     "nameKey": "badge.veteran",    "stat": "bossCount",  "gte": 25 },
+  { "id": "centurion",   "nameKey": "badge.centurion",  "stat": "bossCount",  "gte": 100 },
+  { "id": "combo-god",   "nameKey": "badge.comboGod",   "stat": "maxCombo",   "gte": 25 },
+  { "id": "reaper",      "nameKey": "badge.reaper",     "stat": "kills",      "gte": 250 },
+  { "id": "graveyard",   "nameKey": "badge.graveyard",  "stat": "nightKills", "gte": 10 },
+  { "id": "world-tour",  "nameKey": "badge.worldTour",  "stat": "projects",   "gte": 10 }
 ]

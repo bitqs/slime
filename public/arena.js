@@ -1337,11 +1337,16 @@
     // usage → stats panel
     const u = data.usage;
     if (u) {
-      // token bars: ↑ uplink (input/context %) heats + burns; ↓ downlink (output %)
+      // token bars: ↑ uplink = context fill (input / window) — burns toward the limit;
+      // ↓ downlink = output relative to input (downlink vs uplink), so it's always
+      // a visible proportion. The exact counts live on the bar labels.
       const winSize = (typeof u.ctxSize === 'number' && u.ctxSize > 0) ? u.ctxSize : 200000;
       if (typeof u.contextPct === 'number') ctxPct = u.contextPct;
       else if (typeof u.ctxTokens === 'number') ctxPct = Math.min(100, u.ctxTokens / winSize * 100);
-      if (typeof u.outTokens === 'number') downPct = Math.min(100, u.outTokens / winSize * 100);
+      if (typeof u.outTokens === 'number') {
+        const inTok = (typeof u.ctxTokens === 'number' && u.ctxTokens > 0) ? u.ctxTokens : winSize;
+        downPct = Math.min(100, u.outTokens / inTok * 100);
+      }
       if (typeof u.ctxTokens === 'number') {
         if (lastCtxTokens != null && u.ctxTokens > lastCtxTokens) burnTokens(u.ctxTokens - lastCtxTokens);
         lastCtxTokens = u.ctxTokens;

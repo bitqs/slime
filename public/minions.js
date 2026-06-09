@@ -140,42 +140,88 @@
   const railEl = () => document.getElementById('minion-rail');
   let lastKey = '';
 
-  function render(todos) {
+  // Boss look is seeded from its NAME (FNV-1a) — same hash the arena uses, so the
+  // rail card matches the on-stage boss sprite.
+  function seedFromName(name) {
+    let h = 2166136261; const s = String(name || '');
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+    return (h >>> 0) || 1;
+  }
+
+  /** one rail card. form=seed, dead=tombstone look, opts.cls extra classes,
+   *  opts.hpPct fill width + color, opts.marker a corner glyph (👑 for the boss). */
+  function makeCard(form, label, status, opts) {
+    const o = opts || {};
+    const card = document.createElement('div');
+    card.className = `minion ${status}${o.cls ? ' ' + o.cls : ''}`;
+    card.dataset.label = label || '';
+    card.dataset.form = String(form || 0);
+    const cv = document.createElement('canvas');
+    cv.width = 8; cv.height = 8;
+    cv.className = 'minion-sprite';
+    drawSlime(cv, form || 0, status === 'completed');
+    const hp = document.createElement('div');
+    hp.className = 'minion-hp';
+    const fill = document.createElement('div');
+    fill.className = 'minion-hp-fill';
+    const pct = o.hpPct != null ? Math.max(0, Math.min(100, o.hpPct)) : (status === 'completed' ? 0 : 100);
+    fill.style.width = pct + '%';
+    if (o.hpColor) fill.style.background = o.hpColor;
+    hp.appendChild(fill);
+    const name = document.createElement('div');
+    name.className = 'minion-name';
+    name.textContent = label || '';
+    name.title = o.title || '';
+    card.append(cv, hp, name);
+    if (o.marker) {
+      const m = document.createElement('div');
+      m.className = 'minion-marker';
+      m.textContent = o.marker;
+      card.appendChild(m);
+    }
+    if (status === 'completed') {
+      const grave = document.createElement('div');
+      grave.className = 'minion-grave';
+      grave.textContent = '🪦';
+      card.appendChild(grave);
+    }
+    return card;
+  }
+
+  // three faint silhouettes that hold the rail's shape when there's no session yet.
+  const PLACEHOLDER_SEEDS = [7, 42, 99];
+
+  function render(todos, boss) {
     const rail = railEl();
     if (!rail) return;
     const list = Array.isArray(todos) ? todos : [];
-    const key = JSON.stringify(list.map((t) => [t.label, t.status]));
+    // key includes the boss (name/hp/broken) so its card refreshes between polls
+    const bkey = boss && boss.name ? [boss.name, boss.hp, boss.broken] : null;
+    const key = JSON.stringify([bkey, list.map((t) => [t.label, t.status])]);
     if (key === lastKey) return; // no churn on identical polls
     lastKey = key;
     rail.textContent = '';
+
+    // the boss (the quest itself) leads the rail — bigger, gold-framed, crowned.
+    if (boss && boss.name) {
+      const hpPct = typeof boss.hp === 'number' ? boss.hp : 100;
+      const hpColor = boss.broken ? '#777' : hpPct > 50 ? '#6abe30' : hpPct > 20 ? '#f0b541' : '#c83737';
+      // always 'in_progress' (a live foe, never a tombstone); 'broken' greys it without killing it
+      rail.appendChild(makeCard(seedFromName(boss.name), boss.name, 'in_progress',
+        { cls: boss.broken ? 'boss broken' : 'boss', hpPct, hpColor, marker: '👑', title: boss.name }));
+    }
+
     for (const t of list) {
-      const card = document.createElement('div');
-      card.className = `minion ${t.status}`;
-      card.dataset.label = t.label || '';
-      card.dataset.form = String(t.form || 0);
-      const cv = document.createElement('canvas');
-      cv.width = 8; cv.height = 8;
-      cv.className = 'minion-sprite';
-      drawSlime(cv, t.form || 0, t.status === 'completed');
-      const hp = document.createElement('div');
-      hp.className = 'minion-hp';
-      const fill = document.createElement('div');
-      fill.className = 'minion-hp-fill';
-      fill.style.width = t.status === 'completed' ? '0%' : '100%';
-      hp.appendChild(fill);
-      const name = document.createElement('div');
-      name.className = 'minion-name';
       // in_progress shows what's being done (next-step hint); others show the mob label
-      name.textContent = t.status === 'in_progress' ? (t.activeForm || t.label || '') : (t.label || '');
-      name.title = t.content || '';
-      card.append(cv, hp, name);
-      if (t.status === 'completed') {
-        const grave = document.createElement('div');
-        grave.className = 'minion-grave';
-        grave.textContent = '🪦';
-        card.appendChild(grave);
+      const label = t.status === 'in_progress' ? (t.activeForm || t.label || '') : (t.label || '');
+      rail.appendChild(makeCard(t.form || 0, label, t.status, { title: t.content || '' }));
+    }
+
+    // the rail always carries content — fall back to faint placeholders when idle
+    if (!rail.children.length) {
+      for (const seed of PLACEHOLDER_SEEDS) {
+        rail.appendChild(makeCard(seed, '—', 'pending', { cls: 'placeholder' }));
       }
-      rail.appendChild(card);
     }
   }
 

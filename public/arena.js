@@ -1157,7 +1157,7 @@
 
     // boss snapshot
     if (snap) {
-      if (window.SlimeMinions) SlimeMinions.render(snap.todos);
+      if (window.SlimeMinions) SlimeMinions.render(snap.todos, snap.boss);
       // a fresh boss → reseed its whole look from its NAME (revives the sprite too,
       // in case a victory cutscene hid it and no intro fired to reset bossDead)
       if (snap.boss && snap.boss.name && snap.boss.name !== lastPolledBoss) {
@@ -1179,7 +1179,7 @@
       }
       if (snap.boss && typeof snap.boss.broken === 'boolean' && snap.boss.broken !== bossBroken) setBroken(snap.boss.broken);
     } else {
-      if (window.SlimeMinions) SlimeMinions.render([]);
+      if (window.SlimeMinions) SlimeMinions.render([], null);
       showOverlay('waiting for a session…');
       boss.visible = false;
       setText('boss-name', '—');

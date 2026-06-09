@@ -69,6 +69,14 @@ body.day #crt{opacity:.4}
 .minion.pending{opacity:.45}
 .minion.in_progress{outline:1px solid var(--accent);outline-offset:1px}
 .minion.completed{opacity:.6}
+.minion.boss{min-width:60px;padding:3px 5px;background:rgba(240,181,65,.07);outline:1px solid var(--accent);outline-offset:0;border-radius:2px}
+.minion.boss canvas{height:34px}
+.minion.boss .minion-name{color:var(--accent);font-weight:bold;max-width:74px}
+.minion.boss .minion-hp{width:50px}
+.minion.boss.broken{filter:grayscale(1)}
+.minion-marker{position:absolute;top:-3px;right:1px;font-size:9px;line-height:1;z-index:3;pointer-events:none}
+.minion.placeholder{opacity:.22}
+.minion.placeholder .minion-hp{visibility:hidden}
 .minion-hp{width:42px;height:4px;background:#0b0d12;box-shadow:inset 0 0 0 1px rgba(0,0,0,.6)}
 .minion-hp-fill{height:100%;background:#6abe30;transition:width .4s}
 body.calm .minion-hp-fill{transition:none}

@@ -67,6 +67,7 @@ function handleEvents(req, res) {
     'Cache-Control': 'no-cache',
     Connection: 'keep-alive',
   });
+  res.write('retry: 3000\n\n');  // tell EventSource to auto-reconnect ~3s after a drop (sleep/wake, proxy timeout)
   res.write(': connected\n\n');
 
   // Track byte offset for the newest jsonl at connection time

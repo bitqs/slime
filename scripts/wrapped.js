@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const state = require('../core/state');
 const locale = require('../core/locale');
+const wrappedCard = require('../core/wrapped-card');
 
 const SEVEN_DAYS = 7 * 24 * 3600 * 1000;
 
@@ -76,7 +77,8 @@ function card(data, lang) {
 
   /** @param {string} left @param {string} right @returns {string} */
   function row(left, right) {
-    const line = `  ${left}: ${right}`;
+    let line = `  ${left}: ${right}`;
+    if (line.length > inner) line = line.slice(0, inner - 1) + '…'; // keep the box square on long values
     const pad = inner - line.length;
     return `║${line}${' '.repeat(Math.max(0, pad))}║`;
   }
@@ -123,8 +125,25 @@ function card(data, lang) {
   return lines.join('\n');
 }
 
-if (require.main === module) {
-  console.log(card(weekly(), locale.current()));
+/** Build the shareable SVG card for the current week. @param {string} [lang] @param {number} [now] */
+function svgCard(lang, now) {
+  const l = lang || locale.current();
+  return wrappedCard.svg(weekly(now), (/** @type {string} */ k) => locale.t(k, l), { lang: l, now });
 }
 
-module.exports = { weekly, card };
+if (require.main === module) {
+  const lang = locale.current();
+  if (process.argv.includes('--svg')) {
+    process.stdout.write(svgCard(lang));   // raw SVG for piping: node wrapped.js --svg > card.svg
+  } else {
+    console.log(card(weekly(), lang));
+    // also drop a shareable battle card next to the state
+    try {
+      const out = path.join(state.ROOT, 'wrapped.svg');
+      fs.writeFileSync(out, svgCard(lang));
+      console.log(`\n🎴 shareable card saved → ${out}`);
+    } catch { /* read-only fs — skip silently */ }
+  }
+}
+
+module.exports = { weekly, card, svgCard };

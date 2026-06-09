@@ -31,3 +31,22 @@ test('card renders box with numbers', () => {
   assert.match(card, /15/);
   assert.match(card, /superpowers/);
 });
+
+test('card box stays square even with a long gear line', () => {
+  const card = wrapped.card({ dmg: 1, kills: 1, turns: 1, hits: 0, activeDays: 1, milestones: [],
+    topGear: [['superpowers', 14], ['code-review', 3], ['frontend-design', 1]] }, 'en');
+  const lines = card.split('\n');
+  const maxw = [...lines[0]].length; // the ╔══╗ border defines the box width
+  for (const l of lines) assert.ok([...l].length <= maxw, `row overflows past the border: "${l}"`);
+  assert.ok(lines.every((l) => l.endsWith('╗') || l.endsWith('╣') || l.endsWith('╝') || l.endsWith('║')), 'every row closes the box');
+});
+
+test('svg card embeds the stats and is well-formed', () => {
+  const wc = require('../core/wrapped-card');
+  const svg = wc.svg(
+    { dmg: 8690, kills: 306, turns: 84, activeDays: 2, maxCombo: 17, milestones: new Array(44), topGear: [['superpowers', 14]] },
+    (k) => k, { lang: 'en', now: Date.parse('2026-06-09T12:00:00Z') });
+  assert.match(svg, /^<svg[\s\S]*<\/svg>\s*$/);
+  for (const n of ['8690', '306', '84', '44', '×17']) assert.ok(svg.includes(n), `missing ${n}`);
+  assert.match(svg, /github\.com\/bitqs\/slime/);
+});

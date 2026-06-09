@@ -92,6 +92,22 @@ Turn on auto-update so every improvement reaches you: `/plugin` → Marketplaces
 
 That's it — just work. The game plays itself.
 
+## First run — open the arena
+
+On your next session the HUD appears at the bottom of your terminal — your live battle, at a glance:
+
+![Slime HUD — Cmd/Ctrl-Click [HUD] to open the arena](docs/media/open-hud.png)
+
+That **`[HUD]`** is a clickable link: **Cmd-Click** (macOS) or **Ctrl-Click** (Windows / Linux) it to open the full battle arena in your browser — or run **`/slime:arena`**. Leave the tab open beside your terminal and watch the fight unfold as you work.
+
+## Troubleshooting
+
+- **`/plugin` not recognized?** Your Claude Code is outdated — update it (`brew upgrade claude-code` or `npm i -g @anthropic-ai/claude-code@latest`) and restart.
+- **HUD not showing?** Run `/reload-plugins` (or restart Claude Code). If you already had a statusline, Slime won't overwrite it — run `/slime:setup` to switch.
+- **"Plugin not found" / stale marketplace?** `/plugin marketplace update slime`, then reinstall.
+- **`[HUD]` link dead / arena won't load?** The local arena server starts on first session; run **`/slime:arena`** to (re)launch it.
+- **Opt out of the auto-HUD:** set `"autoHud": false` in `~/.claude/slime/config.json`.
+
 ## What You Get
 
 | | |

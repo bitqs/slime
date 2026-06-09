@@ -37,13 +37,19 @@ function cacheFromStatusline(stdin, root) {
       ? { added: cost.total_lines_added || 0, removed: cost.total_lines_removed || 0 }
       : prev.lines ?? null,
     durationMs: cost.total_duration_ms != null ? cost.total_duration_ms : prev.durationMs ?? null,
-    // tokens currently in context (input + cache), from the most recent API response
+    // uplink: input tokens (incl. cache) currently in context, from the latest API response
     ctxTokens: stdin.context_window && stdin.context_window.total_input_tokens != null
       ? stdin.context_window.total_input_tokens : prev.ctxTokens ?? null,
+    // downlink: output tokens from the latest response
+    outTokens: stdin.context_window && stdin.context_window.total_output_tokens != null
+      ? stdin.context_window.total_output_tokens : prev.outTokens ?? null,
+    // context window size (200k / 1M) — denominator for the token bars
+    ctxSize: stdin.context_window && stdin.context_window.context_window_size != null
+      ? stdin.context_window.context_window_size : prev.ctxSize ?? null,
     t: Date.now(),
   };
-  const same = JSON.stringify([prev.fiveHour, prev.sevenDay, prev.contextPct, prev.source, prev.cost, prev.model, prev.lines, prev.durationMs, prev.ctxTokens])
-            === JSON.stringify([next.fiveHour, next.sevenDay, next.contextPct, next.source, next.cost, next.model, next.lines, next.durationMs, next.ctxTokens]);
+  const same = JSON.stringify([prev.fiveHour, prev.sevenDay, prev.contextPct, prev.source, prev.cost, prev.model, prev.lines, prev.durationMs, prev.ctxTokens, prev.outTokens, prev.ctxSize])
+            === JSON.stringify([next.fiveHour, next.sevenDay, next.contextPct, next.source, next.cost, next.model, next.lines, next.durationMs, next.ctxTokens, next.outTokens, next.ctxSize]);
   if (same) return;
   state.ensureDirs();
   safeWrite(cachePath(root), JSON.stringify(next));

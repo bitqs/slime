@@ -642,7 +642,8 @@
   // context "fuse": a thin ember gauge across the top that fills as the context
   // window burns down; sits under the letterbox so cutscenes still cover it.
   const ctxFx = new PIXI.Graphics();
-  let ctxPct = null;          // 0–100 context-window used
+  let ctxPct = null;          // ↑ uplink: input/context % of the window
+  let downPct = null;         // ↓ downlink: output % of the window
   let lastCtxTokens = null;   // to detect tokens burned between polls
   uiLayer.addChild(flashRect, vignette, vignetteEdge, ctxFx, letterTop, letterBot, bigText);
 
@@ -860,30 +861,33 @@
     ];
   }
 
-  // ── context "burn" gauge ───────────────────────────────────────────────────────
-  // The context window is fuel: this thin top bar fills + heats up (gold→orange→red)
-  // as it's consumed, with a flickering flame at the burning edge and a danger pulse
-  // when nearly full. Drawn every frame from the latest ctxPct.
-  function drawCtxBar() {
+  // ── token bars: ↑ uplink (input/context) + ↓ downlink (output) ──────────────────
+  // Two thin stacked bars at the very top. The ↑ bar is "fuel" — it fills + heats up
+  // (gold→orange→red) with a flame at the burning edge and a red pulse near full; the
+  // ↓ bar is the cooler cyan output stream. Both normalised to the context window.
+  function drawTokenBars() {
     ctxFx.clear();
-    if (ctxPct == null) return;
-    const pct = Math.max(0, Math.min(100, ctxPct));
     const h = 3;
-    ctxFx.rect(0, 0, W, h).fill({ color: 0x000000, alpha: 0.4 });           // charred track
-    const fw = Math.round(W * pct / 100);
-    if (fw > 0) {
-      const col = pct > 80 ? 0xc83737 : pct > 50 ? 0xe8842c : 0xf0b541;     // heat ramps with fill
-      ctxFx.rect(0, 0, fw, h).fill(col);
-      ctxFx.rect(0, 0, fw, 1).fill({ color: 0xfff2c0, alpha: 0.55 });       // hot top edge
-      if (!CALM) {                                                          // flame licking the burning edge
+    /** @param {number} y @param {number} pct @param {number} col @param {boolean} flame */
+    function bar(y, pct, col, flame) {
+      ctxFx.rect(0, y, W, h).fill({ color: 0x000000, alpha: 0.4 });          // track
+      let fw = Math.round(W * Math.max(0, Math.min(100, pct)) / 100);
+      if (pct > 0 && fw < 2) fw = 2;                                         // keep a nonzero value visible
+      if (fw <= 0) return;
+      ctxFx.rect(0, y, fw, h).fill(col);
+      ctxFx.rect(0, y, fw, 1).fill({ color: 0xffffff, alpha: 0.4 });         // lit top edge
+      if (flame && !CALM) {                                                  // flame at the burning edge
         const flick = 1 + Math.sin(frame / 4) * 0.6 + Math.sin(frame / 1.7) * 0.3;
-        ctxFx.rect(fw - 1, 0, 2, h + Math.max(0, 2 * flick)).fill(0xfff2c0);
-        ctxFx.rect(fw - 2, h, 4, 1).fill({ color: 0xffd060, alpha: 0.7 });
+        ctxFx.rect(fw - 1, y, 2, h + Math.max(0, 2 * flick)).fill(0xfff2c0);
+        ctxFx.rect(fw - 2, y + h, 4, 1).fill({ color: 0xffd060, alpha: 0.7 });
       }
     }
-    if (pct > 80 && !CALM) {                                                // almost full → red pulse
-      ctxFx.rect(0, 0, W, h).fill({ color: 0xc83737, alpha: Math.max(0, 0.12 + Math.sin(frame / 9) * 0.1) });
+    if (ctxPct != null) {                                                    // ↑ uplink
+      const up = Math.max(0, Math.min(100, ctxPct));
+      bar(0, up, up > 80 ? 0xc83737 : up > 50 ? 0xe8842c : 0xf0b541, true);
+      if (up > 80 && !CALM) ctxFx.rect(0, 0, W, h).fill({ color: 0xc83737, alpha: Math.max(0, 0.12 + Math.sin(frame / 9) * 0.1) });
     }
+    if (downPct != null) bar(4, downPct, 0x46b3c9, false);                   // ↓ downlink
   }
 
   // tokens were burned this turn → embers lick up off the burning edge + a count floater
@@ -903,7 +907,7 @@
   app.ticker.add(() => {
     frame++;
     drawHud();
-    drawCtxBar();
+    drawTokenBars();
 
     // hitstop: freeze world, count down
     if (fx.hitstop > 0) { fx.hitstop--; return; }
@@ -1188,9 +1192,11 @@
     setText('pg-kills', s ? String(s.kills || 0) : '—');
     setText('pg-dmg', s ? String(s.dmg || 0) : '—');
     setText('pg-summons', s ? '×' + (s.summons || 0) : '—');
-    // Tokens — input tokens currently in context (the HUD's "↑24.5k", in the arena now)
-    const tok = usage && typeof usage.ctxTokens === 'number' ? usage.ctxTokens : null;
-    setText('pg-tokens', tok != null ? '↑' + fmtTok(tok) : '—');
+    // Tokens — ↑ uplink (input/context) and ↓ downlink (output), both counts
+    const up = usage && typeof usage.ctxTokens === 'number' ? usage.ctxTokens : null;
+    const dn = usage && typeof usage.outTokens === 'number' ? usage.outTokens : null;
+    const tokTxt = [up != null ? '↑' + fmtTok(up) : '', dn != null ? '↓' + fmtTok(dn) : ''].filter(Boolean).join(' ');
+    setText('pg-tokens', tokTxt || '—');
     // Streak — consecutive active days, with longest in parens
     const st = data && data.streak;
     setText('pg-streak', st && st.days > 0 ? `${st.days}d` + (st.longest > st.days ? ` (best ${st.longest})` : '') : '—');
@@ -1315,8 +1321,11 @@
     // usage → stats panel
     const u = data.usage;
     if (u) {
-      // context burn: drive the top fuse gauge + ignite embers for tokens spent this turn
+      // token bars: ↑ uplink (input/context %) heats + burns; ↓ downlink (output %)
+      const winSize = (typeof u.ctxSize === 'number' && u.ctxSize > 0) ? u.ctxSize : 200000;
       if (typeof u.contextPct === 'number') ctxPct = u.contextPct;
+      else if (typeof u.ctxTokens === 'number') ctxPct = Math.min(100, u.ctxTokens / winSize * 100);
+      if (typeof u.outTokens === 'number') downPct = Math.min(100, u.outTokens / winSize * 100);
       if (typeof u.ctxTokens === 'number') {
         if (lastCtxTokens != null && u.ctxTokens > lastCtxTokens) burnTokens(u.ctxTokens - lastCtxTokens);
         lastCtxTokens = u.ctxTokens;

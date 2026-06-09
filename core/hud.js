@@ -105,10 +105,11 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live, level, quest
   parts.push(`💀${snap.kills || 0} ⚔️${snap.dmg || 0}`);
   const cost = stdinJson && stdinJson.cost && stdinJson.cost.total_cost_usd;
   if (cost) parts.push(`💰$${cost.toFixed(2)}`);
-  // turn telemetry, wrapped from the statusline stdin (elapsed + tokens in context)
+  // turn telemetry, wrapped from the statusline stdin (elapsed + ↑ input / ↓ output tokens)
   const dur = usageCache && usageCache.durationMs;
-  const tok = usageCache && usageCache.ctxTokens;
-  const tele = [dur ? `⏱${fmtDur(dur)}` : '', tok ? `↑${fmtTok(tok)}` : ''].filter(Boolean).join(' ');
+  const up = usageCache && usageCache.ctxTokens;
+  const dn = usageCache && usageCache.outTokens;
+  const tele = [dur ? `⏱${fmtDur(dur)}` : '', up ? `↑${fmtTok(up)}` : '', dn ? `↓${fmtTok(dn)}` : ''].filter(Boolean).join(' ');
   if (tele) parts.push(tele);
   if (snap.lastText) parts.push(sanitize(snap.lastText, 120));
   return parts.join(' | ');

@@ -37,10 +37,13 @@ function cacheFromStatusline(stdin, root) {
       ? { added: cost.total_lines_added || 0, removed: cost.total_lines_removed || 0 }
       : prev.lines ?? null,
     durationMs: cost.total_duration_ms != null ? cost.total_duration_ms : prev.durationMs ?? null,
+    // tokens currently in context (input + cache), from the most recent API response
+    ctxTokens: stdin.context_window && stdin.context_window.total_input_tokens != null
+      ? stdin.context_window.total_input_tokens : prev.ctxTokens ?? null,
     t: Date.now(),
   };
-  const same = JSON.stringify([prev.fiveHour, prev.sevenDay, prev.contextPct, prev.source, prev.cost, prev.model, prev.lines, prev.durationMs])
-            === JSON.stringify([next.fiveHour, next.sevenDay, next.contextPct, next.source, next.cost, next.model, next.lines, next.durationMs]);
+  const same = JSON.stringify([prev.fiveHour, prev.sevenDay, prev.contextPct, prev.source, prev.cost, prev.model, prev.lines, prev.durationMs, prev.ctxTokens])
+            === JSON.stringify([next.fiveHour, next.sevenDay, next.contextPct, next.source, next.cost, next.model, next.lines, next.durationMs, next.ctxTokens]);
   if (same) return;
   state.ensureDirs();
   safeWrite(cachePath(root), JSON.stringify(next));

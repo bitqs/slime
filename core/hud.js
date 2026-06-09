@@ -31,6 +31,18 @@ function sanitize(s, max = 60) {
   return kept.join('');
 }
 
+/** ms → "Xm Ys" / "Ys" (mirrors Claude Code's own elapsed display). @param {number} ms @returns {string} */
+function fmtDur(ms) {
+  const s = Math.round(ms / 1000), m = Math.floor(s / 60);
+  return m > 0 ? `${m}m${String(s % 60).padStart(2, '0')}s` : `${s}s`;
+}
+/** token count → compact "24.5k" / "1.2M". @param {number} n @returns {string} */
+function fmtTok(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(n);
+}
+
 /**
  * @param {Snapshot | null | undefined} snap
  * @param {StatuslineStdin | null | undefined} stdinJson
@@ -93,6 +105,11 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live, level, quest
   parts.push(`💀${snap.kills || 0} ⚔️${snap.dmg || 0}`);
   const cost = stdinJson && stdinJson.cost && stdinJson.cost.total_cost_usd;
   if (cost) parts.push(`💰$${cost.toFixed(2)}`);
+  // turn telemetry, wrapped from the statusline stdin (elapsed + tokens in context)
+  const dur = usageCache && usageCache.durationMs;
+  const tok = usageCache && usageCache.ctxTokens;
+  const tele = [dur ? `⏱${fmtDur(dur)}` : '', tok ? `↑${fmtTok(tok)}` : ''].filter(Boolean).join(' ');
+  if (tele) parts.push(tele);
   if (snap.lastText) parts.push(sanitize(snap.lastText, 120));
   return parts.join(' | ');
 }

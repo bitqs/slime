@@ -44,6 +44,7 @@ export interface UsageCache {
   model?: string | null;
   lines?: { added: number; removed: number } | null;
   durationMs?: number | null;
+  ctxTokens?: number | null;
   t: number;
 }
 
@@ -128,7 +129,7 @@ export interface StatuslineStdin {
     total_lines_removed?: number;
     total_duration_ms?: number;
   };
-  context_window?: { used_percentage: number };
+  context_window?: { used_percentage?: number; total_input_tokens?: number; total_output_tokens?: number };
   model?: { display_name: string };
 }
 

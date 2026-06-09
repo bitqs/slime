@@ -24,6 +24,12 @@ It lives right in your terminal status line — the boss, your token meters, the
 
 ![Slime status line in the terminal](docs/media/statusline.png)
 
+## The full experience
+
+Code in your terminal, watch the fight in the browser — one real session, zero impact on your work. The status line keeps the boss and your meters in view; the arena plays out every strike in full.
+
+![Slime — terminal and arena, side by side](docs/media/full-experience.png)
+
 ## How to read the battle
 
 | On screen | Meaning |

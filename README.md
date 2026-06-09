@@ -36,6 +36,25 @@ It lives right in your terminal status line — the boss, your token meters, the
 | 🍖 Feeding | Planning and Q&A feed the boss; it grows |
 | 🐺 Summons | Subagent dispatches fight beside you |
 
+## The status bar
+
+The arena's top panel is your character sheet — real session telemetry in three columns: your token budgets, the run so far, and your combat output this turn.
+
+![Slime arena status bar](docs/media/statusbar.png)
+
+| Field | Meaning |
+|---|---|
+| ⚡ **Dtk** / **Dtk CD** | Daily token budget left (the 5-hour rate window) and minutes until it resets |
+| 🏕️ **Wtk** / **Wtk CD** | Weekly token budget left (the 7-day window) and hours until it resets |
+| 🧠 **Ctx** | Context window used — how full the conversation is |
+| 💰 **Spent** | Real session cost so far, in USD |
+| ⚔️ **Weapon** | The model you're wielding (Opus / Sonnet / Haiku) |
+| ⏳ **Time** · ⏲ **Pace** | Session duration, and average wall-clock time per turn |
+| 🔄 **Turn** | Prompts cast this session |
+| 🗡️ **Atk** · 💥 **Dmg** | Lines added / removed this turn, and total lines changed |
+| 🔥 **Combo** · 💀 **Kills** | Consecutive successful tool strikes, and tests passed |
+| 🐺 **Summon** | Subagent dispatches |
+
 ## Quick Start
 
 ```

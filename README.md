@@ -63,6 +63,12 @@ The arena's top panel is your character sheet — real session telemetry in thre
 | 🔥 **Combo** · 💀 **Kills** | Consecutive successful tool strikes, and tests passed |
 | 🐺 **Summon** | Subagent dispatches |
 
+## Weekly Wrapped
+
+Run `/slime:wrapped` for a recap of your last 7 days — and a **shareable battle card** (`wrapped.svg`) drops next to your state, ready to post:
+
+![Slime Weekly Wrapped — a shareable battle card](docs/media/wrapped-card.png)
+
 ## Quick Start
 
 ```

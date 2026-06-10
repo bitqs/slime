@@ -36,6 +36,16 @@ if (r.ok && state.writeProfile(prof)) {
     `✦⟳ ASCENDED — prestige ⟳${r.prestige}!\n` +
     `  Level reset to 1. Permanent XP multiplier is now ${mult(r.prestige)}.\n` +
     `  Onward — earn it all back, faster.\n`);
+  // announce to the live session so the arena plays the ascension ceremony
+  try {
+    const sid = state.newestSessionId();
+    if (sid) {
+      const locale = require('../core/locale');
+      const lang = locale.current();
+      state.appendEvent(sid, { t: Date.now(), kind: 'prestige', tier: r.prestige,
+        text: locale.fmt(locale.t('prestige.ascend', lang), { tier: r.prestige, mult: mult(r.prestige) }) });
+    }
+  } catch {} // display-only — never fail the prestige over it
 } else {
   process.stdout.write(`⟳ Prestige did not save — no changes made.\n`);
 }

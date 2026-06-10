@@ -107,6 +107,7 @@
   "quest.weeklyKills": "每周猎手",
   "quest.streakDays": "每日修行",
   "quest.done": "🎯 任务完成 — {name}",
+  "prestige.ascend": "✦⟳ 飞升 — 转生 ⟳{tier}!经验永久 {mult}",
   "loot.drop": "✨ 战利品 — +{xp} 经验 {name}",
   "loot.xpSmall": "小玩意",
   "loot.xpMedium": "遗物",

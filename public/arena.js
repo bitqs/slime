@@ -699,7 +699,7 @@
   let lastPolledBoss = null; // last boss name seen by applyState — detects a fresh boss in real sessions
   let wasZero = false;       // tracks token===0 transitions for the Zzz floater
   const fx = { shake: 0, shakeAmp: 4, knightLunge: 0, knightHurt: 0, speed: 1, hitstop: 0, particles: [],
-    floaters: [], chromaFrames: 0, edgeFlame: 0, slowmoLeft: null, zoom: 1, zoomLeft: null,
+    floaters: [], dissolving: [], chromaFrames: 0, edgeFlame: 0, slowmoLeft: null, zoom: 1, zoomLeft: null,
     bossFalling: false, type: null };
   const governor = SlimeSeq.createGovernor(3, 60);
   let activeScenes = [];
@@ -1099,6 +1099,14 @@
       return true;
     });
 
+    // dissolving sprites (minion deaths): fade out, then hide and restore alpha
+    fx.dissolving = fx.dissolving.filter((d) => {
+      d.age++;
+      d.node.alpha = Math.max(0, 1 - d.age / d.maxAge);
+      if (d.age >= d.maxAge) { d.node.visible = false; d.node.alpha = 1; return false; }
+      return true;
+    });
+
     // edge flame (combo)
     vignetteEdge.alpha = fx.edgeFlame ? 0.25 + Math.sin(frame / 10) * 0.15 : 0;
 
@@ -1409,6 +1417,12 @@
     if (!d || !d.kind) return;
 
     if (d.kind === 'cast') { fx.knightLunge = 6; pushLog(d.text);
+      // sword-slash trail: a short steel arc flying off the knight's lunge
+      if (!CALM) for (let i = 0; i < 5; i++) {
+        fx.particles.push({ x: knight.x + 12 + i * 2, y: knight.y - 2 - i,
+          vx: 2.2 + i * 0.25, vy: -0.3 + i * 0.12, age: 0, maxAge: 14, noGravity: true,
+          color: colorNum(P.steel) });
+      }
       if (/\b(Agent|Task)\b/.test(d.tool || '') || /召唤|派遣|summon/i.test(d.text || '')) spawnSummon();
     }
     if (d.kind === 'resolve') {
@@ -1440,11 +1454,19 @@
       clearSummons();
       const line = (d.text || '').split('\n')[0];
       if (line) {
-        setScene('settle');
-        PRIM.letterbox({ on: true });
-        PRIM.bigtext({ text: line.slice(0, 40), y: H / 2 });
-        setTimeout(() => { PRIM.hidetext(); PRIM.letterbox({ on: false }); setScene('battle'); }, 2000);
         pushLog(line);
+        // ceremony scales with the result: an S-rank turn earns the full
+        // letterbox beat; ordinary turns get a brief caption so the routine
+        // punctuation never outweighs a level-up
+        if (/rank:?\s*S|评级:?\s*S/i.test(line)) {
+          setScene('settle');
+          PRIM.letterbox({ on: true });
+          PRIM.bigtext({ text: line.slice(0, 40), y: H / 2 });
+          setTimeout(() => { PRIM.hidetext(); PRIM.letterbox({ on: false }); setScene('battle'); }, 2000);
+        } else {
+          PRIM.bigtext({ text: line.slice(0, 40), y: H / 2 });
+          setTimeout(() => { PRIM.hidetext(); }, 1100);
+        }
       }
     }
     if (d.kind === 'loot_drop') {
@@ -1525,6 +1547,7 @@
       case 'boss_down': A.play('victory'); break;
       case 'ultimate': A.play('ultimate'); break;
       case 'level_up': A.play('levelup'); break;
+      case 'prestige': A.play('victory'); break;
       case 'badge_unlocked': A.play('badge'); break;
       case 'quest_done': A.play('quest'); break;
       case 'choice_open': case 'choice_made': A.play('choice'); break;
@@ -1562,17 +1585,50 @@
     }
     if (d.kind === 'boss_down') { clearSummons(); setScene('battle'); engagedBoss = null; setBroken(false); packSprites.forEach((s) => { s.visible = false; }); tentacleGfx.clear(); playScene(SCENE_VICTORY()); if (d.text) pushLog(d.text); }
     if (d.kind === 'potion') { playScene(SCENE_POTION); if (d.text) pushLog(d.text); }
-    if (d.kind === 'boss_broken') { setBroken(true); PRIM.shake({ amp: 2, frames: 8 }); if (d.text) pushLog(d.text); }
-    // progression payoffs — each gets its own colour/word so they read as distinct
-    // wins (sound is differentiated in audioFor). Floaters are flash-safe; the
-    // sparkle burst is CALM-gated. Anchored to the boss so coords track the stage.
-    if (d.kind === 'level_up' || d.kind === 'badge_unlocked' || d.kind === 'quest_done') {
+    if (d.kind === 'boss_broken') {
+      // the guard-break is a real moment: red crack-flash + shard spray, not just a shiver
+      setBroken(true); PRIM.shake({ amp: 2, frames: 8 });
+      PRIM.flash({ color: '#c83737', strength: 0.35 });
+      const bx = boss.x + boss.width / 2;
+      if (!CALM) { burst(bx, 110, P.red, 12); burst(bx, 110, P.dark, 8); }
+      floater('BREAK!', bx, 92, P.red, 11, true);
+      if (d.text) pushLog(d.text);
+    }
+    // progression payoffs, sized by rarity: quest < badge (floaters, distinct
+    // colour/word) < level-up (letterbox beat) — sound differentiated in audioFor.
+    // Floaters are flash-safe; bursts are CALM-gated. Anchored to the boss.
+    if (d.kind === 'level_up') {
+      playScene([
+        { at: 0,  do: 'letterbox', on: true },
+        { at: 2,  do: 'flash', color: '#f0b541', strength: 0.5 },
+        { at: 4,  do: 'bigtext', text: (d.text || '⭐ LEVEL UP').slice(0, 40), y: 60 },
+        { at: 8,  do: 'goldrain' },
+        { at: 80, do: 'hidetext' },
+        { at: 80, do: 'letterbox', on: false },
+      ]);
+      if (d.text) pushLog(d.text);
+    }
+    if (d.kind === 'badge_unlocked' || d.kind === 'quest_done') {
       const cx = boss.x + boss.width / 2;
-      const pop = d.kind === 'level_up' ? ['LEVEL UP!', P.gold]
-        : d.kind === 'badge_unlocked' ? ['🏅 BADGE', P.steel]
-        : ['🎯 QUEST!', P.ember];
+      const pop = d.kind === 'badge_unlocked' ? ['🏅 BADGE', P.steel] : ['🎯 QUEST!', P.ember];
       floater(pop[0], cx, 70, pop[1], 12, true);
       if (!CALM) burst(cx, 82, pop[1], 10);
+      if (d.text) pushLog(d.text);
+    }
+    if (d.kind === 'prestige') {
+      // the rarest moment in the game — full gold ascension ceremony
+      playScene([
+        { at: 0,   do: 'letterbox', on: true },
+        { at: 0,   do: 'dim', on: true },
+        { at: 4,   do: 'slowmo', factor: 0.3, frames: 40 },
+        { at: 6,   do: 'bigtext', text: (d.text || '✦⟳ ASCENDED ⟳✦').slice(0, 40), y: 60 },
+        { at: 10,  do: 'flash', color: '#f0b541', strength: 0.6 },
+        { at: 14,  do: 'goldrain' },
+        { at: 44,  do: 'confetti' },
+        { at: 100, do: 'dim', on: false },
+        { at: 130, do: 'hidetext' },
+        { at: 130, do: 'letterbox', on: false },
+      ]);
       if (d.text) pushLog(d.text);
     }
     if (d.kind === 'ultimate') {
@@ -1594,12 +1650,13 @@
         const idx = lastTodos.findIndex((t) => t.label === d.minion);
         const s = idx >= 0 ? packSprites[idx] : null;
         if (s && s.visible) {
-          // execution: punch-freeze, slime splat + shards, and a reward sparkle
+          // execution: punch-freeze, slime splat + shards, and a reward sparkle;
+          // the body dissolves over ~12 frames instead of blinking out
           PRIM.hitstop({ frames: 6 }); PRIM.shake({ amp: 2, frames: 6 });
           burst(s.x + s.width / 2, s.y + s.height / 2, P.red, 10);
           burst(s.x + s.width / 2, s.y + s.height / 2, P.bone, 12);
           floater(d.count ? `✦×${d.count}` : '✦', s.x + s.width / 2, s.y - 6, P.gold, 10, true);
-          s.visible = false;
+          if (CALM) { s.visible = false; } else { fx.dissolving.push({ node: s, age: 0, maxAge: 12 }); }
         } else {
           PRIM.hitstop({ frames: 5 });
           burst(boss.x + boss.width / 2, BOSS_FLOOR - 6, P.red, d.count ? 16 : 8);

@@ -122,6 +122,7 @@ export interface SlimeEvent {
   loot?: string;
   xp?: number;
   fx?: string;
+  tier?: number;
 }
 
 /** Shape of JSON piped from the Claude Code statusline to our scripts. */

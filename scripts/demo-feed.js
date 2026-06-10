@@ -94,7 +94,13 @@ const script = [
     snap.kills = (snap.kills || 0) + 1;
     ev({ kind: 'turn_end', text: '🏆 Turn 1 complete — Rank S' });
   },
-  () => ev({ kind: 'boss_down', boss: BOSS, text: `⚡⚡⚡ ${BOSS} — DEFEATED ⚡⚡⚡` }),
+  () => ev({ kind: 'boss_down', boss: BOSS, xp: 380, text: `⚡⚡⚡ ${BOSS} — DEFEATED ⚡⚡⚡` }),
+  // ── progression payoffs: loot < quest < badge < level < prestige ─────────
+  () => ev({ kind: 'loot_drop', loot: 'xp_big', xp: 60, fx: 'burst', text: '✨ Loot — +60 XP a gleaming core' }),
+  () => ev({ kind: 'quest_done', quest: 'weekly_kills', text: '🎯 Quest complete — Weekly hunt' }),
+  () => ev({ kind: 'badge_unlocked', badge: 'combo-king', text: '🏅 Badge unlocked — Combo King' }),
+  () => ev({ kind: 'level_up', text: '⭐ LEVEL UP — now Veteran (Lv10)' }),
+  () => ev({ kind: 'prestige', tier: 1, text: '✦⟳ ASCENDED — Prestige 1! XP ×1.25 forever' }),
 ];
 let i = 0;
 setInterval(() => { script[i % script.length](); i++; }, 2500);

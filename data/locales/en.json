@@ -68,6 +68,7 @@
   "quest.weeklyKills": "Weekly Hunter",
   "quest.streakDays": "Daily Grind",
   "quest.done": "🎯 Quest complete — {name}",
+  "prestige.ascend": "✦⟳ ASCENDED — Prestige {tier}! XP {mult} forever",
   "loot.drop": "✨ Loot — +{xp} XP {name}",
   "loot.xpSmall": "trinket",
   "loot.xpMedium": "relic",

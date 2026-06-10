@@ -12,7 +12,7 @@
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
-const { readSnapshot, eventsPath, newestSessionId, ROOT, readProfile } = require('../core/state');
+const { readSnapshot, eventsPath, newestSessionId, listSessions, ROOT, readProfile } = require('../core/state');
 const { readCache } = require('../core/usage');
 const { safeWrite, readJson } = require('../core/safe-io');
 const locale = require('../core/locale');
@@ -21,6 +21,17 @@ const arenaStatus = require('../core/arena-status');
 // cap concurrent SSE viewers so a leaked/abusive client can't pile up timers
 let sseCount = 0;
 const SSE_MAX = 16;
+
+// Pin id: the regex is the whole guard — no slashes/dots, so building
+// eventsPath(id) from it can never traverse (same pattern as AUDIO_RE).
+const SESSION_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+/** @param {string | undefined} reqUrl @returns {string | null} */
+function pinnedId(reqUrl) {
+  try {
+    const v = new URL(reqUrl || '', 'http://localhost').searchParams.get('session');
+    return v && SESSION_ID_RE.test(v) ? v : null; // invalid → null → fall back to newest
+  } catch { return null; }
+}
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const PORT = Number(process.env.SLIME_PORT) || 4117;
@@ -40,10 +51,10 @@ function handleIndex(res) {
   }
 }
 
-/** @param {ServerResponse} res */
-function handleState(res) {
+/** @param {IncomingMessage} req @param {ServerResponse} res */
+function handleState(req, res) {
   try {
-    const id = newestSessionId();
+    const id = pinnedId(req.url) || newestSessionId();
     const snapshot = id ? readSnapshot(id) : null;
     const usage = readCache();
     const lang = locale.current();
@@ -71,8 +82,9 @@ function handleEvents(req, res) {
   res.write('retry: 3000\n\n');  // tell EventSource to auto-reconnect ~3s after a drop (sleep/wake, proxy timeout)
   res.write(': connected\n\n');
 
-  // Track byte offset for the newest jsonl at connection time
-  let trackedId = newestSessionId();
+  // Track byte offset for the pinned (or newest) jsonl at connection time
+  const pinned = pinnedId(req.url);
+  let trackedId = pinned || newestSessionId();
   let byteOffset = 0;
   if (trackedId) {
     try {
@@ -93,11 +105,13 @@ function handleEvents(req, res) {
         lastHb = now;
       }
 
-      // Check for a newer session
-      const currentId = newestSessionId();
-      if (currentId && currentId !== trackedId) {
-        trackedId = currentId;
-        byteOffset = 0;
+      // Check for a newer session (auto-follow mode only; a pinned viewer stays put)
+      if (!pinned) {
+        const currentId = newestSessionId();
+        if (currentId && currentId !== trackedId) {
+          trackedId = currentId;
+          byteOffset = 0;
+        }
       }
 
       if (!trackedId) return;
@@ -139,6 +153,14 @@ function handleEvents(req, res) {
   req.on('close', cleanup);
   req.on('error', cleanup);
   res.on('close', cleanup);
+}
+
+/** @param {ServerResponse} res */
+function handleSessions(res) {
+  try {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ sessions: listSessions(), newest: newestSessionId() }));
+  } catch { res.writeHead(500); res.end('{}'); }
 }
 
 /** @param {ServerResponse} res */
@@ -212,7 +234,9 @@ function createServer() {
     if (req.method === 'GET' && url === '/') {
       handleIndex(res);
     } else if (req.method === 'GET' && url === '/state') {
-      handleState(res);
+      handleState(req, res);
+    } else if (req.method === 'GET' && url === '/sessions') {
+      handleSessions(res);
     } else if (req.method === 'GET' && url === '/events') {
       handleEvents(req, res);
     } else if (req.method === 'POST' && url === '/set-lang') {

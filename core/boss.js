@@ -101,11 +101,11 @@ function minionLabel(cwd, idx, lang) {
   return lang === 'zh' ? `${base}·小兵 ${idx + 1}` : `${base} mob ${idx + 1}`;
 }
 
-/** Push a milestone, award XP, recompute level, unlock any newly-earned badges,
- *  and clear the boss file.
+/** Push a milestone, award XP (kill + badge + quest), recompute level once all
+ *  XP has landed, unlock any newly-earned badges, and clear the boss file.
  *  @param {string} cwd @param {BossState} b
  *  @param {{ dmg?: number; kills?: number; maxCombo?: number }} [stats]
- *  @returns {{ total: number, level: number, leveledUp: boolean, titleKey: string, newBadges: string[], newQuests: string[] }} */
+ *  @returns {{ total: number, level: number, leveledUp: boolean, titleKey: string, newBadges: string[], newQuests: string[], xpGained: number }} */
 function recordDefeat(cwd, b, stats = {}) {
   const prof = state.readProfile();
   const m = {
@@ -118,20 +118,24 @@ function recordDefeat(cwd, b, stats = {}) {
   };
   prof.milestones.push(m);
   const prog = require('./progression');
-  const fromLevel = prog.levelFor(prof.xp || 0).level;
-  prof.xp = (prof.xp || 0) + Math.round(prog.xpForDefeat(m) * prog.prestigeMult(prof));
-  const lv = prog.levelFor(prof.xp);
-  prof.level = lv.level;
-  // badges: evaluate against the now-updated profile, persist new ones
+  const xpBefore = prof.xp || 0;
+  const fromLevel = prog.levelFor(xpBefore).level;
+  prof.xp = xpBefore + Math.round(prog.xpForDefeat(m) * prog.prestigeMult(prof));
+  // badges: evaluate against the now-updated profile, persist new ones (+XP each)
   prof.badges = prof.badges || [];
   const newBadges = prog.evaluateBadges(prof);
   const now = Date.now();
   for (const id of newBadges) prof.badges.push({ id, unlockedAt: now });
-  // quests: a fresh kill can complete weekly_kills (idempotent; streak handled per-turn)
+  if (newBadges.length) prof.xp += Math.round(prog.BADGE_XP * newBadges.length * prog.prestigeMult(prof));
+  // quests: a fresh kill can complete weekly_kills (idempotent; streak handled
+  // per-turn). evaluateQuests pays quest XP into prof.xp itself.
   const { completed: newQuests } = prog.evaluateQuests(prof, now);
+  // level: computed once, after kill + badge + quest XP have all landed
+  const lv = prog.levelFor(prof.xp);
+  prof.level = lv.level;
   state.writeProfile(prof);
   clear(cwd);
-  return { total: prof.milestones.length, level: lv.level, leveledUp: lv.level > fromLevel, titleKey: lv.titleKey, newBadges, newQuests };
+  return { total: prof.milestones.length, level: lv.level, leveledUp: lv.level > fromLevel, titleKey: lv.titleKey, newBadges, newQuests, xpGained: prof.xp - xpBefore };
 }
 
 module.exports = { nameBoss, loadOrCreate, save, clear, bossPath, compressName, minionLabel, recordDefeat };

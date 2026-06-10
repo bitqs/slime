@@ -62,6 +62,38 @@ test('stop hook emits systemMessage card and resets inTurn', () => {
   assert.equal(snap.inTurn, false);
 });
 
+test('stop hook on a broken boss: card carries the kill, XP gained, and fight totals beat the turn agg', () => {
+  const boss = require('../core/boss');
+  const state = require('../core/state');
+  state.ensureDirs();
+  const cwd = '/tmp/defeat-card';
+  const b = boss.loadOrCreate(cwd, 'fix it');
+  b.broken = true; b.hp = 0; b.estLines = 10; b.dmgTaken = 10;
+  // whole-fight totals from earlier turns — bigger than this turn's (empty) agg
+  b.fightDmg = 64; b.fightKills = 2; b.fightMaxCombo = 4;
+  boss.save(cwd, b);
+  state.writeSnapshot('hdef', { sessionId: 'hdef', turn: 3, combo: 0, kills: 0, dmg: 0, summons: 0,
+    boss: { name: b.name, hp: 0, broken: true } });
+
+  const out = run('hook-stop.js', { session_id: 'hdef', cwd });
+  const msg = JSON.parse(out);
+  assert.match(msg.systemMessage, /DEFEATED|击杀/);
+  assert.match(msg.systemMessage, /⭐ \+\d+ (XP|经验)/);
+  // milestone recorded the whole-fight dmg, not the empty current turn
+  const prof = state.readProfile();
+  const m = prof.milestones[prof.milestones.length - 1];
+  assert.equal(m.dmg, 64);
+  assert.equal(m.kills, 2);
+  assert.equal(m.maxCombo, 4);
+  // boss_down event carries the xp for the arena/report
+  const evs = state.readEvents('hdef');
+  const down = evs.find((e) => e.kind === 'boss_down');
+  assert.ok(down && typeof down.xp === 'number' && down.xp > 0);
+  // statusline carries the kill, not "turn complete"
+  const snap = state.readSnapshot('hdef');
+  assert.match(snap.lastText, /DEFEATED|击杀/);
+});
+
 test('hooks never crash on garbage stdin (observer principle)', () => {
   for (const s of ['hook-pretool.js', 'hook-posttool.js', 'hook-prompt.js',
                    'hook-sessionstart.js', 'hook-subagentstop.js', 'hook-precompact.js',

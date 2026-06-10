@@ -229,6 +229,38 @@ test('evaluateQuests: streak_days completes and escalates the next target', () =
   assert.equal(active.progress, 7);  // absolute streak; below the new target
 });
 
+test('evaluateQuests: completing a quest pays its XP into the profile', () => {
+  const now = new Date(2026, 5, 8, 12).getTime();
+  const day = 86400000;
+  const ms = [];
+  for (let i = 1; i <= 5; i++) ms.push({ at: now - i * 3600000 });
+  const p = { milestones: ms, xp: 0 };
+  prog.evaluateQuests(p, now); // seed
+  p.quests.find((q) => q.kind === 'weekly_kills').startedAt = now - 7 * day;
+  const { completed, xpGained } = prog.evaluateQuests(p, now);
+  assert.deepEqual(completed, ['weekly_kills']);
+  const def = prog.QUEST_DEFS.find((d) => d.kind === 'weekly_kills');
+  assert.equal(xpGained, def.xp);
+  assert.equal(p.xp, def.xp);
+});
+
+test('evaluateQuests: quest XP honors the prestige multiplier', () => {
+  const p = { milestones: [], streak: { days: 7, lastActiveDay: '2026-06-08' }, xp: 0, prestige: 2 };
+  const now = new Date(2026, 5, 8, 12).getTime();
+  const { completed, xpGained } = prog.evaluateQuests(p, now); // completes streak 7/7
+  assert.deepEqual(completed, ['streak_days']);
+  const def = prog.QUEST_DEFS.find((d) => d.kind === 'streak_days');
+  assert.equal(xpGained, Math.round(def.xp * 1.5)); // prestige 2 → ×1.5
+  assert.equal(p.xp, xpGained);
+});
+
+test('evaluateQuests: no completion → zero xpGained, profile xp untouched', () => {
+  const p = { milestones: [], xp: 77 };
+  const { xpGained } = prog.evaluateQuests(p, new Date(2026, 5, 8, 12).getTime());
+  assert.equal(xpGained, 0);
+  assert.equal(p.xp, 77);
+});
+
 test('evaluateQuests: a completed quest is not re-completed on the next call', () => {
   const p = { milestones: [], streak: { days: 7, lastActiveDay: '2026-06-08' } };
   const now = new Date(2026, 5, 8, 12).getTime();

@@ -9,6 +9,11 @@ export interface BossState {
   broken?: boolean;
   estLines?: number;
   dmgTaken?: number;
+  // whole-fight totals, accumulated across turns/sessions so a multi-turn kill
+  // earns XP for the full fight, not just the turn it ended on
+  fightDmg?: number;
+  fightKills?: number;
+  fightMaxCombo?: number;
 }
 
 export interface Snapshot {

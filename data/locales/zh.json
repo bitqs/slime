@@ -48,6 +48,7 @@
   "report.header": "━━━ 回合 #{turn} ━━━ 评级: {rank}",
   "report.boss": "🗡️ Boss: {name}  {bar} {hp}% HP",
   "report.stats": "⚔️ 伤害 {dmg} (改动行数) | 💀 击杀 {kills} | 💥 受击 {hits} | 🔥 最大连击 ×{maxCombo}",
+  "report.xp": "⭐ +{xp} 经验",
   "report.stamina": "⚡ Token {bar} {hp}% (5小时窗口){weekly}",
   "report.weekly": " | 周 {bar} {pct}%",
   "report.stagger": "⚡ {name} 摇摇欲坠 — 收工时自动斩杀",

@@ -9,6 +9,7 @@
   "report.header": "━━━ TURN #{turn} ━━━ Rank: {rank}",
   "report.boss": "🗡️ Boss: {name}  {bar} {hp}% HP",
   "report.stats": "⚔️ DMG {dmg} (lines changed) | 💀 Kills {kills} | 💥 Hits {hits} | 🔥 Max combo ×{maxCombo}",
+  "report.xp": "⭐ +{xp} XP",
   "report.stamina": "⚡ Token {bar} {hp}% (5h window){weekly}",
   "report.weekly": " | Weekly {bar} {pct}%",
   "report.stagger": "⚡ {name} staggers — it falls on its own when you stop",

@@ -110,9 +110,10 @@ resolves — Phase 5). Prestige (New Game+) sits on top as the long-horizon sink
   tension arc within a fight. (Intentional for a work companion — but a *soft*
   tension, e.g. a boss "enrage" on a long stall, could deepen the moment loop
   without ever harming real work.)
-- **Statusline under-uses its frequency for rewards.** It now carries ✦Lv and the
-  🎯 quest meter, but loot/level-up *moments* still flash only in the arena; a
-  brief statusline flash would hit the most-seen surface.
+- ~~**Statusline under-uses its frequency for rewards.**~~ Closed: kill/level/
+  badge/quest moments now land on `lastText` (most-seen surface), the turn report
+  carries the kill + ⭐XP + reward lines, and quests/badges pay XP so the 🎯 meter
+  is never a zero-reward goal.
 
 ## 7. Polish roadmap (prioritized)
 

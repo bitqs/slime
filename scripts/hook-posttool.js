@@ -27,6 +27,11 @@ runHook((/** @type {HookPayload} */ p) => {
       const hpHit = Math.min(ev.dmg, Math.ceil(b.estLines * 0.25));
       b.dmgTaken = (b.dmgTaken || 0) + hpHit;
       b.hp = Math.max(0, Math.round(100 * (1 - b.dmgTaken / b.estLines)));
+      // whole-fight totals (uncapped, across turns) so a multi-turn kill pays
+      // XP for the full fight — recordDefeat reads these over the turn agg
+      b.fightDmg = (b.fightDmg || 0) + ev.dmg;
+      if (ev.kill) b.fightKills = (b.fightKills || 0) + 1;
+      if (ev.combo) b.fightMaxCombo = Math.max(b.fightMaxCombo || 0, ev.combo);
       if (b.hp === 0 && !b.broken) {
         b.broken = true;
         state.appendEvent(id, { t: Date.now(), kind: 'boss_broken', boss: b.name,
@@ -41,14 +46,24 @@ runHook((/** @type {HookPayload} */ p) => {
       const seed = id + ':' + (snap.resolves = (snap.resolves || 0) + 1);
       const drop = loot.roll(seed);
       if (drop) {
+        const prog = require('../core/progression');
         const prof = state.readProfile();
-        prof.xp = (prof.xp || 0) + Math.round(drop.xp * require('../core/progression').prestigeMult(prof));
+        const fromLevel = prog.levelFor(prof.xp || 0).level;
+        prof.xp = (prof.xp || 0) + Math.round(drop.xp * prog.prestigeMult(prof));
+        const lv = prog.levelFor(prof.xp);
+        prof.level = lv.level;
         // only announce the reward if the XP actually persisted — never show fake XP
         if (state.writeProfile(prof)) {
           const lang = locale.current();
           const lootText = locale.fmt(locale.t('loot.drop', lang), { xp: drop.xp, name: locale.t(drop.nameKey, lang) });
           state.appendEvent(id, { t: Date.now(), kind: 'loot_drop', loot: drop.id, xp: drop.xp, fx: drop.fx, text: lootText });
           snap.lastText = lootText;
+          // a lucky drop can tip a level — celebrate it like any other level-up
+          if (lv.level > fromLevel) {
+            const lvText = defeatFlow.levelupText({ level: lv.level, titleKey: lv.titleKey }, lang);
+            state.appendEvent(id, { t: Date.now(), kind: 'level_up', text: lvText });
+            snap.lastText = lvText;
+          }
         }
       }
     }
@@ -112,10 +127,18 @@ runHook((/** @type {HookPayload} */ p) => {
       if (fb.broken && fb.hp === 0) {
         const lang = locale.current();
         const agg = report.aggregate(state.readEvents(id));
-        const r = boss.recordDefeat(p.cwd, fb, { dmg: agg.dmg, kills: agg.kills, maxCombo: agg.maxCombo });
-        state.appendEvent(id, { t: Date.now(), kind: 'boss_down', boss: fb.name,
-          text: locale.fmt(locale.t('boss.autoDown', lang), { name: fb.name, count: r.total }) });
+        // whole-fight totals win over the current-turn agg (multi-turn fights)
+        const r = boss.recordDefeat(p.cwd, fb, {
+          dmg: Math.max(agg.dmg, fb.fightDmg || 0),
+          kills: Math.max(agg.kills, fb.fightKills || 0),
+          maxCombo: Math.max(agg.maxCombo, fb.fightMaxCombo || 0),
+        });
+        const downText = locale.fmt(locale.t('boss.autoDown', lang), { name: fb.name, count: r.total });
+        state.appendEvent(id, { t: Date.now(), kind: 'boss_down', boss: fb.name, xp: r.xpGained, text: downText });
         defeatFlow.emitRewards(id, r, lang);
+        // the kill is the headline — put it (plus any level/badge/quest news) on
+        // the statusline instead of leaving the last tool's resolve text up
+        snap.lastText = [downText, ...defeatFlow.rewardLines(r, lang)].join(' · ');
         delete snap.boss;
         delete snap.todos;
       }

@@ -144,3 +144,21 @@ test('recordDefeat: combo-king unlocks when maxCombo ≥ 10', () => {
   const r = boss.recordDefeat('/p/badge3', b, { dmg: 0, kills: 0, maxCombo: 10 });
   assert.ok(r.newBadges.includes('combo-king'));
 });
+
+test('recordDefeat: returns xpGained covering kill + badge XP, and level reflects it', () => {
+  const prog = require('../core/progression');
+  const pReset = state.readProfile();
+  pReset.badges = []; pReset.milestones = []; pReset.xp = 0; pReset.prestige = 0;
+  pReset.totals = { turns: 0, dmg: 0, kills: 0 };
+  state.writeProfile(pReset);
+  const b = boss.loadOrCreate('/p/xpgain', 'do work');
+  const r = boss.recordDefeat('/p/xpgain', b, { dmg: 42, kills: 1, maxCombo: 2 });
+  const killXp = prog.xpForDefeat({ dmg: 42, kills: 1, maxCombo: 2 });
+  // first kill from a clean slate unlocks first-blood → +BADGE_XP
+  assert.ok(r.newBadges.includes('first-blood'));
+  assert.equal(r.xpGained, killXp + prog.BADGE_XP);
+  const prof = state.readProfile();
+  assert.equal(prof.xp, r.xpGained);
+  assert.equal(prof.level, prog.levelFor(prof.xp).level);
+  assert.equal(r.level, prof.level);
+});

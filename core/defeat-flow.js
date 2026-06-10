@@ -54,4 +54,4 @@ function emitQuests(sid, ids, lang) {
   }
 }
 
-module.exports = { emitRewards, rewardLines, emitQuests };
+module.exports = { emitRewards, rewardLines, emitQuests, levelupText };

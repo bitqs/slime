@@ -56,11 +56,16 @@ const BADGES = /** @type {BadgeDef[]} */ (require('../data/badges.json'));
 
 /** Auto-quest templates — one active instance per kind. Targets are starting
  *  values; `streak_days` escalates by its base on each completion (see
- *  evaluateQuests), `weekly_kills` keeps a constant target and resets its window. */
+ *  evaluateQuests), `weekly_kills` keeps a constant target and resets its window.
+ *  `xp` pays on completion (≈ a third of a typical boss) so the 🎯 meter the
+ *  statusline tracks is never a zero-reward goal. */
 const QUEST_DEFS = [
-  { kind: /** @type {'weekly_kills'} */ ('weekly_kills'), target: 5, nameKey: 'quest.weeklyKills' },
-  { kind: /** @type {'streak_days'} */ ('streak_days'),  target: 7, nameKey: 'quest.streakDays' },
+  { kind: /** @type {'weekly_kills'} */ ('weekly_kills'), target: 5, nameKey: 'quest.weeklyKills', xp: 150 },
+  { kind: /** @type {'streak_days'} */ ('streak_days'),  target: 7, nameKey: 'quest.streakDays',  xp: 100 },
 ];
+
+/** XP paid per badge unlock (applied by recordDefeat, prestige-multiplied). */
+const BADGE_XP = 100;
 
 /** Build the flat stat object every badge predicate checks. Pure; tolerates
  *  old profiles missing any field.
@@ -185,15 +190,17 @@ function questProgress(profile, q, now) {
 }
 
 /** Refresh auto-quest progress against `now`: seed a missing active quest per
- *  kind, recompute progress, and on completion stamp `doneAt`, roll a fresh
- *  active quest (window reset for weekly, target escalation for streak), and
- *  report the completed id. Mutates + returns profile.quests. Idempotent: a
- *  quest already carrying `doneAt` is never re-completed.
+ *  kind, recompute progress, and on completion stamp `doneAt`, pay the quest's
+ *  XP (prestige-multiplied) into the profile, roll a fresh active quest (window
+ *  reset for weekly, target escalation for streak), and report the completed id.
+ *  Mutates + returns profile.quests. Idempotent: a quest already carrying
+ *  `doneAt` is never re-completed. Callers persist xp/level on the profile.
  *  @param {Profile} profile @param {number} now
- *  @returns {{ quests: Quest[], completed: string[] }} */
+ *  @returns {{ quests: Quest[], completed: string[], xpGained: number }} */
 function evaluateQuests(profile, now) {
   const quests = (profile.quests || []).slice();
   const completed = [];
+  let xpGained = 0;
   for (const def of QUEST_DEFS) {
     let q = quests.find((x) => x.kind === def.kind && !x.doneAt);
     if (!q) {
@@ -204,14 +211,16 @@ function evaluateQuests(profile, now) {
     if (q.progress >= q.target && !q.doneAt) {
       q.doneAt = now;
       completed.push(q.id);
+      xpGained += Math.round((def.xp || 0) * prestigeMult(profile));
       const nextTarget = def.kind === 'streak_days' ? q.target + def.target : def.target;
       const next = { id: def.kind, kind: def.kind, target: nextTarget, progress: 0, startedAt: now };
       next.progress = questProgress(profile, next, now);
       quests.push(next);
     }
   }
+  if (xpGained) profile.xp = (profile.xp || 0) + xpGained;
   profile.quests = quests;
-  return { quests, completed };
+  return { quests, completed, xpGained };
 }
 
 /** The active (not-yet-done) quest closest to completion, by progress/target
@@ -253,4 +262,4 @@ function prestige(profile) {
   return { ok: true, prestige: profile.prestige, mult: prestigeMult(profile) };
 }
 
-module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS, BADGES, deriveStats, evaluateBadges, nameKeyFor, QUEST_DEFS, dayStr, bumpActivity, evaluateQuests, nearestQuest, prestigeMult, canPrestige, prestige, PRESTIGE_MIN_LEVEL };
+module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS, BADGES, BADGE_XP, deriveStats, evaluateBadges, nameKeyFor, QUEST_DEFS, dayStr, bumpActivity, evaluateQuests, nearestQuest, prestigeMult, canPrestige, prestige, PRESTIGE_MIN_LEVEL };

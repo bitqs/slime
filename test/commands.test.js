@@ -19,11 +19,11 @@ test('defeat records milestone and clears boss', () => {
 
   const out = execFileSync('node', [S('defeat.js'), '/tmp/myapp'], { env: ENV }).toString();
   assert.match(out, /DEFEATED/);
-  assert.match(out, /The [A-Za-z-]+ Myapp Bugbear/);
+  assert.match(out, /The [A-Za-z-]+ Myapp Glitch Slime/);
 
   const prof = JSON.parse(fs.readFileSync(path.join(ROOT, 'profile.json'), 'utf8'));
   assert.equal(prof.milestones.length, 1);
-  assert.match(prof.milestones[0].boss, /^The [A-Za-z-]+ Myapp Bugbear$/);
+  assert.match(prof.milestones[0].boss, /^The [A-Za-z-]+ Myapp Glitch Slime$/);
   assert.ok(!fs.existsSync(boss.bossPath('/tmp/myapp')));
 });
 
@@ -34,7 +34,7 @@ test('defeat with no boss says so', () => {
 
 test('milestones renders the wall', () => {
   const out = execFileSync('node', [S('milestones.js')], { env: ENV }).toString();
-  assert.match(out, /The [A-Za-z-]+ Myapp Bugbear/);
+  assert.match(out, /The [A-Za-z-]+ Myapp Glitch Slime/);
   assert.match(out, /MILESTONE WALL/);
 });
 

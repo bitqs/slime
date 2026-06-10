@@ -15,6 +15,16 @@ const TYPES = [
 ];
 
 /** @type {Record<string, string>} */
+const TYPES_EN = {
+  Bugbear: 'Glitch Slime',
+  Colossus: 'Forge Slime',
+  Hydra: 'Hydra Slime',
+  Wraith: 'Trial Slime',
+  Sphinx: 'Scroll Slime',
+  Golem: 'Rock Slime',
+};
+
+/** @type {Record<string, string>} */
 const TYPES_ZH = {
   Bugbear: '错虫史莱姆',
   Colossus: '重构史莱姆',
@@ -69,7 +79,7 @@ function nameBoss(prompt, cwd, lang) {
     return `「${adj}・${base}」${TYPES_ZH[type]}`;
   }
   const ep = EPITHETS[type][h % EPITHETS[type].length];
-  return `The ${ep} ${base} ${type}`;
+  return `The ${ep} ${base} ${TYPES_EN[type]}`;
 }
 
 /** @param {string} cwd @returns {string} */

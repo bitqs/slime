@@ -10,15 +10,15 @@ const state = require('../core/state');
 
 test('nameBoss: epithet + compressed base + type, deterministic per prompt', () => {
   const a = boss.nameBoss('fix the login crash', '/p/slime');
-  assert.match(a, /^The [A-Za-z-]+ Slime Bugbear$/);
+  assert.match(a, /^The [A-Za-z-]+ Slime Glitch Slime$/);
   assert.equal(boss.nameBoss('fix the login crash', '/p/slime'), a); // deterministic
-  assert.match(boss.nameBoss('refactor auth', '/p/my-survivor-game'), /^The [A-Za-z-]+ MSG Colossus$/);
-  assert.match(boss.nameBoss('whatever else', '/p/web'), /^The [A-Za-z-]+ Web Golem$/);
+  assert.match(boss.nameBoss('refactor auth', '/p/my-survivor-game'), /^The [A-Za-z-]+ MSG Forge Slime$/);
+  assert.match(boss.nameBoss('whatever else', '/p/web'), /^The [A-Za-z-]+ Web Rock Slime$/);
 });
 
 test('boss store persists per cwd', () => {
   const b = boss.loadOrCreate('/p/web', 'add dark mode');
-  assert.match(b.name, /^The [A-Za-z-]+ Web Hydra$/);
+  assert.match(b.name, /^The [A-Za-z-]+ Web Hydra Slime$/);
   b.hp = 40;
   boss.save('/p/web', b);
   assert.equal(boss.loadOrCreate('/p/web', 'ignored').hp, 40);

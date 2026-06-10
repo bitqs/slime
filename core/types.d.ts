@@ -31,6 +31,7 @@ export interface Snapshot {
   updated?: number;
   boss?: { name: string; hp: number; broken?: boolean };
   est?: number;
+  cwd?: string;
   todos?: Array<{ content: string; status: string; label: string; activeForm?: string; form: number }>;
   gear?: string[];
   resolves?: number;

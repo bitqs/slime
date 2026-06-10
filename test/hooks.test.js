@@ -39,6 +39,7 @@ test('prompt hook opens encounter and creates boss', () => {
   run('hook-prompt.js', { session_id: 'h2', prompt: 'fix login bug', cwd: '/tmp/myapp' });
   const snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'sessions', 'h2.json'), 'utf8'));
   assert.match(snap.boss.name, /^The [A-Za-z-]+ Myapp Glitch Slime$/);
+  assert.equal(snap.cwd, '/tmp/myapp');
 });
 
 test('prompt hook encounter event has numeric est', () => {

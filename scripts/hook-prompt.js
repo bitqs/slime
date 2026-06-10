@@ -40,6 +40,7 @@ runHook((/** @type {HookPayload} */ p) => {
     } catch {}
     snap.boss = { name: b.name, hp: b.hp };
     snap.est = est; // survives arena refreshes — encounter SSE events do not
+    snap.cwd = p.cwd || ''; // picker label; snapshots are per-session so this is stable
     state.appendEvent(id, { t: Date.now(), kind: 'encounter', bossName: b.name, text: locale.fmt(locale.t('encounter', lang), { turn: snap.turn, name: b.name, hp: b.hp }), est });
     snap.lastText = locale.fmt(locale.t('encounter.appears', lang), { name: b.name });
     snap.updated = Date.now();

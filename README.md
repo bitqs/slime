@@ -156,6 +156,8 @@ A read-only live monitor: boss bar, your Token, combo, and the last three strike
 
 A local pixel-art battle stage — your knight strikes in real time as Claude works. 100% local (127.0.0.1), read-only.
 
+Running Claude Code in several terminals? A 📡 channel picker appears in the arena's top bar — pin any battle (the pin lives in the URL, so each tab can watch a different session) or let it auto-follow the newest.
+
 ## How It Works
 
 ```

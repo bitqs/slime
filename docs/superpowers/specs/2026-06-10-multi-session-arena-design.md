@@ -1,7 +1,7 @@
 # Multi-session arena — session picker (B3)
 
 **Date:** 2026-06-10
-**Status:** Approved (approach A: picker + URL pin)
+**Status:** Implemented (verified live via playwright — pin, reload, auto-follow, zh relabel)
 **Scope:** `core/state.js`, `scripts/serve.js`, `public/index.html`, `public/arena.js`, `test/serve.test.js`
 
 ## Problem

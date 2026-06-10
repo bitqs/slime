@@ -21,19 +21,19 @@ const BOSS = 'The Demo Dragon';
 
 // Todos: shape matches exactly what hook-posttool writes (content/status/label/activeForm/form)
 const TODOS_INITIAL = [
-  { content: 'sharpen the demo', status: 'in_progress', label: 'QL mob 1', activeForm: 'Sharpening the demo', form: 0 },
-  { content: 'slay the dragon', status: 'pending',     label: 'QL mob 2', activeForm: '',     form: 1 },
-  { content: 'loot the hoard',  status: 'pending',     label: 'QL mob 3', activeForm: '',     form: 2 },
+  { content: 'sharpen the demo', status: 'in_progress', label: 'Demo mob 1', activeForm: 'Sharpening the demo', form: 0 },
+  { content: 'slay the dragon', status: 'pending',     label: 'Demo mob 2', activeForm: '',     form: 1 },
+  { content: 'loot the hoard',  status: 'pending',     label: 'Demo mob 3', activeForm: '',     form: 2 },
 ];
 const TODOS_FIRST_KILL = [
-  { content: 'sharpen the demo', status: 'completed',  label: 'QL mob 1', activeForm: '',     form: 0 },
-  { content: 'slay the dragon', status: 'in_progress', label: 'QL mob 2', activeForm: 'Slaying the dragon', form: 1 },
-  { content: 'loot the hoard',  status: 'pending',     label: 'QL mob 3', activeForm: '',     form: 2 },
+  { content: 'sharpen the demo', status: 'completed',  label: 'Demo mob 1', activeForm: '',     form: 0 },
+  { content: 'slay the dragon', status: 'in_progress', label: 'Demo mob 2', activeForm: 'Slaying the dragon', form: 1 },
+  { content: 'loot the hoard',  status: 'pending',     label: 'Demo mob 3', activeForm: '',     form: 2 },
 ];
 const TODOS_ALL_DONE = [
-  { content: 'sharpen the demo', status: 'completed', label: 'QL mob 1', activeForm: '', form: 0 },
-  { content: 'slay the dragon', status: 'completed',  label: 'QL mob 2', activeForm: '', form: 1 },
-  { content: 'loot the hoard',  status: 'completed',  label: 'QL mob 3', activeForm: '', form: 2 },
+  { content: 'sharpen the demo', status: 'completed', label: 'Demo mob 1', activeForm: '', form: 0 },
+  { content: 'slay the dragon', status: 'completed',  label: 'Demo mob 2', activeForm: '', form: 1 },
+  { content: 'loot the hoard',  status: 'completed',  label: 'Demo mob 3', activeForm: '', form: 2 },
 ];
 
 /** @type {import('../core/types').Snapshot} */
@@ -70,7 +70,7 @@ const script = [
   () => {
     snap.todos = TODOS_FIRST_KILL;
     snap.boss = { name: BOSS, hp: 50 };
-    ev({ kind: 'minion_down', minion: 'QL mob 1', text: '✄ slain: sharpen the demo' });
+    ev({ kind: 'minion_down', minion: 'Demo mob 1', text: '✄ slain: sharpen the demo' });
   },
   () => ev({ kind: 'potion', text: '🧪 potion quaffed' }),
   () => ev({ kind: 'resolve', dmg: 18, combo: 2, text: '⚔️ hit! 18 dmg 🔥combo×2' }),
@@ -79,7 +79,7 @@ const script = [
     snap.todos = TODOS_ALL_DONE.map((t, i) =>
       i === 2 ? { ...t, status: 'pending' } : t);   // mob 3 still pending
     snap.boss = { name: BOSS, hp: 20 };
-    ev({ kind: 'minion_down', minion: 'QL mob 2', text: '✄ slain: slay the dragon' });
+    ev({ kind: 'minion_down', minion: 'Demo mob 2', text: '✄ slain: slay the dragon' });
   },
   () => ev({ kind: 'resolve', dmg: 20, combo: 4, text: '⚔️ hit! 20 dmg 🔥combo×4' }),
   // ── all todos done → boss hp 0 → broken ──────────────────────────────────

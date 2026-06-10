@@ -83,6 +83,39 @@ function newestSessionId() {
   return best;
 }
 
+const ACTIVE_MS = 10 * 60 * 1000;
+
+/** Live-session directory listing for the arena picker: newest-first,
+ *  capped, tolerant of evicted/corrupt snapshots.
+ *  @param {number} [limit]
+ *  @returns {Array<{id: string, project: string|null, boss: string|null, turn: number, updated: number, active: boolean}>} */
+function listSessions(limit = 12) {
+  const dir = path.join(ROOT, 'sessions');
+  /** @type {Array<{id: string, project: string|null, boss: string|null, turn: number, updated: number, active: boolean}>} */
+  const out = [];
+  try {
+    for (const f of fs.readdirSync(dir)) {
+      if (!f.endsWith('.json')) continue;
+      const id = f.slice(0, -5);
+      try {
+        const st = fs.statSync(path.join(dir, f));
+        const snap = readSnapshot(id);
+        if (!snap) continue;
+        out.push({
+          id,
+          project: snap.cwd ? (String(snap.cwd).split(/[\\/]/).filter(Boolean).pop() || null) : null,
+          boss: (snap.boss && snap.boss.name) ? snap.boss.name : null,
+          turn: Number(snap.turn) || 0,
+          updated: st.mtimeMs,
+          active: Date.now() - st.mtimeMs < ACTIVE_MS,
+        });
+      } catch { /* evicted mid-scan */ }
+    }
+  } catch { /* sessions dir missing */ }
+  out.sort((a, b) => b.updated - a.updated);
+  return out.slice(0, limit);
+}
+
 /** @returns {StatuslineStdin | null} */
 function readStdin() {
   try { return JSON.parse(fs.readFileSync(0, 'utf8')); }
@@ -92,5 +125,5 @@ function readStdin() {
 module.exports = {
   ROOT, appendEvent, readEvents, readSnapshot, writeSnapshot,
   readProfile, writeProfile, eventsPath, snapshotPath, reportPath, ensureDirs, readStdin,
-  newestSessionId,
+  newestSessionId, listSessions,
 };

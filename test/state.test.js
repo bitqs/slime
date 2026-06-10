@@ -36,6 +36,24 @@ test('profile defaults then persists', () => {
   assert.equal(state.readProfile().milestones.length, 1);
 });
 
+test('listSessions lists snapshots newest-first with labels', () => {
+  state.writeSnapshot('old1', { sessionId: 'old1', turn: 3, cwd: '/p/alpha', boss: { name: 'The Grim Alpha Trial Slime', hp: 40 } });
+  state.writeSnapshot('new1', { sessionId: 'new1', turn: 1, cwd: '/p/beta' });
+  // force distinct mtimes (fs mtime resolution can swallow same-ms writes)
+  const old = path.join(process.env.SLIME_ROOT, 'sessions', 'old1.json');
+  fs.utimesSync(old, new Date(Date.now() - 60000), new Date(Date.now() - 60000));
+  const ls = state.listSessions();
+  const a = ls.find((s) => s.id === 'old1');
+  const b = ls.find((s) => s.id === 'new1');
+  assert.ok(ls.indexOf(b) < ls.indexOf(a), 'newest first');
+  assert.equal(b.project, 'beta');
+  assert.equal(b.boss, null);
+  assert.equal(a.boss, 'The Grim Alpha Trial Slime');
+  assert.equal(a.turn, 3);
+  assert.equal(typeof b.updated, 'number');
+  assert.equal(b.active, true);
+});
+
 test('newestSessionId returns the most recently touched session', () => {
   state.ensureDirs();
   const dir = path.join(process.env.SLIME_ROOT, 'sessions');

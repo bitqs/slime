@@ -137,19 +137,32 @@ function svgCard(lang, now) {
   return wrappedCard.svg(weekly(now), (/** @type {string} */ k) => locale.t(k, l), { lang: l, now });
 }
 
+/** Copy-paste-ready share blurb for the week — the stats line + a one-line
+ *  pitch with the repo link. The viral seam: a good week wants to be posted.
+ *  @param {ReturnType<typeof weekly>} data @param {string} [lang] @returns {string} */
+function shareText(data, lang) {
+  const l = lang || locale.current();
+  const bosses = (data.milestones && data.milestones.length) || 0;
+  const stats = locale.fmt(locale.t('wrapped.shareStats', l),
+    { dmg: data.dmg || 0, kills: data.kills || 0, bosses, combo: data.maxCombo || 0 });
+  return `${stats}\n${locale.t('wrapped.sharePitch', l)}`;
+}
+
 if (require.main === module) {
   const lang = locale.current();
   if (process.argv.includes('--svg')) {
     process.stdout.write(svgCard(lang));   // raw SVG for piping: node wrapped.js --svg > card.svg
   } else {
-    console.log(card(weekly(), lang));
+    const data = weekly();
+    console.log(card(data, lang));
     // also drop a shareable battle card next to the state
     try {
       const out = path.join(state.ROOT, 'wrapped.svg');
       fs.writeFileSync(out, svgCard(lang));
-      console.log(`\n🎴 shareable card saved → ${out}`);
+      console.log(`\n🎴 ${locale.t('wrapped.cardSaved', lang)} → ${out}`);
     } catch { /* read-only fs — skip silently */ }
+    console.log(`\n📣 ${locale.t('wrapped.shareHint', lang)}\n${shareText(data, lang)}`);
   }
 }
 
-module.exports = { weekly, card, svgCard };
+module.exports = { weekly, card, svgCard, shareText };

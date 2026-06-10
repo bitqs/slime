@@ -41,6 +41,16 @@ test('card box stays square even with a long gear line', () => {
   assert.ok(lines.every((l) => l.endsWith('╗') || l.endsWith('╣') || l.endsWith('╝') || l.endsWith('║')), 'every row closes the box');
 });
 
+test('shareText: stats + repo link, both locales', () => {
+  const data = { dmg: 2341, kills: 12, turns: 9, hits: 0, activeDays: 5, maxCombo: 11,
+    milestones: new Array(3), topGear: [], streak: { days: 5 } };
+  for (const lang of ['en', 'zh']) {
+    const s = wrapped.shareText(data, lang);
+    for (const n of ['2341', '12', '3', '×11']) assert.ok(s.includes(n), `${lang} missing ${n}`);
+    assert.match(s, /github\.com\/bitqs\/slime/);
+  }
+});
+
 test('svg card embeds the stats and is well-formed', () => {
   const wc = require('../core/wrapped-card');
   const svg = wc.svg(

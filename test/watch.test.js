@@ -25,6 +25,19 @@ test('renders battle frame with boss, stats and recent events', () => {
   assert.match(frame, /hit! 4 dmg/);
 });
 
+test('boss name and event text are sanitized — no ESC/control bytes reach the frame', () => {
+  const frame = renderFrame(
+    { boss: { name: 'Evil\x1b[31mBoss\x07', hp: 50 }, combo: 0, summons: 0, kills: 0, dmg: 0, turn: 1 },
+    null,
+    [{ text: 'pwn\x1b]0;owned\x07ed line' }],
+    'en', 80
+  );
+  assert.ok(!frame.includes('\x1b'), 'ESC byte leaked into the frame');
+  assert.ok(!frame.includes('\x07'), 'BEL byte leaked into the frame');
+  assert.match(frame, /Evil.*Boss/); // printable remnant '[31m' may stay; ESC must not
+  assert.match(frame, /pwn.*ed line/);
+});
+
 test('zero HP shows rest banner', () => {
   const frame = renderFrame(
     { boss: { name: 'X', hp: 50 }, turn: 1 },

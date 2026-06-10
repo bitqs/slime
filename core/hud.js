@@ -106,7 +106,7 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live, level, quest
   if (snap.summons > 0) parts.push(`🐺×${snap.summons}`);
   parts.push(`💀${snap.kills || 0} ⚔️${snap.dmg || 0}`);
   const cost = stdinJson && stdinJson.cost && stdinJson.cost.total_cost_usd;
-  if (cost) parts.push(`💰$${cost.toFixed(2)}`);
+  if (typeof cost === 'number' && Number.isFinite(cost)) parts.push(`💰$${cost.toFixed(2)}`);
   // turn telemetry, wrapped from the statusline stdin (elapsed + ↑ input / ↓ output tokens).
   // elapsed ticks live between events: last known duration + wall-clock since it was cached.
   const dur = (usageCache && usageCache.durationMs != null)

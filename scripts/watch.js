@@ -12,6 +12,7 @@
 const { ROOT, readSnapshot, readEvents, newestSessionId } = require('../core/state');
 const { readCache, hp, restTime } = require('../core/usage');
 const { bar } = require('../core/report');
+const { sanitize } = require('../core/hud');
 const locale = require('../core/locale');
 
 // ── pure render ───────────────────────────────────────────────────────────────
@@ -46,7 +47,7 @@ function renderFrame(snap, usageCache, events, lang, cols) {
   const lines = [];
 
   // ── line 1: boss bar + player HP ─────────────────────────────────────────
-  const bossName = snap.boss ? snap.boss.name : '???';
+  const bossName = snap.boss ? sanitize(snap.boss.name, 40) : '???';
   const bossHp   = snap.boss ? snap.boss.hp   : 100;
   const bossBar  = bar(bossHp);
   const bossHpPct = `${bossHp}%`;
@@ -83,7 +84,7 @@ function renderFrame(snap, usageCache, events, lang, cols) {
   // ── lines 4-6: last 3 events with non-empty text ─────────────────────────
   const textEvents = events.filter((e) => e.text && e.text.trim()).slice(-3);
   for (const ev of textEvents) {
-    if (ev.text) lines.push(ev.text.trim());
+    if (ev.text) lines.push(sanitize(ev.text.trim(), 120));
   }
 
   return lines.map((line) => line.length > width ? line.slice(0, width - 1) + '…' : line).join('\n');

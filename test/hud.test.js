@@ -120,6 +120,18 @@ test('live arena renders a clickable [HUD] link carrying the live port', () => {
   const line = hud.render(snap, {}, TIPS, now, null, 'en', { port: 4118 });
   assert.match(line, /\[HUD\]/);
   assert.match(line, /127\.0\.0\.1:4118/);
+  // OSC 8 needs a real ESC byte + BEL terminator or terminals render it as junk
+  assert.ok(line.includes('\x1b]8;;http://127.0.0.1:4118\x07[HUD]\x1b]8;;\x07'),
+    'OSC 8 hyperlink is malformed');
+});
+
+test('non-numeric cost from stdin is ignored, not crashed on', () => {
+  const now = Date.now();
+  const snap = { inTurn: true, combo: 0, kills: 0, dmg: 0, summons: 0, updated: now };
+  const line = hud.render(snap, { cost: { total_cost_usd: '1.50' } }, TIPS, now, null, 'en');
+  assert.ok(!line.includes('💰'), 'string cost must not render');
+  const line2 = hud.render(snap, { cost: { total_cost_usd: 1.5 } }, TIPS, now, null, 'en');
+  assert.match(line2, /💰\$1\.50/);
 });
 
 test('between turns leads with 🟢 + the [HUD] link and shows the result', () => {

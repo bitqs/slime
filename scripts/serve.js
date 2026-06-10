@@ -2,7 +2,8 @@
 /**
  * serve.js — local battle viewer server
  * Serves public/index.html and live session state/events over SSE.
- * READ-ONLY: never writes under ROOT.
+ * Reads game state only; the single write is handleSetLang (a UI preference
+ * in config.json — never game state).
  */
 
 /** @typedef {import('node:http').IncomingMessage} IncomingMessage */

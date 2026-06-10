@@ -1238,7 +1238,8 @@
         rail: 'Minions — your todo list', music: 'Music on / off', sfx: 'Sound effects on / off',
         day: 'Day / night theme', calm: 'Flash / calm toggle', help: 'Game guide (h)',
         lang: 'Switch to Chinese', collapse: 'Collapse the arena', expand: 'Expand the arena',
-        gh: 'Slime on GitHub', issue: 'Report an issue' },
+        gh: 'Slime on GitHub', issue: 'Report an issue', sessions: 'Watch another session' },
+      sessAuto: '📡 auto-follow',
       guideTitle: '⚔️ How to read the battle',
       guide: [
         ['🗡️', 'Boss', 'your current quest in this project. Forged from your prompt; its size / tier comes from the estimated token cost.'],
@@ -1259,7 +1260,8 @@
         rail: '小怪 — 你的 todo 列表', music: '音乐 开 / 关', sfx: '音效 开 / 关',
         day: '白天 / 黑夜 主题', calm: '闪烁 / 舒缓 开关', help: '游戏说明 (h)',
         lang: '切换英文', collapse: '收起竞技场', expand: '展开竞技场',
-        gh: 'GitHub 上的 Slime', issue: '反馈问题' },
+        gh: 'GitHub 上的 Slime', issue: '反馈问题', sessions: '切换观战会话' },
+      sessAuto: '📡 自动跟随',
       guideTitle: '⚔️ 怎么看懂这场仗',
       guide: [
         ['🗡️', 'Boss', '当前项目里的任务。由你的 prompt 锻造,体型 / 等级取决于预估 token 花费。'],
@@ -1297,6 +1299,9 @@
     tip('boss-name', U.tip.boss); tip('minion-rail', U.tip.rail);
     tip('music-btn', U.tip.music); tip('sfx-btn', U.tip.sfx); tip('day-btn', U.tip.day);
     tip('calm-btn', U.tip.calm); tip('help-btn', U.tip.help); tip('gh-btn', U.tip.gh); tip('issue-btn', U.tip.issue);
+    tip('session-picker', U.tip.sessions);
+    const sp = document.getElementById('session-picker');
+    if (sp && sp.options.length) sp.options[0].text = U.sessAuto;
     const lb = document.getElementById('lang-btn');
     if (lb) { lb.textContent = U.langLabel; lb.dataset.tip = U.tip.lang; }
     const ov = document.getElementById('overlay');
@@ -1396,8 +1401,15 @@
     }
     setUserStatus(data);
   }
+  // ── session picker (multi-session) ────────────────────────────────────────────
+  // Pin lives in the URL (?session=) so refresh / shared links keep the channel.
+  let pinnedSession = (() => {
+    try { return new URLSearchParams(location.search).get('session'); } catch (e) { return null; }
+  })();
+  const sessQS = () => pinnedSession ? `?session=${encodeURIComponent(pinnedSession)}` : '';
+
   async function pollState() {
-    try { const r = await fetch('/state'); if (r.ok) applyState(await r.json()); } catch {}
+    try { const r = await fetch('/state' + sessQS()); if (r.ok) applyState(await r.json()); } catch {}
   }
   pollState();
   setInterval(pollState, 5000);
@@ -1479,15 +1491,57 @@
     EXTRA_HANDLERS.forEach((h) => { try { h(d); } catch {} });
   }
 
+  let esRef = null;
   function connectEvents() {
-    let es;
     try {
-      es = new EventSource('/events');
-      es.onmessage = handleEvent;
-      es.onerror = () => { es.close(); setTimeout(connectEvents, 3000); };
+      esRef = new EventSource('/events' + sessQS());
+      esRef.onmessage = handleEvent;
+      esRef.onerror = () => { esRef.close(); setTimeout(connectEvents, 3000); };
     } catch {}
   }
   connectEvents();
+
+  const sessionPicker = document.getElementById('session-picker');
+  function setPinned(id) {
+    pinnedSession = id || null;
+    try {
+      const u = new URL(location.href);
+      if (pinnedSession) u.searchParams.set('session', pinnedSession);
+      else u.searchParams.delete('session');
+      history.replaceState(null, '', u);
+    } catch (e) {}
+    if (esRef) { try { esRef.close(); } catch (e) {} }
+    connectEvents();
+    pollState();
+  }
+  async function refreshSessions() {
+    if (!sessionPicker) return;
+    if (document.activeElement === sessionPicker) return; // don't rebuild under an open dropdown
+    let data = null;
+    try { const r = await fetch('/sessions'); if (r.ok) data = await r.json(); } catch (e) {}
+    if (!data || !Array.isArray(data.sessions)) { sessionPicker.hidden = true; return; } // demo worker has no /sessions
+    const live = data.sessions.filter((s) => s.active);
+    const show = live.length >= 2 || !!pinnedSession; // zero chrome for single-terminal users
+    sessionPicker.hidden = !show;
+    if (!show) return;
+    const U = UI[lang];
+    sessionPicker.textContent = '';
+    const auto = document.createElement('option');
+    auto.value = '';
+    auto.text = U.sessAuto;
+    sessionPicker.appendChild(auto);
+    for (const s of data.sessions) {
+      const o = document.createElement('option'); // option.text is text-only — session strings never touch innerHTML
+      o.value = s.id;
+      o.text = (s.active ? '' : '⏸ ') + `${s.project || s.id.slice(0, 8)} · ${s.boss || '—'} (T${s.turn})`;
+      sessionPicker.appendChild(o);
+    }
+    sessionPicker.value = pinnedSession || '';
+    if (sessionPicker.selectedIndex < 0) sessionPicker.value = ''; // pinned session vanished from the list
+  }
+  if (sessionPicker) sessionPicker.addEventListener('change', () => setPinned(sessionPicker.value || null));
+  refreshSessions();
+  setInterval(refreshSessions, 10000);
 
   // ── scene system: 'battle' | 'feeding' | 'settle' ─────────────────────────────
   let scene = 'battle';

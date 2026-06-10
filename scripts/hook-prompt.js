@@ -15,8 +15,18 @@ runHook((/** @type {HookPayload} */ p) => {
     snap.inTurn = true;
     const lang = locale.current();
     const b = boss.loadOrCreate(p.cwd || '', p.prompt || '', lang);
-    const est = require('../core/estimate').estimateTokens(p.prompt || '');
-    if (!b.estLines) b.estLines = require('../core/estimate').estLines(est);
+    const estimate = require('../core/estimate');
+    const est = estimate.estimateTokens(p.prompt || '');
+    // Re-price the fight budget on every prompt: damped, grow-only, [40,400].
+    // A fight that genuinely grows in scope toughens the boss (HP ticks up);
+    // a broken boss awaiting confirmation can't be saved by a verbose prompt.
+    if (!b.broken) {
+      const prior = b.estLines;
+      b.estLines = estimate.repriceLines(prior, estimate.estLines(est));
+      if (prior && b.estLines > prior) {
+        b.hp = Math.max(0, Math.round(100 * (1 - (b.dmgTaken || 0) / b.estLines)));
+      }
+    }
     boss.save(p.cwd || '', b);
     try {
       const cfgPath = require('node:path').join(state.ROOT, 'config.json');

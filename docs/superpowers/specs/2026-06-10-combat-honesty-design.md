@@ -1,7 +1,7 @@
 # Combat honesty — boss budget sanity + anti-farm
 
 **Date:** 2026-06-10
-**Status:** Spec only — not implemented
+**Status:** Implemented (D1-D4, 2026-06-10)
 **Scope:** `core/estimate.js`, `scripts/hook-prompt.js`, `core/mapper.js`,
 `scripts/hook-posttool.js`, `data/badges.json`
 **Pillar at stake:** "combat stays real" (`docs/GAME-DESIGN.md` §8) — numbers

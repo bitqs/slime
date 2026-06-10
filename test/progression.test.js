@@ -68,7 +68,16 @@ test('deriveStats: aggregates profile into badge stats', () => {
 
 test('deriveStats: empty/old profile defaults to zeros', () => {
   const s = prog.deriveStats({ milestones: [], totals: { turns: 0, dmg: 0, kills: 0 } });
-  assert.deepEqual(s, { bossCount: 0, kills: 0, maxCombo: 0, projects: 0, nightKills: 0, badgeCount: 0 });
+  assert.deepEqual(s, { bossCount: 0, kills: 0, maxCombo: 0, projects: 0, nightKills: 0, badgeCount: 0, longestStreak: 0 });
+});
+
+test('deriveStats: longestStreak reads streak.longest; fortnight unlocks at 14', () => {
+  const profile = {
+    milestones: [], totals: { turns: 0, dmg: 0, kills: 0 }, badges: [],
+    streak: { days: 3, lastActiveDay: '2026-06-10', longest: 14 },
+  };
+  assert.equal(prog.deriveStats(profile).longestStreak, 14);
+  assert.ok(prog.evaluateBadges(profile).includes('fortnight'));
 });
 
 test('evaluateBadges: returns newly-satisfied ids, excludes owned', () => {

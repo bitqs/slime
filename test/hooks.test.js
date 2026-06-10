@@ -62,6 +62,57 @@ test('stop hook emits systemMessage card and resets inTurn', () => {
   assert.equal(snap.inTurn, false);
 });
 
+test('prompt hook re-prices the budget: grow-only, damped, clamped at 400, HP toughens', () => {
+  const boss = require('../core/boss');
+  const cwd = '/tmp/reprice';
+  const estimate = require('../core/estimate');
+  run('hook-prompt.js', { session_id: 'hrp', prompt: 'fix it', cwd });
+  const b1 = boss.loadOrCreate(cwd, '');
+  const small = estimate.estLines(estimate.estimateTokens('fix it'));
+  assert.equal(b1.estLines, small);
+  // deal some damage so HP moves off 100 and a raise is observable
+  b1.dmgTaken = 22; b1.hp = Math.round(100 * (1 - 22 / b1.estLines));
+  boss.save(cwd, b1);
+  const hpBefore = b1.hp;
+  // a huge second prompt grows the budget — damped, and HP ticks up
+  run('hook-prompt.js', { session_id: 'hrp', prompt: 'x'.repeat(200000), cwd });
+  const b2 = boss.loadOrCreate(cwd, '');
+  assert.equal(b2.estLines, Math.round(0.5 * 400 + 0.5 * small)); // damped, not 400; clamped, not 2600
+  assert.ok(b2.hp > hpBefore, `hp should rise with the budget (${hpBefore} → ${b2.hp})`);
+  // a tiny third prompt never shrinks it
+  run('hook-prompt.js', { session_id: 'hrp', prompt: 'ok', cwd });
+  const b3 = boss.loadOrCreate(cwd, '');
+  assert.equal(b3.estLines, b2.estLines);
+  boss.clear(cwd);
+});
+
+test('test-kill anti-farm: same green command pays once per fight, new command pays again', () => {
+  const boss = require('../core/boss');
+  const state = require('../core/state');
+  const cwd = '/tmp/antifarm';
+  const sid = 'haf';
+  state.writeSnapshot(sid, { sessionId: sid, turn: 1, combo: 0, kills: 0, dmg: 0, summons: 0 });
+  const payload = (cmd) => ({ session_id: sid, cwd, tool_name: 'Bash',
+    tool_input: { command: cmd }, tool_response: {} });
+
+  run('hook-posttool.js', payload('npm test'));
+  run('hook-posttool.js', payload('npm test'));      // rerun — no second kill
+  run('hook-posttool.js', payload('pytest -x'));     // different suite — fresh kill
+  const evs = state.readEvents(sid).filter((e) => e.kind === 'resolve');
+  assert.deepEqual(evs.map((e) => !!e.kill), [true, false, true]);
+  assert.match(evs[1].text, /already clear|已清空/);
+  const snap = state.readSnapshot(sid);
+  assert.equal(snap.kills, 2);
+  // signatures die with the boss: defeat clears the file → rerun pays again
+  const b = boss.loadOrCreate(cwd, '');
+  assert.equal((b.testKillSigs || []).length, 2);
+  boss.recordDefeat(cwd, b, {});
+  run('hook-posttool.js', payload('npm test'));
+  const evs2 = state.readEvents(sid).filter((e) => e.kind === 'resolve');
+  assert.equal(evs2[evs2.length - 1].kill, true);
+  boss.clear(cwd);
+});
+
 test('stop hook on a broken boss: card carries the kill, XP gained, and fight totals beat the turn agg', () => {
   const boss = require('../core/boss');
   const state = require('../core/state');
@@ -236,6 +287,13 @@ test('stop hook leaves an unbroken boss alone', () => {
 test('TodoWrite: hp→0 sets broken, emits boss_broken, then auto-downs immediately', () => {
   // With auto-down-on-break: once the boss hits 0 hp and is broken, it is immediately
   // defeated (boss_down event, snap.boss cleared, boss file gone).
+  // A real fight must have happened first (ULTIMATE gate: fightDmg ≥ 25% budget).
+  {
+    const bossLib = require('../core/boss');
+    const b = bossLib.loadOrCreate('/tmp/brk', 'fix it');
+    b.estLines = 40; b.fightDmg = 20;
+    bossLib.save('/tmp/brk', b);
+  }
   run('hook-posttool.js', {
     session_id: 'm3', cwd: '/tmp/brk', tool_name: 'TodoWrite',
     tool_input: { todos: [{ content: 'a', activeForm: 'a', status: 'completed' }] }, tool_response: {},
@@ -279,6 +337,13 @@ test('edits drain boss hp from the code budget', () => {
 test('all todos done with hp left → ultimate + broken + auto-downed immediately', () => {
   // Create boss via prompt (fresh, hp=100)
   run('hook-prompt.js', { session_id: 'ult1', prompt: 'add feature', cwd: '/tmp/ult' });
+  // ULTIMATE gate: the finisher needs a real fight behind it (≥25% of budget)
+  {
+    const bossLib = require('../core/boss');
+    const b = bossLib.loadOrCreate('/tmp/ult', '');
+    b.fightDmg = Math.ceil(0.25 * (b.estLines || 40));
+    bossLib.save('/tmp/ult', b);
+  }
   // Send all-completed todos without draining hp first
   run('hook-posttool.js', {
     session_id: 'ult1', cwd: '/tmp/ult', tool_name: 'TodoWrite',

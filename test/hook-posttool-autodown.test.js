@@ -53,6 +53,36 @@ test('auto-downs a pre-broken boss: boss file gone, boss_down event, no snap.bos
   assert.ok(prof.milestones.some((m) => m.project === cwd), 'milestone should be recorded');
 });
 
+test('ULTIMATE gate: all-todos-done with no real damage breaks but does not zero', () => {
+  const boss = require('../core/boss');
+  const state = require('../core/state');
+  const cwd = '/p/ult-gate';
+  const sid = 'adg';
+  const b = boss.loadOrCreate(cwd, 'build it');
+  b.estLines = 100; // 25% floor = 25 lines
+  boss.save(cwd, b);
+  state.writeSnapshot(sid, { sessionId: sid, turn: 1, combo: 0, kills: 0, dmg: 0, summons: 0 });
+  const done = [{ content: 'only todo', status: 'completed' }];
+
+  // no fightDmg yet → broken, HP stays > 0, no ultimate, no boss_down
+  run('hook-posttool.js', { session_id: sid, cwd, tool_name: 'TodoWrite', tool_input: { todos: done } });
+  let evs = state.readEvents(sid);
+  assert.equal(evs.filter((e) => e.kind === 'ultimate').length, 0, 'no ultimate without a real fight');
+  assert.equal(evs.filter((e) => e.kind === 'boss_down').length, 0, 'no instant kill');
+  assert.equal(evs.filter((e) => e.kind === 'boss_broken').length, 1, 'guard still breaks');
+  let b2 = boss.loadOrCreate(cwd, '');
+  assert.ok(b2.broken && b2.hp > 0, `broken at HP ${b2.hp} > 0`);
+
+  // now a real fight: enough damage → ULTIMATE fires and the kill confirms
+  b2.fightDmg = 30; b2.broken = false; // revive-equivalent: live fight again
+  boss.save(cwd, b2);
+  run('hook-posttool.js', { session_id: sid, cwd, tool_name: 'TodoWrite', tool_input: { todos: done } });
+  evs = state.readEvents(sid);
+  assert.equal(evs.filter((e) => e.kind === 'ultimate').length, 1);
+  assert.equal(evs.filter((e) => e.kind === 'boss_down').length, 1);
+  assert.equal(fs.existsSync(boss.bossPath(cwd)), false, 'boss file cleared by the confirmed kill');
+});
+
 test('does NOT auto-down a healthy boss: file remains, snap.boss intact, no boss_down', () => {
   const boss = require('../core/boss');
   const state = require('../core/state');

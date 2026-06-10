@@ -14,6 +14,8 @@ export interface BossState {
   fightDmg?: number;
   fightKills?: number;
   fightMaxCombo?: number;
+  // hashes of green test commands already paid this fight (anti-farm; capped 20)
+  testKillSigs?: number[];
 }
 
 export interface Snapshot {
@@ -93,7 +95,7 @@ export interface Profile {
 export interface BadgeDef {
   id: string;
   nameKey: string;
-  stat: 'bossCount' | 'maxCombo' | 'kills' | 'projects' | 'nightKills' | 'badgeCount';
+  stat: 'bossCount' | 'maxCombo' | 'kills' | 'projects' | 'nightKills' | 'badgeCount' | 'longestStreak';
   gte: number;
 }
 

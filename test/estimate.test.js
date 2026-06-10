@@ -33,3 +33,19 @@ test('bounds hold with heavy CJK', () => {
   assert.equal(estimateTokens('改'.repeat(200000)), 900000);
   assert.ok(estimateTokens('') >= 15000); // floor
 });
+
+test('estLines clamps to [40, 400] — a pasted log cannot mint a damage sponge', () => {
+  const { estLines } = require('../core/estimate');
+  assert.equal(estLines(1000), 40);          // floor
+  assert.equal(estLines(900000), 400);       // ceiling (was 2600)
+  assert.equal(estLines(null), Math.max(40, Math.round((25000 / 450) * 1.3))); // default untouched
+});
+
+test('repriceLines: damped growth, never shrinks, stays clamped', () => {
+  const { repriceLines } = require('../core/estimate');
+  assert.equal(repriceLines(100, 300), 200);     // 0.5·300 + 0.5·100
+  assert.equal(repriceLines(100, 60), 100);      // smaller estimate → no shrink
+  assert.equal(repriceLines(390, 400), 395);
+  assert.equal(repriceLines(400, 400), 400);     // ceiling holds
+  assert.equal(repriceLines(undefined, 80), 80); // no prior budget → take the new one
+});

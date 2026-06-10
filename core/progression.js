@@ -70,7 +70,7 @@ const BADGE_XP = 100;
 /** Build the flat stat object every badge predicate checks. Pure; tolerates
  *  old profiles missing any field.
  *  @param {Profile} profile
- *  @returns {{ bossCount: number, kills: number, maxCombo: number, projects: number, nightKills: number, badgeCount: number }} */
+ *  @returns {{ bossCount: number, kills: number, maxCombo: number, projects: number, nightKills: number, badgeCount: number, longestStreak: number }} */
 function deriveStats(profile) {
   const ms = (profile && profile.milestones) || [];
   const totals = (profile && profile.totals) || { kills: 0 };
@@ -90,6 +90,7 @@ function deriveStats(profile) {
     projects: projects.size,
     nightKills,
     badgeCount: ((profile && profile.badges) || []).length,
+    longestStreak: (profile && profile.streak && profile.streak.longest) || 0,
   };
 }
 

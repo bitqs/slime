@@ -14,6 +14,21 @@ runHook((/** @type {HookPayload} */ p) => {
     const id = p.session_id;
     const snap = state.readSnapshot(id) || { sessionId: id, turn: 0, combo: 0, kills: 0, dmg: 0, summons: 0 };
     const ev = mapper.resolve(p, snap, locale.current());
+    // anti-farm: a green test run pays one kill per distinct command per fight.
+    // Re-running the same suite keeps the resolve but earns nothing; a different
+    // command is a fresh kill. Signatures die with the boss file on defeat.
+    if (ev.kill && p.cwd && (p.tool_name || '') === 'Bash') {
+      const sig = mapper.hash(String((p.tool_input && (p.tool_input.command || p.tool_input.cmd)) || ''));
+      const b = boss.loadOrCreate(p.cwd, '');
+      const sigs = Array.isArray(b.testKillSigs) ? b.testKillSigs : [];
+      if (sigs.includes(sig)) {
+        ev.kill = false;
+        ev.text = locale.t('resolve.alreadyClear', locale.current());
+      } else {
+        b.testKillSigs = sigs.concat(sig).slice(-20);
+        boss.save(p.cwd, b);
+      }
+    }
     state.appendEvent(id, ev);
     snap.combo = ev.combo ?? snap.combo;
     if (ev.dmg) snap.dmg = (snap.dmg || 0) + ev.dmg;
@@ -76,16 +91,26 @@ runHook((/** @type {HookPayload} */ p) => {
       const b = boss.loadOrCreate(cwd, '');
       const allDone = todos.length > 0 && todos.every((t) => t.status === 'completed');
       if (allDone && b.hp > 0) {
-        // every minion is down but the boss still stands — ULTIMATE finisher
-        b.hp = 0;
-        if (!b.broken) {
+        if ((b.fightDmg || 0) >= 0.25 * (b.estLines || 40)) {
+          // every minion is down after a real fight (≥25% of the budget in
+          // actual edits) — ULTIMATE finisher
+          b.hp = 0;
+          if (!b.broken) {
+            b.broken = true;
+            state.appendEvent(id, { t: Date.now(), kind: 'ultimate', boss: b.name,
+              text: locale.fmt(locale.t('boss.ultimate', lang), { name: b.name }) });
+            state.appendEvent(id, { t: Date.now(), kind: 'boss_broken', boss: b.name,
+              text: locale.fmt(locale.t('boss.broken', lang), { name: b.name }) });
+          }
+        } else if (!b.broken) {
+          // todos done but barely any real damage dealt (anti kill-mill): the
+          // guard breaks, HP stays up — the kill confirms via real damage or
+          // the Stop hook's natural path, never as an instant zero
           b.broken = true;
-          state.appendEvent(id, { t: Date.now(), kind: 'ultimate', boss: b.name,
-            text: locale.fmt(locale.t('boss.ultimate', lang), { name: b.name }) });
           state.appendEvent(id, { t: Date.now(), kind: 'boss_broken', boss: b.name,
             text: locale.fmt(locale.t('boss.broken', lang), { name: b.name }) });
         }
-      } else if (!allDone && b.broken && b.hp === 0 && (b.dmgTaken || 0) < (b.estLines || 1)) {
+      } else if (!allDone && b.broken && (b.dmgTaken || 0) < (b.estLines || 1)) {
         // new live todos while not actually out of budget → revive from the budget
         b.broken = false;
         b.hp = Math.max(1, Math.round(100 * (1 - (b.dmgTaken || 0) / (b.estLines || 1))));

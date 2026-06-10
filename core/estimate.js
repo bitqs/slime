@@ -22,10 +22,22 @@ function fmtTokens(n) {
   return `≈${Math.round(n / 10000) * 10}k`;
 }
 /** Expected lines-changed budget for a quest, with bug-fix headroom.
- *  est tokens → lines: ~1 line per 450 est-tokens, ×1.3 margin, floor 40.
+ *  est tokens → lines: ~1 line per 450 est-tokens, ×1.3 margin, clamped to
+ *  [40, 400] — 400 ≈ a genuinely large feature; bigger work should be multiple
+ *  bosses, not one sponge minted by a pasted log.
  *  @param {number | null | undefined} estTokens @returns {number} */
 function estLines(estTokens) {
   const t = typeof estTokens === 'number' && estTokens > 0 ? estTokens : 25000;
-  return Math.max(40, Math.round((t / 450) * 1.3));
+  return Math.min(400, Math.max(40, Math.round((t / 450) * 1.3)));
 }
-module.exports = { estimateTokens, fmtTokens, estLines };
+/** Re-price a fight budget against a fresh prompt's estimate: damped upward
+ *  (half-weight on the new figure so one verbose prompt can only nudge it),
+ *  never shrinks (HP = 1 - dmgTaken/estLines must not jump down mid-fight),
+ *  same [40, 400] clamp via the blended inputs.
+ *  @param {number | null | undefined} current @param {number} fresh estLines of the new prompt
+ *  @returns {number} */
+function repriceLines(current, fresh) {
+  if (typeof current !== 'number' || current <= 0) return fresh;
+  return Math.max(current, Math.round(0.5 * fresh + 0.5 * current));
+}
+module.exports = { estimateTokens, fmtTokens, estLines, repriceLines };

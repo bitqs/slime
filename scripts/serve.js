@@ -171,7 +171,7 @@ function handle404(res) {
 
 // Exact-match whitelist: no fs paths are derived from user input, so
 // traversal is structurally impossible.
-const STATIC_WHITELIST = new Set(['/arena.js', '/sequencer.js', '/minions.js', '/audio.js', '/vendor/pixi.min.js']);
+const STATIC_WHITELIST = new Set(['/arena.js', '/sequencer.js', '/moves.js', '/minions.js', '/audio.js', '/vendor/pixi.min.js']);
 
 // Vendored audio (optional, dropped in later — e.g. ElevenLabs-generated SFX/BGM).
 // The regex is the whole guard: a flat filename, fixed extensions, no slashes or

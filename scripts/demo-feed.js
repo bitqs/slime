@@ -50,9 +50,11 @@ const script = [
       boss: { name: BOSS, hp: 80 }, est: 180000, todos: TODOS_INITIAL, updated: Date.now() };
     ev({ kind: 'encounter', bossName: BOSS, text: '⚡ The Demo Dragon appears!', est: 180000 });
   },
-  () => ev({ kind: 'cast', text: '⚔️ Carves with [Edit] → demo.ts' }),
+  () => ev({ kind: 'cast', tool: 'Edit', text: '⚔️ Carves with [Edit] → demo.ts' }),
   () => ev({ kind: 'resolve', dmg: 12, combo: 3, text: '⚔️ hit! 12 dmg 🔥combo×3' }),
+  () => ev({ kind: 'cast', tool: 'Bash', text: '🔥 Casts [Bash] → npm test' }),
   () => ev({ kind: 'resolve', dmg: 30, combo: 6, text: '⚔️ hit! 30 dmg 🔥combo×6' }),
+  () => ev({ kind: 'cast', tool: 'Grep', text: '⚡ Casts [Grep] → TODO hunt' }),
   () => ev({ kind: 'resolve', dmg: 64, combo: 11, text: '⚔️ CRIT! 64 dmg 🔥combo×11' }),
   () => ev({ kind: 'resolve', kill: true, text: '💀 tests pass — minion slain!' }),
   // ── choice arc ───────────────────────────────────────────────────────────
@@ -73,6 +75,7 @@ const script = [
     ev({ kind: 'minion_down', minion: 'Demo mob 1', text: '✄ slain: sharpen the demo' });
   },
   () => ev({ kind: 'potion', text: '🧪 potion quaffed' }),
+  () => ev({ kind: 'cast', tool: 'Read', text: '✨ Casts [Read] → scrolls of lore' }),
   () => ev({ kind: 'resolve', dmg: 18, combo: 2, text: '⚔️ hit! 18 dmg 🔥combo×2' }),
   // ── second minion kill (mob 2 → completed) ───────────────────────────────
   () => {
@@ -81,6 +84,7 @@ const script = [
     snap.boss = { name: BOSS, hp: 20 };
     ev({ kind: 'minion_down', minion: 'Demo mob 2', text: '✄ slain: slay the dragon' });
   },
+  () => ev({ kind: 'cast', tool: 'WebFetch', text: '❄️ Casts [WebFetch] → far realms' }),
   () => ev({ kind: 'resolve', dmg: 20, combo: 4, text: '⚔️ hit! 20 dmg 🔥combo×4' }),
   // ── all todos done → boss hp 0 → broken ──────────────────────────────────
   () => {

@@ -1,7 +1,7 @@
 # Weapon & magic FX + randomized moves
 
 **Date:** 2026-06-10
-**Status:** Approved (user chose full set + per-tool elements)
+**Status:** Implemented (239 tests; live-verified via playwright incl. ?calm=1)
 **Scope:** new `public/moves.js` (+`test/moves.test.js`), `public/arena.js`, `public/index.html`, `scripts/serve.js` (whitelist)
 
 ## Goal

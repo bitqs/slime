@@ -608,6 +608,10 @@
   // particle graphics (redrawn each frame)
   const particleGfx = new PIXI.Graphics();
   fxLayer.addChild(particleGfx);
+  // glow graphics: additive blend for magic/weapon shapes (rings, arcs, bolts…)
+  const glowGfx = new PIXI.Graphics();
+  glowGfx.blendMode = 'add';
+  fxLayer.addChild(glowGfx);
 
   // ── uiLayer chrome ───────────────────────────────────────────────────────────
   const flashRect = new PIXI.Graphics().rect(0, 0, W, H).fill(0xffffff);
@@ -700,7 +704,9 @@
   let wasZero = false;       // tracks token===0 transitions for the Zzz floater
   const fx = { shake: 0, shakeAmp: 4, knightLunge: 0, knightHurt: 0, speed: 1, hitstop: 0, particles: [],
     floaters: [], dissolving: [], chromaFrames: 0, edgeFlame: 0, slowmoLeft: null, zoom: 1, zoomLeft: null,
-    bossFalling: false, type: null };
+    bossFalling: false, type: null,
+    shapes: [],                 // move FX shapes: rings / arcs / bolts / pillars / projectiles
+    knightAnticip: 0, knightSmear: 0, pendingLunge: 0 };
   const governor = SlimeSeq.createGovernor(3, 60);
   let activeScenes = [];
   let frame = 0;
@@ -796,6 +802,124 @@
       }
     },
   };
+
+  // ── weapon & magic move FX ────────────────────────────────────────────────────
+  // Shapes are cheap vector overlays animated by age and redrawn each frame into
+  // glowGfx (additive) — same lifecycle pattern as fx.particles. `delay` lets an
+  // attack-side effect wait for the knight's anticipation frames.
+  const ELEM = {
+    blade: { main: 0xcfd6dd, glow: 0xf5f8fa },
+    fire: { main: 0xe8842c, glow: 0xf0b541 },
+    lightning: { main: 0x9fd8ff, glow: 0xeaf7ff },
+    holy: { main: 0xf0b541, glow: 0xfff7d0 },
+    ice: { main: 0xbfe8ff, glow: 0xe8f7ff },
+    arcane: { main: 0x9b7fd4, glow: 0xc9b3f0 },
+  };
+  function spawnShape(s) { s.age = 0; s.delay = s.delay || 0; fx.shapes.push(s); }
+
+  function shockwave(x, y, color, big) {
+    spawnShape({ kind: 'ring', x, y, color, maxAge: CALM ? 10 : 16, r0: 4, r1: (big ? 56 : 34) });
+  }
+  function speedlines(x, y, color) {
+    if (CALM) return;
+    spawnShape({ kind: 'lines', x, y, color, maxAge: 10, n: 12, r: 46 });
+  }
+  function slasharc(x, y, color, jitter) {
+    spawnShape({ kind: 'arc', x, y, color, maxAge: CALM ? 8 : 12, r: 18 * (jitter || 1),
+      a0: -1.1 + Math.random() * 0.4, sweep: 2.0 });
+  }
+  function boltFX(x1, y1, x2, y2, delay) {
+    // jagged polyline via random midpoint displacement; CALM: one faint segment
+    const pts = [{ x: x1, y: y1 }];
+    const segs = CALM ? 1 : 6;
+    for (let i = 1; i < segs; i++) {
+      const t = i / segs;
+      pts.push({ x: x1 + (x2 - x1) * t, y: y1 + (y2 - y1) * t + (Math.random() * 18 - 9) });
+    }
+    pts.push({ x: x2, y: y2 });
+    spawnShape({ kind: 'bolt', pts, color: ELEM.lightning.glow, maxAge: CALM ? 8 : 14, delay });
+  }
+  function pillarFX(x, color, delay) {
+    spawnShape({ kind: 'pillar', x, color, maxAge: CALM ? 14 : 22, w: 14, delay });
+  }
+  function projFX(x1, y1, x2, y2, color, delay) {
+    spawnShape({ kind: 'proj', x1, y1, x2, y2, color, maxAge: 12, delay });
+  }
+  // 2-frame white overlay over an actor's bounds — actor-local (≪25% of the
+  // field), so it stays inside WCAG limits; still arbitrated by the governor.
+  function impactframe(targets) {
+    if (CALM || !governor.allow(frame)) return;
+    for (const t of targets) {
+      spawnShape({ kind: 'impact', target: t, maxAge: 2 });
+    }
+  }
+  function elemburst(element, x, y, n) {
+    const e = ELEM[element] || ELEM.arcane;
+    const count = Math.max(2, Math.round(CALM ? n / 4 : n));
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const p = { x: x + Math.cos(a) * 4, y: y + Math.sin(a) * 4, age: 0,
+        color: Math.random() < 0.5 ? e.main : e.glow };
+      if (element === 'fire' || element === 'holy') {        // rises and flickers out
+        p.vx = Math.random() * 0.8 - 0.4; p.vy = -(0.8 + Math.random() * 1.2);
+        p.noGravity = true; p.maxAge = 30;
+      } else if (element === 'ice') {                        // shards fall slow
+        p.vx = Math.random() * 1.6 - 0.8; p.vy = -0.4 + Math.random() * 0.4;
+        p.maxAge = 38;
+      } else if (element === 'lightning') {                  // fast short sparks
+        p.vx = Math.cos(a) * 2.4; p.vy = Math.sin(a) * 2.4;
+        p.noGravity = true; p.maxAge = 14;
+      } else if (element === 'arcane') {                     // slow swirl
+        p.vx = Math.cos(a + 1.2) * 1.1; p.vy = Math.sin(a + 1.2) * 1.1;
+        p.noGravity = true; p.maxAge = 34;
+      } else {                                               // blade: steel chips
+        p.vx = Math.cos(a) * (1 + Math.random()); p.vy = Math.sin(a) * (1 + Math.random()) - 1;
+        p.maxAge = 26;
+      }
+      fx.particles.push(p);
+    }
+  }
+
+  // Attack choreography: anticipation (coil back) → lunge with smear → recovery.
+  // Attack-side element FX spawn with `delay` so they land on the lunge frame.
+  function attack(mv) {
+    const tier = mv ? mv.tier : 'normal';
+    const anticip = CALM ? 0 : (tier === 'crit' ? 8 : tier === 'finisher' ? 6 : 3);
+    fx.knightAnticip = anticip;
+    fx.pendingLunge = tier === 'normal' ? 7 : 10;
+    if (!mv) return;
+    const e = ELEM[mv.element] || ELEM.arcane;
+    const bx = boss.x + boss.width / 2, by = Math.max(80, boss.y + boss.height * 0.45);
+    const kx = knight.x + 10, ky = knight.y - 4;
+    if (mv.element === 'blade') slasharc(bx - 14, by, e.glow, mv.jitter);
+    else if (mv.element === 'lightning') boltFX(kx, ky, bx, by, anticip);
+    else if (mv.element === 'holy') pillarFX(bx, e.glow, anticip);
+    else projFX(kx, ky, bx, by, e.main, anticip);            // fire / ice / arcane bolt
+  }
+
+  // Impact-side FX at the boss when a damaging resolve lands.
+  function playMoveImpact(mv, bx, by) {
+    const e = ELEM[(mv && mv.element) || 'blade'];
+    const jit = mv ? mv.jitter : 1;
+    const tier = mv ? mv.tier : 'normal';
+    elemburst((mv && mv.element) || 'blade', bx, by, 8 * jit);
+    if (tier === 'finisher') {
+      shockwave(bx, by, e.main, false);
+      speedlines(bx, by, e.glow);
+      impactframe([boss]);
+      if (mv) floater(mv.name[lang === 'zh' ? 'zh' : 'en'], bx, 92, e.glow, 9, true);
+    } else if (tier === 'crit') {
+      // composed cinematic — reserved for ~5% of strikes so it stays special
+      PRIM.hitstop({ frames: 8 });
+      PRIM.zoom({ scale: 1.18, frames: 10 });
+      PRIM.flash({ color: '#fff7d0', strength: 0.5 });
+      shockwave(bx, by, e.glow, true);
+      speedlines(bx, by, e.glow);
+      impactframe([knight, boss]);
+      elemburst((mv && mv.element) || 'blade', bx, by, 16 * jit);
+      if (mv) floater('★ ' + mv.name[lang === 'zh' ? 'zh' : 'en'], bx, 88, P.gold, 11, true);
+    }
+  }
 
   function playScene(steps) { activeScenes.push(SlimeSeq.createTimeline(steps)); }
 
@@ -998,6 +1122,19 @@
       if (boss.y >= BOSS_FLOOR - boss.height) { groundBoss(); fx.bossFalling = false; PRIM.slam(); }
     }
 
+    // attack choreography: anticipation coils back, then releases into the lunge
+    if (fx.knightAnticip > 0) {
+      fx.knightAnticip--;
+      if (fx.knightAnticip === 0 && fx.pendingLunge > 0) {
+        fx.knightLunge = fx.pendingLunge;
+        fx.knightSmear = CALM ? 0 : 2;                       // blur-stretch on the 2 fastest frames
+        fx.pendingLunge = 0;
+      }
+    } else if (fx.pendingLunge > 0) {                        // CALM path: no anticipation
+      fx.knightLunge = fx.pendingLunge; fx.pendingLunge = 0;
+    }
+    if (fx.knightSmear > 0) fx.knightSmear--;
+    knight.scale.x = fx.knightSmear > 0 ? 1.7 : 1;
     // knight lunge decay
     if (fx.knightLunge > 0) fx.knightLunge = Math.max(0, fx.knightLunge - 1);
     // counterattack recoil: a failed tool = the boss strikes back, knight knocked
@@ -1019,7 +1156,8 @@
       }
     } else {
       const recoil = fx.knightHurt > 0 ? Math.min(8, fx.knightHurt) : 0; // knocked back, eases home
-      knight.x = 40 + fx.knightLunge - recoil;
+      const coil = fx.knightAnticip > 0 ? Math.min(5, fx.knightAnticip * 1.5) : 0; // anticipation pull-back
+      knight.x = 40 + fx.knightLunge - recoil - coil;
     }
 
     if (!CALM && summons.length && frame % 45 === 0) {
@@ -1071,6 +1209,55 @@
       }
     }
 
+
+    // move FX shapes (additive glow layer, redrawn each frame like particles)
+    glowGfx.clear();
+    fx.shapes = fx.shapes.filter((s) => {
+      if (s.delay > 0) { s.delay--; return true; }
+      s.age++;
+      const t = s.age / s.maxAge;                    // 0→1 life
+      const fade = Math.max(0, 1 - t);
+      if (s.kind === 'ring') {
+        const r = s.r0 + (s.r1 - s.r0) * (1 - (1 - t) * (1 - t)); // ease-out expand
+        glowGfx.circle(s.x, s.y, r).stroke({ color: s.color, width: Math.max(1, 3 * fade), alpha: fade });
+      } else if (s.kind === 'lines') {
+        for (let i = 0; i < s.n; i++) {
+          const a = (i / s.n) * Math.PI * 2 + 0.3;
+          const rOut = s.r * (1 - t * 0.8), rIn = rOut - 10 * fade;
+          glowGfx.moveTo(s.x + Math.cos(a) * rOut, s.y + Math.sin(a) * rOut)
+            .lineTo(s.x + Math.cos(a) * rIn, s.y + Math.sin(a) * rIn)
+            .stroke({ color: s.color, width: 1, alpha: fade * 0.9 });
+        }
+      } else if (s.kind === 'arc') {
+        const a0 = s.a0 + t * 1.2;                   // crescent sweeps through the target
+        glowGfx.arc(s.x, s.y, s.r, a0, a0 + s.sweep)
+          .stroke({ color: s.color, width: Math.max(1, 3.5 * fade), alpha: fade });
+      } else if (s.kind === 'bolt') {
+        // 2-3 flicker windows; re-jitter midpoints each flicker so it crackles
+        const on = CALM ? s.age < s.maxAge : (Math.floor(s.age / 3) % 2 === 0);
+        if (on) {
+          if (!CALM && s.age % 3 === 0) {
+            for (let i = 1; i < s.pts.length - 1; i++) s.pts[i].y += Math.random() * 6 - 3;
+          }
+          glowGfx.moveTo(s.pts[0].x, s.pts[0].y);
+          for (let i = 1; i < s.pts.length; i++) glowGfx.lineTo(s.pts[i].x, s.pts[i].y);
+          glowGfx.stroke({ color: s.color, width: CALM ? 1 : 2, alpha: CALM ? fade * 0.5 : fade });
+        }
+      } else if (s.kind === 'pillar') {
+        const w = s.w * (1 - t * 0.4);
+        glowGfx.rect(s.x - w / 2, 60, w, FLOOR_Y - 60).fill({ color: s.color, alpha: fade * (CALM ? 0.2 : 0.4) });
+      } else if (s.kind === 'proj') {
+        const px = s.x1 + (s.x2 - s.x1) * t, py = s.y1 + (s.y2 - s.y1) * t - Math.sin(t * Math.PI) * 14;
+        glowGfx.rect(px - 2, py - 2, 4, 4).fill({ color: s.color, alpha: 1 });
+        if (!CALM && s.age % 2 === 0) fx.particles.push({ x: px, y: py, vx: 0, vy: 0,
+          age: 0, maxAge: 10, noGravity: true, color: s.color });
+      } else if (s.kind === 'impact') {
+        const tg = s.target;
+        if (tg && tg.visible) glowGfx.rect(tg.x - 2, tg.y - 2, Math.max(8, tg.width) + 4, Math.max(8, tg.height) + 4)
+          .fill({ color: 0xffffff, alpha: 0.85 });
+      }
+      return s.age < s.maxAge;
+    });
 
     // particles
     particleGfx.clear();
@@ -1415,6 +1602,10 @@
   setInterval(pollState, 5000);
 
   // ── SSE events ────────────────────────────────────────────────────────────────
+  // random-move picker (UMD module; fail-soft if the script didn't load)
+  const movePicker = (typeof SlimeMoves !== 'undefined') ? SlimeMoves.createPicker() : null;
+  let pendingMove = null;
+  let lastCombo = 0;
   const EXTRA_HANDLERS = [];
   window.SlimeArena = { playScene, PRIM, fx, pushLog, floater, stats, on: (fn) => EXTRA_HANDLERS.push(fn) };
 
@@ -1428,13 +1619,11 @@
     let d; try { d = JSON.parse(ev.data); } catch { return; }
     if (!d || !d.kind) return;
 
-    if (d.kind === 'cast') { fx.knightLunge = 6; pushLog(d.text);
-      // sword-slash trail: a short steel arc flying off the knight's lunge
-      if (!CALM) for (let i = 0; i < 5; i++) {
-        fx.particles.push({ x: knight.x + 12 + i * 2, y: knight.y - 2 - i,
-          vx: 2.2 + i * 0.25, vy: -0.3 + i * 0.12, age: 0, maxAge: 14, noGravity: true,
-          color: colorNum(P.steel) });
-      }
+    if (d.kind === 'cast') { pushLog(d.text);
+      // pick a random move for this strike (shuffle bag + finisher + PRD crit)
+      const mv = movePicker ? movePicker.pick(d.tool || '', lastCombo + 1) : null;
+      pendingMove = mv;
+      attack(mv);
       if (/\b(Agent|Task)\b/.test(d.tool || '') || /召唤|派遣|summon/i.test(d.text || '')) spawnSummon();
     }
     if (d.kind === 'resolve') {
@@ -1444,7 +1633,10 @@
         PRIM.shake({ amp: 3, frames: 6 });
         if (d.combo && d.combo > 1) floater(`×${d.combo}`, bx + 12, 100, P.ember, 9, true);
         onCombo(d.combo || 0, d.dmg);
+        playMoveImpact(pendingMove, bx, 118);
+        pendingMove = null;
       }
+      lastCombo = typeof d.combo === 'number' ? d.combo : lastCombo;
       if (d.kill) { // execution: freeze-frame punch + splat + reward sparkle
         PRIM.hitstop({ frames: 6 }); PRIM.shake({ amp: 3, frames: 7 });
         burst(bx, 125, P.red, 9); burst(bx, 125, P.bone, 9);
@@ -1459,6 +1651,7 @@
         burst(knight.x + 6, knight.y + 4, P.red, CALM ? 4 : 9);
         floater('✗', knight.x + 4, knight.y - 8, P.red, 11, true);
         onCombo(0, 0);
+        lastCombo = 0; pendingMove = null;                   // a backfire breaks the move chain
       }
       if (d.text) pushLog(d.text);
     }

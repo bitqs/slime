@@ -87,7 +87,8 @@ runHook((/** @type {HookPayload} */ p) => {
       if (e.kind === 'boss_down') {
         rewardLines.push(sanitize(e.text, 200));
         if (typeof e.xp === 'number' && e.xp > 0) rewardLines.push(T('report.xp', { xp: e.xp }));
-      } else if (e.kind === 'level_up' || e.kind === 'badge_unlocked' || e.kind === 'quest_done') {
+      } else if (e.kind === 'level_up' || e.kind === 'badge_unlocked' || e.kind === 'quest_done'
+              || e.kind === 'chest_open' || e.kind === 'egg_drop') {
         rewardLines.push(sanitize(e.text, 200));
       }
     }

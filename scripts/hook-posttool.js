@@ -7,6 +7,8 @@ const boss = require('../core/boss');
 const report = require('../core/report');
 const defeatFlow = require('../core/defeat-flow');
 const loot = require('../core/loot');
+const eggs = require('../core/eggs');
+const prog = require('../core/progression');
 const { runHook } = require('../core/hook-runner');
 
 runHook((/** @type {HookPayload} */ p) => {
@@ -37,9 +39,12 @@ runHook((/** @type {HookPayload} */ p) => {
     if (ev.dmg && p.cwd) {
       const b = boss.loadOrCreate(p.cwd, '');
       if (!b.estLines) b.estLines = require('../core/estimate').estLines(null);
-      // Cap each hit's HP damage so one giant edit can't one-shot the boss (≥4 hits
-      // to kill). XP is unaffected — it reads raw dmg from the event log.
-      const hpHit = Math.min(ev.dmg, Math.ceil(b.estLines * 0.25));
+      // In-fight arc (ATOM-P14): HP damage rides the live combo — grind early,
+      // surge once the streak builds; one miss resets it. The per-hit cap below
+      // still guarantees ≥4 hits to kill. XP is unaffected — it reads raw dmg.
+      const profForCaps = state.readProfile();
+      const comboMult = prog.comboDmgMult(ev.combo || 0, eggs.comboCap(profForCaps));
+      const hpHit = Math.min(Math.round(ev.dmg * comboMult), Math.ceil(b.estLines * 0.25));
       b.dmgTaken = (b.dmgTaken || 0) + hpHit;
       b.hp = Math.max(0, Math.round(100 * (1 - b.dmgTaken / b.estLines)));
       // whole-fight totals (uncapped, across turns) so a multi-turn kill pays
@@ -59,7 +64,7 @@ runHook((/** @type {HookPayload} */ p) => {
       // in the hot path. XP is applied once here; the loot_drop event is display-only,
       // so SSE replay never re-rolls or double-counts.
       const seed = id + ':' + (snap.resolves = (snap.resolves || 0) + 1);
-      const drop = loot.roll(seed);
+      const drop = loot.roll(seed, undefined, eggs.lootBonus(profForCaps));
       if (drop) {
         const prog = require('../core/progression');
         const prof = state.readProfile();
@@ -79,6 +84,23 @@ runHook((/** @type {HookPayload} */ p) => {
             state.appendEvent(id, { t: Date.now(), kind: 'level_up', text: lvText });
             snap.lastText = lvText;
           }
+        }
+      }
+    }
+    // slime egg (ATOM-G07): a confirmed kill has a small, luck-adjusted chance
+    // to drop a permanent micro-perk. Deterministic seed; XP-free, so no
+    // level math needed here.
+    if (ev.kill) {
+      const prof = state.readProfile();
+      const perk = eggs.roll(id + ':egg:' + (snap.kills || 0), eggs.lootBonus(prof));
+      if (perk) {
+        eggs.grant(prof, perk.id);
+        if (state.writeProfile(prof)) {
+          const lang = locale.current();
+          const text = locale.fmt(locale.t('egg.drop', lang),
+            { perk: locale.t(perk.nameKey, lang), count: eggs.total(prof) });
+          state.appendEvent(id, { t: Date.now(), kind: 'egg_drop', perk: perk.id, text });
+          snap.lastText = text;
         }
       }
     }

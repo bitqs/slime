@@ -27,6 +27,16 @@ runHook((/** @type {HookPayload} */ p) => {
         b.hp = Math.max(0, Math.round(100 * (1 - (b.dmgTaken || 0) / b.estLines)));
       }
     }
+    // seal the chest tier the moment the boss exists (ATOM-L02: rolled at
+    // spawn, revealed on defeat — stalling can't reroll it)
+    if (!b.chestTier) {
+      try {
+        const chest = require('../core/chest');
+        const eggs = require('../core/eggs');
+        const prof = state.readProfile();
+        chest.ensureTier(b, prof.chestCount || 0, eggs.lootBonus(prof));
+      } catch {}
+    }
     boss.save(p.cwd || '', b);
     try {
       const cfgPath = require('node:path').join(state.ROOT, 'config.json');

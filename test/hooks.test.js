@@ -417,3 +417,32 @@ test('auto-HUD respects "autoHud": false', () => {
   });
   assert.equal(fs.existsSync(path.join(cfgDir, 'settings.json')), false);
 });
+
+test('hook-prompt: a fresh boss gets a sealed chestTier', () => {
+  run('hook-prompt.js', { session_id: 'chest-s1', cwd: '/p/chesthook', prompt: 'fix the parser' });
+  const boss = require('../core/boss');
+  const b = boss.loadOrCreate('/p/chesthook', '');
+  assert.ok(['silver', 'gold', 'jackpot'].includes(b.chestTier), String(b.chestTier));
+});
+
+test('hook-posttool: combo multiplies HP damage (visual layer), fightDmg stays raw', () => {
+  // identical 10-line edits; later hits arrive at higher combo so they must
+  // take MORE hp than the first (estLines fixed by the prompt hook)
+  // 'x\n'.repeat(10) → mapper counts 11 lines (trailing \n splits to empty part).
+  // 4000-char prompt → estLines ≈ 90, cap ≈ 23, so 6 combo-scaled 11-line hits
+  // (cumulative dmgTaken ≈ 85) stay under budget and no auto-down fires.
+  run('hook-prompt.js', { session_id: 'combo-s1', cwd: '/p/combohook', prompt: 'add feature x ' + 'x'.repeat(3985) });
+  const payload = (n) => ({
+    session_id: 'combo-s1', cwd: '/p/combohook', tool_name: 'Edit',
+    tool_input: { file_path: '/p/combohook/f' + n + '.js', new_string: 'x\n'.repeat(10) },
+    tool_response: {},
+  });
+  run('hook-posttool.js', payload(1));
+  const boss = require('../core/boss');
+  const afterOne = boss.loadOrCreate('/p/combohook', '').dmgTaken;
+  for (let i = 2; i <= 6; i++) run('hook-posttool.js', payload(i));
+  const b = boss.loadOrCreate('/p/combohook', '');
+  assert.equal(b.fightDmg, 66, 'fightDmg is raw lines (6 × 11, since x\\n.repeat(10) gives 11 mapper-lines)');
+  assert.ok(b.dmgTaken > 66, `dmgTaken ${b.dmgTaken} should exceed raw 66 (combo mult)`);
+  assert.ok(b.dmgTaken - afterOne > 50, 'later hits hit harder than the first');
+});

@@ -147,23 +147,32 @@ test('recordDefeat: combo-king unlocks when maxCombo ≥ 10', () => {
 
 test('recordDefeat: returns xpGained covering kill + badge XP, and level reflects it', () => {
   const prog = require('../core/progression');
+  const eggsMod = require('../core/eggs');
+  // Reset badges, milestones, xp, prestige, and totals so exactly one badge
+  // (first-blood) unlocks. Leave chestCount and eggs untouched so the test
+  // exercises the live egg xpMult path and does not tamper shared file state.
   const pReset = state.readProfile();
   pReset.badges = []; pReset.milestones = []; pReset.xp = 0; pReset.prestige = 0;
   pReset.totals = { turns: 0, dmg: 0, kills: 0 };
-  pReset.chestCount = 0; pReset.eggs = {};
   state.writeProfile(pReset);
-  const eggsMod = require('../core/eggs');
+  // Capture live profile AFTER legitimate setup writes, immediately before defeat.
   const prof0 = require('../core/state').readProfile();
   const fromLevel = prog.levelFor(prof0.xp || 0).level;
   const b = boss.loadOrCreate('/p/xpgain', 'do work');
   const r = boss.recordDefeat('/p/xpgain', b, { dmg: 42, kills: 1, maxCombo: 2 });
   const killXp = prog.xpForDefeat({ dmg: 42, kills: 1, maxCombo: 2 });
-  // first kill from a clean slate unlocks first-blood → +BADGE_XP
+  // first kill from a clean-badge slate unlocks first-blood → +BADGE_XP
   assert.ok(r.newBadges.includes('first-blood'));
   const killPart = Math.round(killXp * prog.levelScale(fromLevel) * prog.prestigeMult(prof0) * eggsMod.xpMult(prof0));
   const chestPart = Math.round(r.chest.rewardXp * prog.prestigeMult(prof0) * eggsMod.xpMult(prof0));
   const badgePart = Math.round(prog.BADGE_XP * prog.prestigeMult(prof0));
-  assert.equal(r.xpGained, killPart + chestPart + badgePart);
+  // evaluateQuests may complete a quest and pay XP; derive questPart from the
+  // result so the assertion stays correct regardless of prior test state.
+  const questPart = r.newQuests.reduce((sum, qid) => {
+    const def = prog.QUEST_DEFS.find((d) => d.kind === qid);
+    return sum + (def ? Math.round(def.xp * prog.prestigeMult(prof0)) : 0);
+  }, 0);
+  assert.equal(r.xpGained, killPart + chestPart + badgePart + questPart);
   const prof = state.readProfile();
   assert.equal(prof.xp, r.xpGained);
   assert.equal(prof.level, prog.levelFor(prof.xp).level);

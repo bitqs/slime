@@ -132,7 +132,7 @@ export interface SlimeEvent {
   xp?: number;
   fx?: string;
   tier?: number;
-  chestTier?: string;
+  chestTier?: 'silver' | 'gold' | 'jackpot';
   perk?: string;
 }
 

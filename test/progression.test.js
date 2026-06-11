@@ -364,7 +364,7 @@ test('levelScale: identity at L1, +12% per level after', () => {
   assert.equal(prog.levelScale(undefined), 1);
 });
 
-test('levelScale: cadence converges — kills/level stays in [0.3, 3] through L25 (ATOM-P02)', () => {
+test('levelScale: cadence converges for a typical fight (dmg 42) — kills/level in [0.3, 3] through L25 (ATOM-P02)', () => {
   const perKill = (lv) => Math.round(prog.xpForDefeat({ dmg: 42 }) * prog.levelScale(lv));
   for (let lv = 1; lv < 25; lv++) {
     const need = prog.xpToReach(lv + 1) - prog.xpToReach(lv);
@@ -379,4 +379,5 @@ test('comboDmgMult: 1 at combo 0, +8% per combo, capped (ATOM-P14)', () => {
   assert.equal(prog.comboDmgMult(50), 2);          // default cap ×2
   assert.equal(prog.comboDmgMult(50, 2.12), 2.12); // egg-widened cap
   assert.equal(prog.comboDmgMult(-3), 1);          // defensive
+  assert.equal(prog.comboDmgMult(5, 0.5), 1); // cap floored at 1
 });

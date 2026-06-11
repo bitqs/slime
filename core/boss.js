@@ -173,7 +173,7 @@ function recordDefeat(cwd, b, stats = {}) {
     titleKey: lv.titleKey, newBadges, newQuests, xpGained: prof.xp - xpBefore,
     chest: {
       tier: opened.tier,
-      rewardXp: opened.reward ? opened.reward.xp : 0,
+      rewardXp: opened.reward ? opened.reward.xp : 0, // raw table xp; prestige/egg mult applied internally
       rewardNameKey: opened.reward ? opened.reward.nameKey : null,
       eggPerk,
     },

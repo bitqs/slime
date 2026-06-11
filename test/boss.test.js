@@ -165,7 +165,7 @@ test('recordDefeat: returns xpGained covering kill + badge XP, and level reflect
   assert.ok(r.newBadges.includes('first-blood'));
   const killPart = Math.round(killXp * prog.levelScale(fromLevel) * prog.prestigeMult(prof0) * eggsMod.xpMult(prof0));
   const chestPart = Math.round(r.chest.rewardXp * prog.prestigeMult(prof0) * eggsMod.xpMult(prof0));
-  const badgePart = Math.round(prog.BADGE_XP * prog.prestigeMult(prof0));
+  const badgePart = Math.round(prog.BADGE_XP * r.newBadges.length * prog.prestigeMult(prof0));
   // evaluateQuests may complete a quest and pay XP; derive questPart from the
   // result so the assertion stays correct regardless of prior test state.
   const questPart = r.newQuests.reduce((sum, qid) => {

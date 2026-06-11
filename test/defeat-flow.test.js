@@ -35,6 +35,18 @@ test('rewardLines (console) matches the emitRewards event text — no drift', ()
   assert.deepEqual(flow.rewardLines(r, 'en'), texts);
 });
 
+test('rewardLines matches emitRewards with a chest in play — no drift', () => {
+  const r = {
+    leveledUp: true, level: 3, titleKey: 'title.apprentice', newBadges: [], newQuests: [],
+    chest: { tier: 'gold', rewardXp: 30, rewardNameKey: 'loot.xpMedium', eggPerk: 'crit' },
+  };
+  flow.emitRewards('s4b', r, 'en');
+  const texts = state.readEvents('s4b')
+    .filter((e) => ['chest_open', 'level_up', 'badge_unlocked'].includes(e.kind))
+    .map((e) => e.text);
+  assert.deepEqual(flow.rewardLines(r, 'en'), texts);
+});
+
 test('rewardLines: chest reveal leads, egg suffix included', () => {
   const r = {
     leveledUp: false, level: 3, titleKey: 'title.apprentice', newBadges: [], newQuests: [],

@@ -46,3 +46,10 @@ test('render: reflects an active quest instance progress/target', () => {
   const out = ach.render(profile, 'en');
   assert.match(out, /Weekly Hunter\s+3\/5/);
 });
+
+test('render: egg section lists per-perk counts', () => {
+  const out = ach.render({ milestones: [], totals: { turns: 0, dmg: 0, kills: 0 }, gear: {},
+    eggs: { xp: 3, crit: 1 } }, 'en');
+  assert.ok(out.includes('🥚'), out);
+  assert.ok(out.includes('×3'), out);
+});

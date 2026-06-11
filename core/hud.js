@@ -55,9 +55,10 @@ function fmtTok(n) {
  * @param {string} [quest] nearest quest "progress/target" → shown as a 🎯 badge
  * @param {number} [streak] current daily streak in days → shown as a 🔥 badge (≥2)
  * @param {number} [prestige] prestige/New Game+ tier → shown as a ⟳ badge
+ * @param {number} [eggs] total slime eggs → shown as a 🥚 badge
  * @returns {string}
  */
-function render(snap, stdinJson, tips, now, usageCache, lang, live, level, quest, streak, prestige) {
+function render(snap, stdinJson, tips, now, usageCache, lang, live, level, quest, streak, prestige, eggs) {
   const locale = require('./locale');
   const l = lang || locale.current();
   /** @param {string} key @param {Record<string, unknown>} [vars] @returns {string} */
@@ -67,6 +68,7 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live, level, quest
   const q = quest ? ` 🎯${sanitize(quest, 12)}` : '';
   // daily streak badge (only once it's a real streak, so a single day isn't noise)
   const st = (streak && streak >= 2) ? ` 🔥${streak}d` : '';
+  const eg = eggs ? ` 🥚${eggs}` : '';
   const hpVal = usage.hp(usageCache);
   const wtkVal = usage.week(usageCache);
   // DTK (daily, 5h window) + WTK (weekly, 7-day window) meters, labelled.
@@ -86,12 +88,12 @@ function render(snap, stdinJson, tips, now, usageCache, lang, live, level, quest
   // Between turns: still lead with the badge + live arena link, then the result.
   if (!snap.inTurn) {
     const body = sanitize(snap.lastText, 120) || T('hud.yourTurn');
-    return `🟢${uiLink(live)}${pr}${lv}${q}${st}${mSuffix} ${body}`;
+    return `🟢${uiLink(live)}${pr}${lv}${q}${st}${eg}${mSuffix} ${body}`;
   }
 
   const parts = [];
   // plugin badge + arena link lead the line, then DTK/WTK meters; boss is a slime icon + hp
-  parts.push(`🟢${uiLink(live)}${pr}${lv}${q}${st}${mSuffix}`);
+  parts.push(`🟢${uiLink(live)}${pr}${lv}${q}${st}${eg}${mSuffix}`);
   const todos = Array.isArray(snap.todos) ? snap.todos : [];
   const doneCnt = todos.filter((t) => t.status === 'completed').length;
   const cnt = todos.length ? ` ⚔${doneCnt}/${todos.length}` : '';

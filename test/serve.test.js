@@ -121,3 +121,16 @@ test('serves /state and / and 404', async () => {
     srv.close();
   }
 });
+
+test('/state: exposes egg counts', async () => {
+  const srv = createServer();
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  try {
+    const base = `http://127.0.0.1:${srv.address().port}`;
+    const res = await fetch(`${base}/state`);
+    const data = await res.json();
+    assert.ok(data.eggs && typeof data.eggs.xp === 'number');
+  } finally {
+    srv.close();
+  }
+});

@@ -166,3 +166,11 @@ test('no quest badge when the quest arg is omitted', () => {
   const line = hud.render(snap, {}, TIPS, now, null, 'en', null, 4);
   assert.doesNotMatch(line, /🎯/);
 });
+
+test('render: egg badge shows after streak when eggs > 0', () => {
+  const snap = { sessionId: 's', turn: 1, combo: 0, kills: 0, dmg: 0, summons: 0, inTurn: false, lastText: 'hi', updated: Date.now() };
+  const line = hud.render(snap, null, [], Date.now(), null, 'en', null, 5, undefined, 0, 0, 47);
+  assert.ok(line.includes('🥚47'), line);
+  const none = hud.render(snap, null, [], Date.now(), null, 'en', null, 5, undefined, 0, 0, 0);
+  assert.ok(!none.includes('🥚'), none);
+});

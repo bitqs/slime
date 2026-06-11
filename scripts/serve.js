@@ -58,9 +58,11 @@ function handleState(req, res) {
     const snapshot = id ? readSnapshot(id) : null;
     const usage = readCache();
     const lang = locale.current();
-    const streak = readProfile().streak || null;
+    const prof = readProfile();
+    const streak = prof.streak || null;
+    const eggCounts = require('../core/eggs').counts(prof);
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ snapshot, usage, lang, streak, harness: 'claude-code' }));
+    res.end(JSON.stringify({ snapshot, usage, lang, streak, eggs: eggCounts, harness: 'claude-code' }));
   } catch {
     res.writeHead(500);
     res.end('{}');

@@ -33,6 +33,17 @@ function render(profile, lang) {
       target: q ? q.target : def.target,
     }));
   }
+  const eggs = require('../core/eggs');
+  const eggCounts = eggs.counts(profile);
+  const eggTotal = eggs.total(profile);
+  if (eggTotal > 0) {
+    lines.push('');
+    lines.push(locale.fmt(locale.t('ach.eggsHeader', lang), { total: eggTotal }));
+    for (const p of eggs.PERKS) {
+      const n = eggCounts[/** @type {keyof typeof eggCounts} */ (p.id)];
+      if (n > 0) lines.push(locale.fmt(locale.t('ach.eggLine', lang), { perk: locale.t(p.nameKey, lang), count: n }));
+    }
+  }
   return lines.join('\n');
 }
 

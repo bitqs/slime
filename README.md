@@ -119,6 +119,10 @@ On your next session the HUD appears at the bottom of your terminal (shown above
 | 💡 **Loading-screen tips** | Long waits teach you real Claude Code technique |
 | 🎬 **Cinematic arena** | Boss intros, victory blowouts, combo escalation, gamified choices, boss forge with token-estimate tiers — PixiJS, vendored, still zero npm deps. Add `?calm=1` (or set OS reduced-motion) for a flash-free arena |
 
+- **Chest lottery** — every boss seals a chest at spawn (Silver / Gold / JACKPOT) and reveals it on the kill, slot-machine style. Your first six chests follow a lucky streak.
+- **Slime eggs** — kills can drop a permanent micro-perk (+1% XP, +0.2% drops, +0.5% crit, rare +2% combo cap). They stack forever and survive prestige.
+- **Combo surge** — boss HP damage rides your live combo: grind early, snowball once the streak builds. One failed tool call resets it.
+
 ## The Observer Principle
 
 Slime **never** affects real usage. No blocking, no context injection, no LLM calls by default, no auto-execution. Claude's behavior with Slime installed is byte-identical to without. Pure visuals, data, feedback.

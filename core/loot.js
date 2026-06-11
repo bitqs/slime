@@ -14,12 +14,13 @@ const TABLE = /** @type {LootTable} */ (require('../data/loot.json'));
  * table). Never throws — the caller is the fail-soft PostToolUse hook.
  * @param {string} seed any per-roll string; same seed → same outcome
  * @param {LootTable} [table]
+ * @param {number} [bonus] additive luck (loot-egg cross-cut, ATOM-L04)
  * @returns {Reward | null}
  */
-function roll(seed, table = TABLE) {
+function roll(seed, table = TABLE, bonus = 0) {
   if (!table || !Array.isArray(table.rewards) || table.rewards.length === 0) return null;
   // clamp to a valid probability so bad data (e.g. chance > 1) can't mean "always drop"
-  const chance = Math.min(1, Math.max(0, typeof table.chance === 'number' ? table.chance : 0));
+  const chance = Math.min(1, Math.max(0, (typeof table.chance === 'number' ? table.chance : 0) + bonus));
   if (chance <= 0) return null;
   // drop gate: uniform 0..9999 vs the integer threshold (chance 1 → threshold 10000, never gated out)
   if ((hash(String(seed)) % 10000) >= Math.round(chance * 10000)) return null;

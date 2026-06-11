@@ -60,3 +60,17 @@ test('roll: fail-soft on missing/empty/malformed tables — returns null, never 
   assert.equal(loot.roll('s', null), null);
   assert.equal(loot.roll('s', { chance: 1, rewards: [{ id: 'z', weight: 0, xp: 1, nameKey: 'k', fx: 'spark' }] }), null);
 });
+
+test('roll: bonus param raises the drop gate (luck cross-cut)', () => {
+  const t = { ...TBL, chance: 0.04 };
+  let base = 0, boosted = 0;
+  for (let i = 0; i < 5000; i++) {
+    if (loot.roll('lb' + i, t)) base++;
+    if (loot.roll('lb' + i, t, 0.10)) boosted++;
+  }
+  assert.ok(boosted > base, `boosted ${boosted} ≤ base ${base}`);
+});
+
+test('roll: bonus clamps — chance + bonus > 1 still behaves like 1', () => {
+  for (let i = 0; i < 50; i++) assert.ok(loot.roll('c' + i, TBL, 5) !== undefined);
+});

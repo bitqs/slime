@@ -87,8 +87,8 @@ runHook((/** @type {HookPayload} */ p) => {
       }
     }
     // slime egg (ATOM-G07): a confirmed kill has a small, luck-adjusted chance
-    // to drop a permanent micro-perk. Deterministic seed; XP-free, so no
-    // level math needed here.
+    // to drop a permanent micro-perk. Deterministic seed (snap.kills here is
+    // the post-increment count for this kill); XP-free, so no level math needed.
     if (ev.kill) {
       const prof = state.readProfile();
       const perk = eggs.roll(id + ':egg:' + (snap.kills || 0), eggs.lootBonus(prof));

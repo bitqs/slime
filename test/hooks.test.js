@@ -444,5 +444,5 @@ test('hook-posttool: combo multiplies HP damage (visual layer), fightDmg stays r
   const b = boss.loadOrCreate('/p/combohook', '');
   assert.equal(b.fightDmg, 66, 'fightDmg is raw lines (6 × 11, since x\\n.repeat(10) gives 11 mapper-lines)');
   assert.ok(b.dmgTaken > 66, `dmgTaken ${b.dmgTaken} should exceed raw 66 (combo mult)`);
-  assert.ok(b.dmgTaken - afterOne > 50, 'later hits hit harder than the first');
+  assert.ok(b.dmgTaken - afterOne > 50, 'hits 2-6 combined dmgTaken substantially exceed the first hit (combo ramp)');
 });

@@ -90,7 +90,9 @@ test('setCritBase: raises the floor, clamps to [base, 0.05]', () => {
   const q = Moves.createPicker(() => 0.0049);
   // without the boost the same rng must NOT crit on the first pick (base 0.002)
   assert.notEqual(q.pick('Edit', 1).tier, 'crit');
-  const r = Moves.createPicker(() => 0.9);
+  // rng 0.06 sits just above the 0.05 ceiling: if the clamp held, no crit;
+  // if 99 leaked through as the base, this would crit — a tight proof
+  const r = Moves.createPicker(() => 0.06);
   r.setCritBase(99); // clamps to 0.05, never 99
   assert.notEqual(r.pick('Edit', 1).tier, 'crit');
 });

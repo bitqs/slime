@@ -111,11 +111,12 @@ function minionLabel(cwd, idx, lang) {
   return lang === 'zh' ? `${base}·小兵 ${idx + 1}` : `${base} mob ${idx + 1}`;
 }
 
-/** Push a milestone, award XP (kill + badge + quest), recompute level once all
- *  XP has landed, unlock any newly-earned badges, and clear the boss file.
+/** Push a milestone, award XP (kill + chest + badge + quest), recompute level
+ *  once all XP has landed, unlock any newly-earned badges, open the sealed
+ *  chest, and clear the boss file.
  *  @param {string} cwd @param {BossState} b
  *  @param {{ dmg?: number; kills?: number; maxCombo?: number }} [stats]
- *  @returns {{ total: number, level: number, leveledUp: boolean, titleKey: string, newBadges: string[], newQuests: string[], xpGained: number }} */
+ *  @returns {{ total: number, level: number, leveledUp: boolean, titleKey: string, newBadges: string[], newQuests: string[], xpGained: number, chest: { tier: string, rewardXp: number, rewardNameKey: string | null, eggPerk: string | null } }} */
 function recordDefeat(cwd, b, stats = {}) {
   const prof = state.readProfile();
   const m = {
@@ -128,9 +129,31 @@ function recordDefeat(cwd, b, stats = {}) {
   };
   prof.milestones.push(m);
   const prog = require('./progression');
+  const eggs = require('./eggs');
+  const chest = require('./chest');
+  const loot = require('./loot');
   const xpBefore = prof.xp || 0;
   const fromLevel = prog.levelFor(xpBefore).level;
-  prof.xp = xpBefore + Math.round(prog.xpForDefeat(m) * prog.prestigeMult(prof));
+  // kill XP: base × level scaling (constant cadence) × prestige × xp-eggs
+  prof.xp = xpBefore + Math.round(
+    prog.xpForDefeat(m) * prog.levelScale(fromLevel) * prog.prestigeMult(prof) * eggs.xpMult(prof));
+  // chest: sealed at spawn, revealed now. Pre-upgrade bosses without a tier
+  // get one here so old fights still pay out.
+  const luck = eggs.lootBonus(prof);
+  const count = prof.chestCount || 0;
+  const tier = chest.ensureTier(b, count, luck);
+  const opened = chest.open(String(b.name) + ':' + (b.created || 0) + ':' + count, tier, loot.TABLE.rewards, luck);
+  prof.chestCount = count + 1;
+  /** @type {string | null} */
+  let eggPerk = null;
+  if (opened.reward) {
+    prof.xp += Math.round(opened.reward.xp * prog.prestigeMult(prof) * eggs.xpMult(prof));
+  }
+  if (opened.egg) {
+    const perk = eggs.pickPerk(String(b.name) + ':' + (b.created || 0) + ':' + count);
+    eggs.grant(prof, perk.id);
+    eggPerk = perk.id;
+  }
   // badges: evaluate against the now-updated profile, persist new ones (+XP each)
   prof.badges = prof.badges || [];
   const newBadges = prog.evaluateBadges(prof);
@@ -140,12 +163,21 @@ function recordDefeat(cwd, b, stats = {}) {
   // quests: a fresh kill can complete weekly_kills (idempotent; streak handled
   // per-turn). evaluateQuests pays quest XP into prof.xp itself.
   const { completed: newQuests } = prog.evaluateQuests(prof, now);
-  // level: computed once, after kill + badge + quest XP have all landed
+  // level: computed once, after kill + chest + badge + quest XP have all landed
   const lv = prog.levelFor(prof.xp);
   prof.level = lv.level;
   state.writeProfile(prof);
   clear(cwd);
-  return { total: prof.milestones.length, level: lv.level, leveledUp: lv.level > fromLevel, titleKey: lv.titleKey, newBadges, newQuests, xpGained: prof.xp - xpBefore };
+  return {
+    total: prof.milestones.length, level: lv.level, leveledUp: lv.level > fromLevel,
+    titleKey: lv.titleKey, newBadges, newQuests, xpGained: prof.xp - xpBefore,
+    chest: {
+      tier: opened.tier,
+      rewardXp: opened.reward ? opened.reward.xp : 0,
+      rewardNameKey: opened.reward ? opened.reward.nameKey : null,
+      eggPerk,
+    },
+  };
 }
 
 module.exports = { nameBoss, loadOrCreate, save, clear, bossPath, compressName, minionLabel, recordDefeat };

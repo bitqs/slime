@@ -150,15 +150,78 @@ test('recordDefeat: returns xpGained covering kill + badge XP, and level reflect
   const pReset = state.readProfile();
   pReset.badges = []; pReset.milestones = []; pReset.xp = 0; pReset.prestige = 0;
   pReset.totals = { turns: 0, dmg: 0, kills: 0 };
+  pReset.chestCount = 0; pReset.eggs = {};
   state.writeProfile(pReset);
+  const eggsMod = require('../core/eggs');
+  const prof0 = require('../core/state').readProfile();
+  const fromLevel = prog.levelFor(prof0.xp || 0).level;
   const b = boss.loadOrCreate('/p/xpgain', 'do work');
   const r = boss.recordDefeat('/p/xpgain', b, { dmg: 42, kills: 1, maxCombo: 2 });
   const killXp = prog.xpForDefeat({ dmg: 42, kills: 1, maxCombo: 2 });
   // first kill from a clean slate unlocks first-blood → +BADGE_XP
   assert.ok(r.newBadges.includes('first-blood'));
-  assert.equal(r.xpGained, killXp + prog.BADGE_XP);
+  const killPart = Math.round(killXp * prog.levelScale(fromLevel) * prog.prestigeMult(prof0) * eggsMod.xpMult(prof0));
+  const chestPart = Math.round(r.chest.rewardXp * prog.prestigeMult(prof0) * eggsMod.xpMult(prof0));
+  const badgePart = Math.round(prog.BADGE_XP * prog.prestigeMult(prof0));
+  assert.equal(r.xpGained, killPart + chestPart + badgePart);
   const prof = state.readProfile();
   assert.equal(prof.xp, r.xpGained);
   assert.equal(prof.level, prog.levelFor(prof.xp).level);
   assert.equal(r.level, prof.level);
+});
+
+test('recordDefeat: opens a chest — tier follows the newbie sequence slot, counter advances', () => {
+  const state = require('../core/state');
+  const chest = require('../core/chest');
+  const before = state.readProfile().chestCount || 0;
+  const b = boss.loadOrCreate('/p/chest1', 'fix chest bug');
+  b.dmgTaken = 5;
+  const r = boss.recordDefeat('/p/chest1', b, { dmg: 5, kills: 0, maxCombo: 0 });
+  assert.ok(r.chest, 'defeat result carries chest info');
+  if (before < chest.NEWBIE_SEQ.length) {
+    assert.equal(r.chest.tier, chest.NEWBIE_SEQ[before]); // scripted sweetener slot
+  } else {
+    assert.ok(['silver', 'gold', 'jackpot'].includes(r.chest.tier));
+  }
+  assert.ok(r.chest.rewardXp > 0);
+  assert.equal(state.readProfile().chestCount, before + 1);
+});
+
+test('recordDefeat: newbie sequence pays gold + jackpot, jackpot guarantees an egg', () => {
+  const state = require('../core/state');
+  const chest = require('../core/chest');
+  const tiers = [];
+  // burn through the rest of the newbie window (wherever this file left it)
+  while ((state.readProfile().chestCount || 0) < chest.NEWBIE_SEQ.length) {
+    const i = state.readProfile().chestCount || 0;
+    const eggsBefore = require('../core/eggs').total(state.readProfile());
+    const b = boss.loadOrCreate('/p/seq' + i, 'fix seq');
+    b.dmgTaken = 1;
+    const r = boss.recordDefeat('/p/seq' + i, b, { dmg: 1 });
+    tiers.push(r.chest.tier);
+    if (r.chest.tier === 'jackpot') {
+      assert.ok(r.chest.eggPerk, 'jackpot always carries an egg');
+      assert.equal(require('../core/eggs').total(state.readProfile()), eggsBefore + 1);
+    }
+  }
+  // the tail we just opened must match the scripted sequence
+  const seqTail = chest.NEWBIE_SEQ.slice(chest.NEWBIE_SEQ.length - tiers.length);
+  assert.deepEqual(tiers, seqTail);
+});
+
+test('recordDefeat: kill XP scales with the level at kill time', () => {
+  const state = require('../core/state');
+  const prog = require('../core/progression');
+  const eggsMod = require('../core/eggs');
+  const prof = state.readProfile();
+  prof.xp = prog.xpToReach(10); // park the player at L10
+  state.writeProfile(prof);
+  const prof0 = state.readProfile(); // multipliers as of kill time
+  const b = boss.loadOrCreate('/p/scale', 'fix scale');
+  b.dmgTaken = 42;
+  const r = boss.recordDefeat('/p/scale', b, { dmg: 42, kills: 0, maxCombo: 0 });
+  const base = prog.xpForDefeat({ dmg: 42, kills: 0, maxCombo: 0 });
+  const expectKill = Math.round(base * prog.levelScale(10) * prog.prestigeMult(prof0) * eggsMod.xpMult(prof0));
+  // xpGained = scaled kill + chest reward (+ any badge/quest XP)
+  assert.ok(r.xpGained >= expectKill, `xpGained ${r.xpGained} < scaled kill ${expectKill}`);
 });

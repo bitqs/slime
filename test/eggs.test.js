@@ -52,3 +52,10 @@ test('grant: increments and tolerates missing eggs object', () => {
   assert.equal(eggs.grant(p, 'xp'), 2);
   assert.equal(eggs.total(p), 2);
 });
+
+test('grant: unknown perk id is rejected, profile untouched', () => {
+  const p = {};
+  assert.equal(eggs.grant(p, 'bogus'), 0);
+  assert.equal(eggs.total(p), 0);
+  assert.ok(!p.eggs || !('bogus' in p.eggs));
+});

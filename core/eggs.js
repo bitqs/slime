@@ -61,6 +61,7 @@ function roll(seed, bonus = 0) {
 
 /** Apply one egg (mutates profile). @param {Profile} profile @param {string} perkId @returns {number} new count */
 function grant(profile, perkId) {
+  if (!PERKS.some((p) => p.id === perkId)) return 0; // unknown perk — never pollute the profile
   const e = profile.eggs || (profile.eggs = {});
   const k = /** @type {keyof typeof e} */ (perkId);
   e[k] = (e[k] || 0) + 1;

@@ -75,7 +75,7 @@
 
   /**
    * @param {(() => number) | undefined} [rng]
-   * @returns {{ pick: (tool: string, combo: number) => Pick }}
+   * @returns {{ pick: (tool: string, combo: number) => Pick; setCritBase: (v: number) => void }}
    */
   function createPicker(rng) {
     const rand = rng || Math.random;
@@ -83,8 +83,15 @@
     const bags = {};
     /** @type {Record<string, string>} */
     const lastMove = {};
-    let critChance = CRIT_BASE;
+    let critBase = CRIT_BASE;
+    let critChance = critBase;
     let critCooldown = false;
+
+    /** Egg-boosted crit floor (cosmetic): clamped so it can never run away. @param {number} v */
+    function setCritBase(v) {
+      critBase = Math.min(0.05, Math.max(CRIT_BASE, Number(v) || CRIT_BASE));
+      if (critChance < critBase) critChance = critBase;
+    }
 
     /** @param {string} el @returns {{ move: string; name: MoveName }} */
     function draw(el) {
@@ -114,7 +121,7 @@
       let tier = 'normal';
       if (!critCooldown && rand() < critChance) {
         tier = 'crit';
-        critChance = CRIT_BASE;
+        critChance = critBase;
         critCooldown = true;
       } else {
         critCooldown = false;
@@ -124,7 +131,7 @@
       return { element, move: m.move, tier, jitter: 0.8 + rand() * 0.4, name: m.name };
     }
 
-    return { pick };
+    return { pick, setCritBase };
   }
 
   return { createPicker, elementFor, MOVES };

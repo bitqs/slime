@@ -978,6 +978,24 @@
     { at: 10, do: 'bigtext', text: '🧪 mana restored', y: 50 },
     { at: 70, do: 'hidetext' },
   ];
+  // chest reveal — slot-machine pacing: silver ~1.2s, gold ~2s, jackpot ~3.4s
+  function SCENE_CHEST(tier) {
+    const big = tier === 'jackpot', mid = tier === 'gold';
+    const label = big ? '💰 JACKPOT 💰' : mid ? '🎁 GOLD CHEST' : '🎁';
+    return [
+      { at: 0, do: 'dim', on: true },
+      big ? { at: 0, do: 'letterbox', on: true } : null,
+      { at: 4, do: 'bigtext', text: '🎁 …', y: 70 },
+      { at: 30, do: 'flash', strength: big ? 0.6 : mid ? 0.45 : 0.3 },
+      { at: 32, do: 'bigtext', text: label, y: 70 },
+      (big || mid) ? { at: 36, do: 'goldrain' } : null,
+      big ? { at: 48, do: 'slowmo', factor: 0.4, frames: 24 } : null,
+      big ? { at: 60, do: 'confetti' } : null,
+      { at: big ? 190 : mid ? 110 : 66, do: 'hidetext' },
+      big ? { at: 194, do: 'letterbox', on: false } : null,
+      { at: big ? 196 : mid ? 114 : 70, do: 'dim', on: false },
+    ].filter(Boolean);
+  }
   function SCENE_FORGE(est) {
     const tier = bossTierFor(est);
     return [
@@ -1502,6 +1520,9 @@
     if (!data) return;
     lastDataLang = data.lang || lastDataLang;
     if (!langPinned) applyLang(data.lang); // follow the server lang until the viewer pins a choice
+    if (movePicker && data.eggs && movePicker.setCritBase) {
+      movePicker.setCritBase(0.002 + 0.005 * (data.eggs.crit || 0));
+    }
     const snap = data.snapshot;
 
     // boss snapshot
@@ -1681,6 +1702,17 @@
       if (!CALM && d.fx === 'burst') burst(cx, 112, P.gold, 9);
       if (d.text) pushLog(d.text);
     }
+    if (d.kind === 'chest_open') {
+      // let the victory ceremony land first, then the reveal (sealed → revealed)
+      const delay = Date.now() - lastBossDownAt < 2500 ? 1800 : 0;
+      const tier = d.chestTier || 'silver';
+      setTimeout(() => { playScene(SCENE_CHEST(tier)); }, delay);
+      if (d.text) pushLog(d.text);
+    }
+    if (d.kind === 'egg_drop') {
+      floater('🥚', knight.x + 6, knight.y - 10, P.gold, 12, true);
+      if (d.text) pushLog(d.text);
+    }
     EXTRA_HANDLERS.forEach((h) => { try { h(d); } catch {} });
   }
 
@@ -1782,6 +1814,7 @@
   let engagedBoss = null;
   let minionStreak = 0;
   let lastMinionKill = 0;
+  let lastBossDownAt = 0;
   /** Map a battle event to a sound (no-op when muted / audio absent). */
   function audioFor(d) {
     const A = window.SlimeAudio;
@@ -1801,6 +1834,7 @@
       case 'cast': if (d.tool === 'Agent') A.play('summon'); break;
       case 'potion': A.play('potion'); break;
       case 'loot_drop': A.play('loot'); break;
+      case 'chest_open': case 'egg_drop': A.play('loot'); break;
       case 'turn_end': case 'plan_scroll': case 'plan_approved': A.play('ui'); break; // soft punctuation
       default: break;
     }
@@ -1830,7 +1864,7 @@
       }
       if (d.text) pushLog(d.text);
     }
-    if (d.kind === 'boss_down') { clearSummons(); setScene('battle'); engagedBoss = null; setBroken(false); packSprites.forEach((s) => { s.visible = false; }); tentacleGfx.clear(); playScene(SCENE_VICTORY()); if (d.text) pushLog(d.text); }
+    if (d.kind === 'boss_down') { lastBossDownAt = Date.now(); clearSummons(); setScene('battle'); engagedBoss = null; setBroken(false); packSprites.forEach((s) => { s.visible = false; }); tentacleGfx.clear(); playScene(SCENE_VICTORY()); if (d.text) pushLog(d.text); }
     if (d.kind === 'potion') { playScene(SCENE_POTION); if (d.text) pushLog(d.text); }
     if (d.kind === 'boss_broken') {
       // the guard-break is a real moment: red crack-flash + shard spray, not just a shiver

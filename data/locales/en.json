@@ -83,5 +83,17 @@
   "loot.drop": "✨ Loot — +{xp} XP {name}",
   "loot.xpSmall": "trinket",
   "loot.xpMedium": "relic",
-  "loot.xpBig": "treasure"
+  "loot.xpBig": "treasure",
+  "chest.open": "🎁 Chest [{tier}] → ✨ {name} +{xp} XP{egg}",
+  "chest.egg": " · 🥚 Slime Egg ({perk})",
+  "chest.tier.silver": "Silver",
+  "chest.tier.gold": "Gold",
+  "chest.tier.jackpot": "JACKPOT",
+  "egg.drop": "🥚 Slime Egg! {perk} (total {count})",
+  "egg.perk.xp": "✨ XP +1%",
+  "egg.perk.loot": "🎁 Drop +0.2%",
+  "egg.perk.crit": "💥 Crit +0.5%",
+  "egg.perk.combo": "🔥 Combo cap +2%",
+  "ach.eggsHeader": "🥚 Slime Eggs — {total}",
+  "ach.eggLine": "  {perk} ×{count}"
 }

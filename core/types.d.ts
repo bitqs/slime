@@ -16,6 +16,8 @@ export interface BossState {
   fightMaxCombo?: number;
   // hashes of green test commands already paid this fight (anti-farm; capped 20)
   testKillSigs?: number[];
+  // chest lottery: tier sealed at spawn, revealed on defeat (ATOM-L02/L03)
+  chestTier?: 'silver' | 'gold' | 'jackpot';
 }
 
 export interface Snapshot {
@@ -91,6 +93,10 @@ export interface Profile {
   badges?: Array<{ id: string; unlockedAt: number }>;
   quests?: Quest[];
   streak?: { days: number; lastActiveDay: string; longest?: number; freezes?: number; freezeMax?: number };
+  // slime eggs: permanent micro-perk counters; prestige never clears them
+  eggs?: { xp?: number; loot?: number; crit?: number; combo?: number };
+  // lifetime chests opened (drives the newbie-luck sequence)
+  chestCount?: number;
 }
 
 export interface BadgeDef {
@@ -126,6 +132,8 @@ export interface SlimeEvent {
   xp?: number;
   fx?: string;
   tier?: number;
+  chestTier?: string;
+  perk?: string;
 }
 
 /** Shape of JSON piped from the Claude Code statusline to our scripts. */

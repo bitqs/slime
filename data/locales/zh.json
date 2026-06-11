@@ -122,5 +122,17 @@
   "loot.drop": "✨ 战利品 — +{xp} 经验 {name}",
   "loot.xpSmall": "小玩意",
   "loot.xpMedium": "遗物",
-  "loot.xpBig": "宝藏"
+  "loot.xpBig": "宝藏",
+  "chest.open": "🎁 宝箱[{tier}] → ✨ {name} +{xp} XP{egg}",
+  "chest.egg": " · 🥚 史莱姆蛋({perk})",
+  "chest.tier.silver": "银",
+  "chest.tier.gold": "金",
+  "chest.tier.jackpot": "头奖",
+  "egg.drop": "🥚 史莱姆蛋!{perk}(累计 {count} 颗)",
+  "egg.perk.xp": "✨ XP +1%",
+  "egg.perk.loot": "🎁 掉落 +0.2%",
+  "egg.perk.crit": "💥 暴击 +0.5%",
+  "egg.perk.combo": "🔥 连击上限 +2%",
+  "ach.eggsHeader": "🥚 史莱姆蛋 — {total}",
+  "ach.eggLine": "  {perk} ×{count}"
 }

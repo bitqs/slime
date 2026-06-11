@@ -46,6 +46,22 @@ function xpForDefeat(m) {
   return 50 + dmgXp + (m.kills || 0) * 20 + (m.maxCombo || 0) * 5;
 }
 
+/** Reward-side level scaling (ATOM-P02 constant cadence): demand stays
+ *  50·n·(n−1) — old saves migrate for free — while supply grows with level,
+ *  so kills/level converges (~2-3) instead of slowing forever, and the same
+ *  punch prints a bigger number. @param {number} [level] @returns {number} */
+function levelScale(level) {
+  return 1 + 0.12 * Math.max(0, (level || 1) - 1);
+}
+
+/** In-fight power curve (ATOM-P14 two-curves race): boss HP damage scales
+ *  with the live combo so a fight reads grind → surge; one miss resets to the
+ *  grind. Visual layer only — XP always reads raw dmg.
+ *  @param {number} combo @param {number} [cap] @returns {number} */
+function comboDmgMult(combo, cap = 2) {
+  return Math.min(cap, 1 + 0.08 * Math.max(0, combo || 0));
+}
+
 /** @typedef {import('./types').Profile} Profile */
 /** @typedef {import('./types').BadgeDef} BadgeDef */
 
@@ -263,4 +279,4 @@ function prestige(profile) {
   return { ok: true, prestige: profile.prestige, mult: prestigeMult(profile) };
 }
 
-module.exports = { levelFor, xpForDefeat, xpToReach, TITLE_BANDS, BADGES, BADGE_XP, deriveStats, evaluateBadges, nameKeyFor, QUEST_DEFS, dayStr, bumpActivity, evaluateQuests, nearestQuest, prestigeMult, canPrestige, prestige, PRESTIGE_MIN_LEVEL };
+module.exports = { levelFor, xpForDefeat, xpToReach, levelScale, comboDmgMult, TITLE_BANDS, BADGES, BADGE_XP, deriveStats, evaluateBadges, nameKeyFor, QUEST_DEFS, dayStr, bumpActivity, evaluateQuests, nearestQuest, prestigeMult, canPrestige, prestige, PRESTIGE_MIN_LEVEL };

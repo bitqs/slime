@@ -66,7 +66,6 @@ runHook((/** @type {HookPayload} */ p) => {
       const seed = id + ':' + (snap.resolves = (snap.resolves || 0) + 1);
       const drop = loot.roll(seed, undefined, eggs.lootBonus(profForCaps));
       if (drop) {
-        const prog = require('../core/progression');
         const prof = state.readProfile();
         const fromLevel = prog.levelFor(prof.xp || 0).level;
         prof.xp = (prof.xp || 0) + Math.round(drop.xp * prog.prestigeMult(prof));

@@ -20,7 +20,9 @@ const PERKS = [
 /** @param {Profile | null | undefined} profile @returns {{ xp: number, loot: number, crit: number, combo: number }} */
 function counts(profile) {
   const e = (profile && profile.eggs) || {};
-  return { xp: e.xp || 0, loot: e.loot || 0, crit: e.crit || 0, combo: e.combo || 0 };
+  // unary + forces numeric coercion: a corrupted profile with string counts
+  // must never reach the statusline template or string-concat in total()
+  return { xp: Number(e.xp) || 0, loot: Number(e.loot) || 0, crit: Number(e.crit) || 0, combo: Number(e.combo) || 0 };
 }
 
 /** @param {Profile | null | undefined} profile @returns {number} */

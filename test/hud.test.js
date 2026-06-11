@@ -173,4 +173,8 @@ test('render: egg badge shows after streak when eggs > 0', () => {
   assert.ok(line.includes('🥚47'), line);
   const none = hud.render(snap, null, [], Date.now(), null, 'en', null, 5, undefined, 0, 0, 0);
   assert.ok(!none.includes('🥚'), none);
+  // in-turn path carries the badge too
+  const turnSnap = { ...snap, inTurn: true, updated: Date.now() };
+  const turnLine = hud.render(turnSnap, null, [], Date.now(), null, 'en', null, 5, undefined, 0, 0, 47);
+  assert.ok(turnLine.includes('🥚47'), turnLine);
 });

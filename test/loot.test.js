@@ -72,5 +72,8 @@ test('roll: bonus param raises the drop gate (luck cross-cut)', () => {
 });
 
 test('roll: bonus clamps — chance + bonus > 1 still behaves like 1', () => {
-  for (let i = 0; i < 50; i++) assert.ok(loot.roll('c' + i, TBL, 5) !== undefined);
+  for (let i = 0; i < 50; i++) {
+    assert.ok(loot.roll('c' + i, TBL, 5) !== null,
+      `seed c${i}: expected always-drop with chance 1+5 clamped to 1`);
+  }
 });

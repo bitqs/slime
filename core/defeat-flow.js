@@ -16,25 +16,46 @@ function questText(qid, lang) {
   const def = progression.QUEST_DEFS.find((d) => d.kind === qid);
   return locale.fmt(locale.t('quest.done', lang), { name: locale.t(def ? def.nameKey : qid, lang) });
 }
-/** Human-readable reward lines (levelup, then one per new badge, then one per quest) for a
+/** @param {{ tier: string, rewardXp: number, rewardNameKey: string | null, eggPerk: string | null }} c
+ *  @param {string} lang @returns {string} */
+function chestText(c, lang) {
+  const egg = c.eggPerk
+    ? locale.fmt(locale.t('chest.egg', lang), { perk: locale.t('egg.perk.' + c.eggPerk, lang) })
+    : '';
+  return locale.fmt(locale.t('chest.open', lang), {
+    tier: locale.t('chest.tier.' + c.tier, lang),
+    name: c.rewardNameKey ? locale.t(c.rewardNameKey, lang) : '',
+    xp: c.rewardXp,
+    egg,
+  });
+}
+/** Human-readable reward lines (chest first, then levelup, then one per new badge, then one per quest) for a
  *  recordDefeat result. Single source so the /defeat console output and the
  *  arena event text can never drift.
- *  @param {{leveledUp:boolean,level:number,titleKey:string,newBadges:string[],newQuests?:string[]}} r @param {string} lang @returns {string[]} */
+ *  @param {{leveledUp:boolean,level:number,titleKey:string,newBadges:string[],newQuests?:string[],chest?:{tier:string,rewardXp:number,rewardNameKey:string|null,eggPerk:string|null}}} r @param {string} lang @returns {string[]} */
 function rewardLines(r, lang) {
   const out = [];
+  if (r && r.chest && r.chest.rewardXp > 0) out.push(chestText(r.chest, lang));
   if (r && r.leveledUp) out.push(levelupText(r, lang));
   for (const bid of (r && r.newBadges) || []) out.push(badgeText(bid, lang));
   for (const qid of (r && r.newQuests) || []) out.push(questText(qid, lang));
   return out;
 }
 
-/** Emit the post-defeat reward events (level_up if crossed, one badge_unlocked
+/** Emit the post-defeat reward events (chest_open first, then level_up if crossed, one badge_unlocked
  *  per newly-earned badge, one quest_done per completed quest) to a session.
  *  Shared by the Stop hook, /defeat, and the auto-down-on-break path so the
  *  event shape stays in one place.
- *  @param {string} sid session id @param {{leveledUp:boolean,level:number,titleKey:string,newBadges:string[],newQuests?:string[]}} r recordDefeat result @param {string} lang @returns {void} */
+ *  @param {string} sid session id @param {{leveledUp:boolean,level:number,titleKey:string,newBadges:string[],newQuests?:string[],chest?:{tier:string,rewardXp:number,rewardNameKey:string|null,eggPerk:string|null}}} r recordDefeat result @param {string} lang @returns {void} */
 function emitRewards(sid, r, lang) {
   if (!sid || !r) return;
+  if (r.chest && r.chest.rewardXp > 0) {
+    state.appendEvent(sid, {
+      t: Date.now(), kind: 'chest_open', chestTier: /** @type {'silver'|'gold'|'jackpot'} */ (r.chest.tier),
+      xp: r.chest.rewardXp, perk: r.chest.eggPerk || undefined,
+      text: chestText(r.chest, lang),
+    });
+  }
   if (r.leveledUp) {
     state.appendEvent(sid, { t: Date.now(), kind: 'level_up', text: levelupText(r, lang) });
   }
@@ -54,4 +75,4 @@ function emitQuests(sid, ids, lang) {
   }
 }
 
-module.exports = { emitRewards, rewardLines, emitQuests, levelupText };
+module.exports = { emitRewards, rewardLines, emitQuests, levelupText, chestText };

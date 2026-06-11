@@ -34,3 +34,26 @@ test('rewardLines (console) matches the emitRewards event text — no drift', ()
     .map((e) => e.text);
   assert.deepEqual(flow.rewardLines(r, 'en'), texts);
 });
+
+test('rewardLines: chest reveal leads, egg suffix included', () => {
+  const r = {
+    leveledUp: false, level: 3, titleKey: 'title.apprentice', newBadges: [], newQuests: [],
+    chest: { tier: 'gold', rewardXp: 30, rewardNameKey: 'loot.xpMedium', eggPerk: 'crit' },
+  };
+  const lines = flow.rewardLines(r, 'en');
+  assert.ok(lines[0].includes('Chest'), lines[0]);
+  assert.ok(lines[0].includes('Gold'), lines[0]);
+  assert.ok(lines[0].includes('+30 XP'), lines[0]);
+  assert.ok(lines[0].includes('Slime Egg'), lines[0]);
+  assert.ok(lines[0].includes('Crit'), lines[0]);
+});
+
+test('rewardLines: chest without egg has no egg suffix; missing chest is fine', () => {
+  const r = {
+    leveledUp: false, level: 1, titleKey: 'title.novice', newBadges: [], newQuests: [],
+    chest: { tier: 'silver', rewardXp: 15, rewardNameKey: 'loot.xpSmall', eggPerk: null },
+  };
+  assert.ok(!flow.rewardLines(r, 'en')[0].includes('Egg'));
+  // old callers without chest info must not crash
+  assert.deepEqual(flow.rewardLines({ leveledUp: false, newBadges: [], newQuests: [] }, 'en'), []);
+});

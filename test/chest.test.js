@@ -66,3 +66,16 @@ test('open: malformed rewards → null reward, never throws', () => {
   const r = chest.open('x', 'gold', []);
   assert.equal(r.reward, null);
 });
+
+test('ensureTier: re-seals an unknown stored tier', () => {
+  const b = { name: 'Boss', created: 5, chestTier: 'legendary' };
+  const t = chest.ensureTier(b, 7);
+  assert.ok(['silver', 'gold', 'jackpot'].includes(t));
+  assert.equal(b.chestTier, t);
+});
+
+test('open: bonus > 1 clamps, jackpot egg still guaranteed', () => {
+  const r = chest.open('clamp', 'jackpot', [{ id: 'xp_big', weight: 1, xp: 60, nameKey: 'loot.xpBig', fx: 'burst' }], 5);
+  assert.equal(r.egg, true);
+  assert.equal(r.reward.id, 'xp_big');
+});

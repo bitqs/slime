@@ -24,7 +24,7 @@ const TIER_WEIGHTS = /** @type {Record<Tier, Record<string, number>>} */ ({
 });
 
 /** Chance the chest also carries a slime egg; the jackpot always does. */
-const EGG_CHANCE = /** @type {Record<Tier, number>} */ ({ silver: 0.10, gold: 0.30, jackpot: 1 });
+const CHEST_EGG_CHANCE = /** @type {Record<Tier, number>} */ ({ silver: 0.10, gold: 0.30, jackpot: 1 });
 
 /** @param {string} seed @param {number} chestCount lifetime opened @param {number} [bonus] luck @returns {Tier} */
 function rollTier(seed, chestCount, bonus = 0) {
@@ -40,7 +40,9 @@ function rollTier(seed, chestCount, bonus = 0) {
 /** Stamp a sealed tier on a boss (no-op when already present). Mutates + returns it.
  *  @param {BossState} b @param {number} chestCount @param {number} [bonus] @returns {Tier} */
 function ensureTier(b, chestCount, bonus = 0) {
-  if (!b.chestTier) b.chestTier = rollTier(String(b.name) + ':' + (b.created || 0), chestCount, bonus);
+  if (!b.chestTier || !TIER_WEIGHTS[b.chestTier]) {
+    b.chestTier = rollTier(String(b.name) + ':' + (b.created || 0), chestCount, bonus);
+  }
   return b.chestTier;
 }
 
@@ -61,9 +63,9 @@ function open(seed, tier, rewards, bonus = 0) {
       pick -= w[r.id];
     }
   }
-  const eggChance = Math.min(1, Math.max(0, EGG_CHANCE[t] + bonus));
+  const eggChance = Math.min(1, Math.max(0, CHEST_EGG_CHANCE[t] + bonus));
   const egg = (hash('chest-egg:' + String(seed)) % 10000) < Math.round(eggChance * 10000);
   return { tier: t, reward, egg };
 }
 
-module.exports = { NEWBIE_SEQ, TIER_WEIGHTS, EGG_CHANCE, JACKPOT_CHANCE, GOLD_CHANCE, rollTier, ensureTier, open };
+module.exports = { NEWBIE_SEQ, TIER_WEIGHTS, CHEST_EGG_CHANCE, JACKPOT_CHANCE, GOLD_CHANCE, rollTier, ensureTier, open };
